@@ -1,0 +1,44 @@
+{{!-- D:\FoundryVTT\Data\modules\dynamic-webs\templates\ui\scene-config.hbs --}}
+
+<section
+  class="tab scrollable {{tabs.dynamicWebs.cssClass}}"
+  data-group="sheet"
+  data-tab="dynamicWebs"
+  data-application-part="dynamicWebs"
+  data-dynamic-webs-scene-config
+>
+  <fieldset>
+    <legend>Dynamic Webs</legend>
+
+    <div class="form-group">
+      <label
+        for="dynamic-webs-web-density"
+        title="{{webDensityControl.description}}"
+      >
+        {{webDensityControl.label}}
+      </label>
+
+      <div class="form-fields">
+        <select
+          id="dynamic-webs-web-density"
+          name="{{fieldNames.webDensity}}"
+          title="{{webDensityControl.description}}"
+          {{#unless editable}}disabled{{/unless}}
+        >
+          {{#each webDensityControl.options}}
+            <option
+              value="{{value}}"
+              {{#if selected}}selected{{/if}}
+            >
+              {{label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <p class="hint">
+        {{webDensityControl.description}}
+      </p>
+    </div>
+  </fieldset>
+</section>

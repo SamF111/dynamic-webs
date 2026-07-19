@@ -1,0 +1,20 @@
+{
+  "id": "dynamic-webs",
+  "title": "Dynamic Webs",
+  "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic corner, wall-span, and ground spider webs for Foundry Virtual Tabletop Scenes.</p>",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "mintchoc",
+      "url": "https://github.com/SamF111"
+    }
+  ],
+  "compatibility": {
+    "minimum": 13,
+    "verified": 14
+  },
+  "socket": true,
+  "esmodules": [
+    "scripts/dynamic-webs.js"
+  ]
+}

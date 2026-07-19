@@ -1,0 +1,32 @@
+import {
+  createSceneConfigHookRegistration
+} from "./sceneConfigHookRegistration.js";
+
+import {
+  createSceneConfigTemplateContext
+} from "./sceneConfigTemplateContext.js";
+
+const registerSceneConfigHooksInternal =
+  createSceneConfigHookRegistration({
+    createTemplateContext:
+      createSceneConfigTemplateContext,
+
+    activateControls:
+      () => {
+        // The standalone tab contains only native form controls.
+      },
+
+    registerAdditionalHooks:
+      () => {
+        // Reserved for later level-aware refresh hooks.
+      }
+  });
+
+/**
+ * Register the Dynamic Webs native Scene Configuration tab.
+ *
+ * @returns {boolean} True when registration occurred.
+ */
+export function registerSceneConfigHooks() {
+  return registerSceneConfigHooksInternal();
+}

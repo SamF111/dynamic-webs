@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "presets": [
+    {
+      "id": "sparse",
+      "label": "Sparse",
+      "configuration": {
+        "cornerWebs": {
+          "maximumCount": 6
+        },
+        "spanWebs": {
+          "maximumCount": 3,
+          "minimumSpacingGridUnits": 1.6
+        },
+        "groundWebs": {
+          "count": 2
+        }
+      }
+    },
+    {
+      "id": "standard",
+      "label": "Standard",
+      "configuration": {
+        "cornerWebs": {
+          "maximumCount": 24
+        },
+        "spanWebs": {
+          "maximumCount": 6,
+          "minimumSpacingGridUnits": 1.25
+        },
+        "groundWebs": {
+          "count": 6
+        }
+      }
+    },
+    {
+      "id": "dense",
+      "label": "Dense",
+      "configuration": {
+        "cornerWebs": {
+          "maximumCount": 48
+        },
+        "spanWebs": {
+          "maximumCount": 10,
+          "minimumSpacingGridUnits": 0.9
+        },
+        "groundWebs": {
+          "count": 10
+        }
+      }
+    },
+    {
+      "id": "infested",
+      "label": "Infested",
+      "configuration": {
+        "cornerWebs": {
+          "maximumCount": 96
+        },
+        "spanWebs": {
+          "maximumCount": 48,
+          "minimumSpacingGridUnits": 0.35
+        },
+        "groundWebs": {
+          "count": 54
+        }
+      }
+    }
+  ]
+}
