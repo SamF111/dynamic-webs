@@ -199,7 +199,9 @@ function createWeb(
   });
 }
 
-function createConfiguration() {
+function createConfiguration(
+  thicknessMultiplier = 1
+) {
   return Object.freeze({
     layerMode:
       "under-tokens",
@@ -212,7 +214,8 @@ function createConfiguration() {
     underAlphaMultiplier:
       0.4,
     silkColour:
-      0xe8edf2
+      0xe8edf2,
+    thicknessMultiplier
   });
 }
 
@@ -358,6 +361,63 @@ test(
 );
 
 test(
+  "rendering scales silk and under-stroke widths without mutating strand widths",
+  () => {
+    const environment =
+      installPixi();
+
+    try {
+      const service =
+        new WebRenderService();
+
+      const web =
+        createWeb();
+
+      const container =
+        service.render(
+          [
+            web
+          ],
+          createConfiguration(
+            2.5
+          )
+        );
+
+      const strokeCommands =
+        container.children[0].commands.filter(
+          (
+            command
+          ) =>
+            command[0] ===
+              "stroke"
+        );
+
+      assert.equal(
+        strokeCommands[0][1].width,
+        5
+      );
+
+      assert.equal(
+        strokeCommands[1][1].width,
+        2.5
+      );
+
+      assert.equal(
+        web.strands[0].widthPx,
+        1
+      );
+
+      assert.equal(
+        service.createDiagnosticSnapshot().thicknessMultiplier,
+        2.5
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
   "clear removes and destroys the active container",
   () => {
     const environment =
@@ -461,4 +521,3 @@ test(
     }
   }
 );
-

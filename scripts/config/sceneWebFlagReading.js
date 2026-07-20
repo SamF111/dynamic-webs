@@ -21,6 +21,11 @@ export function readRawSceneWebConfiguration(
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.WEB_COLOUR
+        ),
+      [SCENE_WEB_FLAG_KEYS.WEB_THICKNESS]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.WEB_THICKNESS
         )
     };
   }

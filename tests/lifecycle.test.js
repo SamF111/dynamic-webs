@@ -36,7 +36,7 @@ function createEnvironment() {
   const clearCalls =
     [];
 
-  const colourRefreshCalls =
+  const presentationRefreshCalls =
     [];
 
   const service = {
@@ -74,10 +74,10 @@ function createEnvironment() {
     },
 
 
-    refreshColourProfile(
+    refreshPresentation(
       options
     ) {
-      colourRefreshCalls.push(
+      presentationRefreshCalls.push(
         options
       );
 
@@ -87,7 +87,9 @@ function createEnvironment() {
         sceneId:
           "scene",
         colourProfileId:
-          options.profileId
+          options.profileId,
+        thicknessMultiplier:
+          options.thicknessMultiplier
       });
     },
 
@@ -122,10 +124,21 @@ function createEnvironment() {
       _namespace,
       key
     ) {
-      return key ===
-        "webColour"
-        ? "natural-white"
-        : "standard";
+      if (
+        key ===
+          "webColour"
+      ) {
+        return "natural-white";
+      }
+
+      if (
+        key ===
+          "webThickness"
+      ) {
+        return 1;
+      }
+
+      return "standard";
     }
   };
 
@@ -199,7 +212,7 @@ function createEnvironment() {
     timeoutCallbacks,
     generateCalls,
     clearCalls,
-    colourRefreshCalls,
+    presentationRefreshCalls,
 
     runNextTimeout() {
       const [
@@ -520,11 +533,23 @@ test(
         (
           _namespace,
           key
-        ) =>
-          key ===
-            "webColour"
-            ? "blood-red"
-            : "standard";
+        ) => {
+          if (
+            key ===
+              "webColour"
+          ) {
+            return "blood-red";
+          }
+
+          if (
+            key ===
+              "webThickness"
+          ) {
+            return 1;
+          }
+
+          return "standard";
+        };
 
       controller.handleSceneUpdated(
         environment.scene,
@@ -549,13 +574,163 @@ test(
       );
 
       assert.deepEqual(
-        environment.colourRefreshCalls,
+        environment.presentationRefreshCalls,
         [
           {
             profileId:
               "blood-red",
+            thicknessMultiplier:
+              1,
             reason:
               "scene-web-colour-update"
+          }
+        ]
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "Scene thickness updates redraw without scheduling geometry generation",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const controller =
+        new SceneWebLifecycleController({
+          runtime:
+            environment.runtime,
+          debounceMs:
+            200
+        });
+
+      environment.scene.getFlag =
+        (
+          _namespace,
+          key
+        ) => {
+          if (
+            key ===
+              "webColour"
+          ) {
+            return "natural-white";
+          }
+
+          if (
+            key ===
+              "webThickness"
+          ) {
+            return 2.5;
+          }
+
+          return "standard";
+        };
+
+      controller.handleSceneUpdated(
+        environment.scene,
+        {
+          flags: {
+            "dynamic-webs": {
+              webThickness:
+                2.5
+            }
+          }
+        }
+      );
+
+      assert.equal(
+        environment.timeoutCallbacks.size,
+        0
+      );
+
+      assert.equal(
+        environment.generateCalls.length,
+        0
+      );
+
+      assert.deepEqual(
+        environment.presentationRefreshCalls,
+        [
+          {
+            profileId:
+              "natural-white",
+            thicknessMultiplier:
+              2.5,
+            reason:
+              "scene-web-thickness-update"
+          }
+        ]
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "combined colour and thickness updates use one presentation refresh",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const controller =
+        new SceneWebLifecycleController({
+          runtime:
+            environment.runtime,
+          debounceMs:
+            200
+        });
+
+      environment.scene.getFlag =
+        (
+          _namespace,
+          key
+        ) => {
+          if (
+            key ===
+              "webColour"
+          ) {
+            return "arcane-blue";
+          }
+
+          if (
+            key ===
+              "webThickness"
+          ) {
+            return 2;
+          }
+
+          return "standard";
+        };
+
+      controller.handleSceneUpdated(
+        environment.scene,
+        {
+          flags: {
+            "dynamic-webs": {
+              webColour:
+                "arcane-blue",
+              webThickness:
+                2
+            }
+          }
+        }
+      );
+
+      assert.deepEqual(
+        environment.presentationRefreshCalls,
+        [
+          {
+            profileId:
+              "arcane-blue",
+            thicknessMultiplier:
+              2,
+            reason:
+              "scene-web-presentation-update"
           }
         ]
       );
@@ -604,4 +779,3 @@ test(
     }
   }
 );
-

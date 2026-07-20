@@ -70,6 +70,10 @@ export function createWebRuntimeState(
       null,
     colourProfile:
       null,
+    thicknessMultiplier:
+      normaliseOptionalPositiveNumber(
+        values.thicknessMultiplier
+      ),
     sceneGeometry:
       null,
     configuration:
@@ -141,6 +145,20 @@ export function createWebRuntimeSnapshot(
     colourProfile:
       state?.colourProfile ??
       null,
+    thicknessMultiplier:
+      Number.isFinite(
+        Number(
+          state?.thicknessMultiplier
+        )
+      ) &&
+      Number(
+        state?.thicknessMultiplier
+      ) >
+        0
+        ? Number(
+            state.thicknessMultiplier
+          )
+        : null,
     sceneGeometry:
       state?.sceneGeometry ??
       null,
@@ -209,6 +227,35 @@ function normaliseOptionalString(
   return text.length >
     0
     ? text
+    : null;
+}
+
+
+function normaliseOptionalPositiveNumber(
+  value
+) {
+  if (
+    value ===
+      null ||
+    value ===
+      undefined ||
+    value ===
+      ""
+  ) {
+    return null;
+  }
+
+  const numericValue =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    numericValue
+  ) &&
+    numericValue >
+      0
+    ? numericValue
     : null;
 }
 

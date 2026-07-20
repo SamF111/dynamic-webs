@@ -13,7 +13,9 @@ export const SCENE_WEB_FLAG_KEYS =
     WEB_DENSITY:
       "webDensity",
     WEB_COLOUR:
-      "webColour"
+      "webColour",
+    WEB_THICKNESS:
+      "webThickness"
   });
 
 /** Determine whether a Scene differential affects Dynamic Webs density. */
@@ -33,6 +35,16 @@ export function doesSceneUpdateAffectWebColour(
   return doesSceneUpdateAffectFlag(
     changed,
     SCENE_WEB_FLAG_KEYS.WEB_COLOUR
+  );
+}
+
+/** Determine whether a Scene differential affects visible web thickness. */
+export function doesSceneUpdateAffectWebThickness(
+  changed
+) {
+  return doesSceneUpdateAffectFlag(
+    changed,
+    SCENE_WEB_FLAG_KEYS.WEB_THICKNESS
   );
 }
 

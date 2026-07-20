@@ -71,5 +71,33 @@
         {{webColourControl.description}}
       </p>
     </div>
+
+    <div class="form-group">
+      <label
+        for="dynamic-webs-web-thickness"
+        title="{{webThicknessControl.description}}"
+      >
+        {{webThicknessControl.label}}
+      </label>
+
+      <div class="form-fields">
+        <input
+          id="dynamic-webs-web-thickness"
+          type="number"
+          name="{{fieldNames.webThickness}}"
+          value="{{webThicknessControl.value}}"
+          min="{{webThicknessControl.minimum}}"
+          max="{{webThicknessControl.maximum}}"
+          step="{{webThicknessControl.step}}"
+          title="{{webThicknessControl.description}}"
+          {{#unless editable}}disabled{{/unless}}
+        >
+        <span class="units">×</span>
+      </div>
+
+      <p class="hint">
+        {{webThicknessControl.description}}
+      </p>
+    </div>
   </fieldset>
 </section>

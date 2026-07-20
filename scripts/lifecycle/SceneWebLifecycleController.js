@@ -6,7 +6,8 @@ import {
 import {
   doesSceneUpdateAffectWebColour,
   doesSceneUpdateAffectWebDensity,
-  doesSceneUpdateAffectWebGeometry
+  doesSceneUpdateAffectWebGeometry,
+  doesSceneUpdateAffectWebThickness
 } from "../config/sceneWebFlagPaths.js";
 
 import {
@@ -14,7 +15,7 @@ import {
 } from "./sceneLifecycle/sceneLifecycleWallUpdates.js";
 
 import {
-  synchroniseSceneWebColour,
+  synchroniseSceneWebPresentation,
   synchroniseSceneWebs
 } from "./sceneLifecycle/sceneLifecycleWebController.js";
 
@@ -267,15 +268,29 @@ export class SceneWebLifecycleController {
       return;
     }
 
-    if (
+    const colourChanged =
       doesSceneUpdateAffectWebColour(
         changed
-      )
+      );
+
+    const thicknessChanged =
+      doesSceneUpdateAffectWebThickness(
+        changed
+      );
+
+    if (
+      colourChanged ||
+      thicknessChanged
     ) {
       this.clearPendingRebuild();
 
-      this.synchroniseActiveSceneColour(
-        "scene-web-colour-update"
+      this.synchroniseActiveScenePresentation(
+        colourChanged &&
+          thicknessChanged
+          ? "scene-web-presentation-update"
+          : colourChanged
+            ? "scene-web-colour-update"
+            : "scene-web-thickness-update"
       );
 
       return;
@@ -535,8 +550,8 @@ export class SceneWebLifecycleController {
     return snapshot;
   }
 
-  /** Apply the active Scene colour without regenerating geometry. */
-  synchroniseActiveSceneColour(
+  /** Apply active Scene presentation without regenerating geometry. */
+  synchroniseActiveScenePresentation(
     reason
   ) {
     const normalisedReason =
@@ -563,7 +578,7 @@ export class SceneWebLifecycleController {
     }
 
     const snapshot =
-      synchroniseSceneWebColour({
+      synchroniseSceneWebPresentation({
         runtime:
           this.runtime,
         scene,
@@ -583,6 +598,15 @@ export class SceneWebLifecycleController {
     }
 
     return snapshot;
+  }
+
+  /** Preserve the v0.2 colour-only lifecycle method as an alias. */
+  synchroniseActiveSceneColour(
+    reason
+  ) {
+    return this.synchroniseActiveScenePresentation(
+      reason
+    );
   }
 
   /** @returns {Readonly<object>} Lifecycle telemetry without timer handles. */
@@ -693,4 +717,3 @@ function normaliseReason(
     ? text
     : "scene-lifecycle";
 }
-

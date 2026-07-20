@@ -19,6 +19,11 @@ import {
 } from "./api/colourApi.js";
 
 import {
+  getPublicSceneWebThickness,
+  setPublicSceneWebThickness
+} from "./api/thicknessApi.js";
+
+import {
   getPublicBaselineDiagnosticReport,
   showPublicBaselineDiagnosticReport
 } from "./api/diagnosticApi.js";
@@ -87,6 +92,24 @@ export function createPublicApi(
           setPublicSceneWebColour(
             profileId,
             sceneId
+          ),
+
+      getThickness:
+        (
+          sceneId = null
+        ) =>
+          getPublicSceneWebThickness(
+            sceneId
+          ),
+
+      setThickness:
+        (
+          thicknessMultiplier,
+          sceneId = null
+        ) =>
+          setPublicSceneWebThickness(
+            thicknessMultiplier,
+            sceneId
           )
     });
 
@@ -139,7 +162,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.2.0",
+            "0.2.1",
           webs:
             getPublicWebState(
               runtime

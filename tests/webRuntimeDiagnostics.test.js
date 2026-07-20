@@ -53,6 +53,11 @@ test(
     );
 
     assert.equal(
+      snapshot.thicknessMultiplier,
+      null
+    );
+
+    assert.equal(
       snapshot.generationReason,
       "canvas-ready"
     );
@@ -207,4 +212,3 @@ test(
     );
   }
 );
-

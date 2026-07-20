@@ -7,6 +7,13 @@ import {
 } from "../config/sceneWebColourConfiguration.js";
 
 import {
+  MAXIMUM_SCENE_WEB_THICKNESS,
+  MINIMUM_SCENE_WEB_THICKNESS,
+  SCENE_WEB_THICKNESS_STEP,
+  getSceneWebThicknessConfiguration
+} from "../config/sceneWebThicknessConfiguration.js";
+
+import {
   SCENE_WEB_FLAG_KEYS,
   SCENE_WEB_FLAG_PATH
 } from "../config/sceneWebFlagPaths.js";
@@ -34,6 +41,11 @@ export async function createSceneConfigTemplateContext({
       scene
     );
 
+  const thicknessConfiguration =
+    getSceneWebThicknessConfiguration(
+      scene
+    );
+
   return {
     editable:
       application?.isEditable !==
@@ -43,14 +55,18 @@ export async function createSceneConfigTemplateContext({
       webDensity:
         densityConfiguration.densityId,
       webColour:
-        colourConfiguration.profileId
+        colourConfiguration.profileId,
+      webThickness:
+        thicknessConfiguration.thicknessMultiplier
     },
 
     fieldNames: {
       webDensity:
         `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}`,
       webColour:
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_COLOUR}`
+        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_COLOUR}`,
+      webThickness:
+        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_THICKNESS}`
     },
 
     webDensityControl: {
@@ -95,6 +111,21 @@ export async function createSceneConfigTemplateContext({
                   colourConfiguration.profileId
             })
           )
+    },
+
+    webThicknessControl: {
+      label:
+        "Web thickness",
+      description:
+        "Multiply visible strand thickness without changing web geometry or interaction width.",
+      value:
+        thicknessConfiguration.thicknessMultiplier,
+      minimum:
+        MINIMUM_SCENE_WEB_THICKNESS,
+      maximum:
+        MAXIMUM_SCENE_WEB_THICKNESS,
+      step:
+        SCENE_WEB_THICKNESS_STEP
     }
   };
 }

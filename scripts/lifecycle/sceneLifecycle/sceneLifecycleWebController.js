@@ -14,6 +14,10 @@ import {
   getSceneWebColourConfiguration
 } from "../../config/sceneWebColourConfiguration.js";
 
+import {
+  getSceneWebThicknessConfiguration
+} from "../../config/sceneWebThicknessConfiguration.js";
+
 /** Synchronise generated webs for one active Scene. */
 export function synchroniseSceneWebs({
   runtime,
@@ -49,6 +53,11 @@ export function synchroniseSceneWebs({
         scene
       );
 
+    const thicknessConfiguration =
+      getSceneWebThicknessConfiguration(
+        scene
+      );
+
     if (
       densityConfiguration.enabled !==
         true
@@ -72,6 +81,8 @@ export function synchroniseSceneWebs({
           densityConfiguration.densityId,
         colourProfileId:
           colourConfiguration.profileId,
+        thicknessMultiplier:
+          thicknessConfiguration.thicknessMultiplier,
         reason:
           normalisedReason
       });
@@ -109,9 +120,9 @@ export function synchroniseSceneWebs({
 }
 
 /**
- * Apply a Scene colour update without regenerating deterministic geometry.
+ * Apply Scene colour and thickness without regenerating deterministic geometry.
  */
-export function synchroniseSceneWebColour({
+export function synchroniseSceneWebPresentation({
   runtime,
   scene,
   reason
@@ -131,7 +142,7 @@ export function synchroniseSceneWebColour({
   const normalisedReason =
     String(
       reason ??
-      "scene-web-colour-update"
+      "scene-web-presentation-update"
     );
 
   try {
@@ -172,10 +183,17 @@ export function synchroniseSceneWebColour({
         scene
       );
 
+    const thicknessConfiguration =
+      getSceneWebThicknessConfiguration(
+        scene
+      );
+
     const snapshot =
-      service.refreshColourProfile({
+      service.refreshPresentation({
         profileId:
           colourConfiguration.profileId,
+        thicknessMultiplier:
+          thicknessConfiguration.thicknessMultiplier,
         reason:
           normalisedReason
       });
@@ -187,11 +205,11 @@ export function synchroniseSceneWebColour({
   } catch (error) {
     reportDiagnostic({
       code:
-        "webs.scene-colour-synchronisation-failed",
+        "webs.scene-presentation-synchronisation-failed",
       severity:
         "warn",
       message:
-        "The active web colour profile could not be applied.",
+        "The active web colour and thickness could not be applied.",
       context: {
         sceneId:
           scene?.id ??
@@ -200,12 +218,21 @@ export function synchroniseSceneWebColour({
           normalisedReason
       },
       nextAction:
-        "Check the Scene web colour flag and data/webs/colours.json.",
+        "Check the Scene web colour and thickness flags.",
       error
     });
 
     return null;
   }
+}
+
+/** Preserve the v0.2 colour synchronisation entry point. */
+export function synchroniseSceneWebColour(
+  options
+) {
+  return synchroniseSceneWebPresentation(
+    options
+  );
 }
 
 function emitStateChanged(

@@ -5,6 +5,7 @@ import sceneConfigurationDefaultsData from "../../data/scene-configuration-defau
 
 import {
   assertJsonObject,
+  assertNumberInRange,
   assertRequiredString,
   deepFreezeJsonData
 } from "../data/jsonData.js";
@@ -21,7 +22,8 @@ const rawDefaults =
 const expectedKeys =
   [
     "webDensity",
-    "webColour"
+    "webColour",
+    "webThickness"
   ];
 
 const actualKeys =
@@ -57,7 +59,7 @@ if (
     0
 ) {
   throw new Error(
-    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity and webColour.`
+    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity, webColour and webThickness.`
   );
 }
 
@@ -72,6 +74,17 @@ export const DEFAULT_SCENE_CONFIGURATION =
       assertRequiredString(
         rawDefaults.webColour,
         `${DEFAULTS_CONTEXT}.webColour`
+      ),
+    webThickness:
+      assertNumberInRange(
+        rawDefaults.webThickness,
+        `${DEFAULTS_CONTEXT}.webThickness`,
+        {
+          minimum:
+            0.5,
+          maximum:
+            4
+        }
       )
   });
 
@@ -80,3 +93,6 @@ export const DEFAULT_SCENE_WEB_DENSITY =
 
 export const DEFAULT_SCENE_WEB_COLOUR =
   DEFAULT_SCENE_CONFIGURATION.webColour;
+
+export const DEFAULT_SCENE_WEB_THICKNESS =
+  DEFAULT_SCENE_CONFIGURATION.webThickness;

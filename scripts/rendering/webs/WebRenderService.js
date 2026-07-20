@@ -38,6 +38,9 @@ export class WebRenderService {
 
     this.lastZIndex =
       null;
+
+    this.lastThicknessMultiplier =
+      1;
   }
 
   render(
@@ -52,6 +55,11 @@ export class WebRenderService {
     const layerMode =
       configuration?.layerMode ??
       "under-tokens";
+
+    const thicknessMultiplier =
+      resolveThicknessMultiplier(
+        configuration?.thicknessMultiplier
+      );
 
     const parent =
       resolveCanvasParentForWebLayer(
@@ -117,8 +125,11 @@ export class WebRenderService {
             strand.points,
             {
               width:
-                strand.widthPx +
-                configuration.underWidthAdditionPx,
+                (
+                  strand.widthPx +
+                  configuration.underWidthAdditionPx
+                ) *
+                thicknessMultiplier,
               colour:
                 resolveStrandColour(
                   strand.underColour,
@@ -136,7 +147,8 @@ export class WebRenderService {
             strand.points,
             {
               width:
-                strand.widthPx,
+                strand.widthPx *
+                thicknessMultiplier,
               colour:
                 resolveStrandColour(
                   strand.colour,
@@ -188,6 +200,9 @@ export class WebRenderService {
             container.zIndex
           )
         : null;
+
+    this.lastThicknessMultiplier =
+      thicknessMultiplier;
 
     return container;
   }
@@ -309,6 +324,8 @@ export class WebRenderService {
               container.zIndex
             )
           : this.lastZIndex,
+      thicknessMultiplier:
+        this.lastThicknessMultiplier,
       renderRevision:
         this.renderRevision,
       lastRenderedAt:
@@ -422,6 +439,23 @@ function resolveDisplayName(
       );
 }
 
+function resolveThicknessMultiplier(
+  value
+) {
+  const numericValue =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    numericValue
+  ) &&
+    numericValue >
+      0
+    ? numericValue
+    : 1;
+}
+
 function resolveStrandColour(
   strandColour,
   legacyConfigurationColour,
@@ -475,4 +509,3 @@ function requirePixi() {
 
   return pixi;
 }
-

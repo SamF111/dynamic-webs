@@ -15,6 +15,11 @@ import {
 } from "../../diagnostics/determinismDiagnostics.js";
 
 import {
+  getSceneWebThicknessConfiguration,
+  normaliseSceneWebThickness
+} from "../../config/sceneWebThicknessConfiguration.js";
+
+import {
   applyWebColourProfileToPopulation,
   getWebColourProfile
 } from "../../simulation/webs/webColourProfiles.js";
@@ -68,6 +73,7 @@ export class WebRuntimeService {
     options = {},
     densityId = null,
     colourProfileId = null,
+    thicknessMultiplier = null,
     reason = null
   } = {}) {
     const nextGenerationId =
@@ -101,10 +107,25 @@ export class WebRuntimeService {
         }
       );
 
+    const resolvedThicknessMultiplier =
+      thicknessMultiplier ===
+        null ||
+      thicknessMultiplier ===
+        undefined
+        ? getSceneWebThicknessConfiguration(
+            scene
+          ).thicknessMultiplier
+        : normaliseSceneWebThickness(
+            thicknessMultiplier
+          );
+
     try {
       this.renderService.render(
         generated.webs,
-        generated.configuration.rendering
+        createRenderingConfiguration(
+          generated.configuration.rendering,
+          resolvedThicknessMultiplier
+        )
       );
     } catch (error) {
       this.state =
@@ -158,6 +179,8 @@ export class WebRuntimeService {
         generated.colourProfileId,
       colourProfile:
         generated.colourProfile,
+      thicknessMultiplier:
+        resolvedThicknessMultiplier,
       sceneGeometry:
         createSceneGeometrySummary(
           context
@@ -176,9 +199,13 @@ export class WebRuntimeService {
   /**
    * Re-resolve and redraw web presentation without generating geometry.
    */
-  refreshColourProfile({
-    profileId,
-    reason = "web-colour-refresh"
+  refreshPresentation({
+    profileId =
+      this.state.colourProfileId,
+    thicknessMultiplier =
+      this.state.thicknessMultiplier,
+    reason =
+      "web-presentation-refresh"
   } = {}) {
     if (
       this.state.active !==
@@ -192,34 +219,48 @@ export class WebRuntimeService {
         profileId
       );
 
+    const resolvedThicknessMultiplier =
+      normaliseSceneWebThickness(
+        thicknessMultiplier
+      );
+
     const operationReason =
       normaliseOptionalIdentifier(
         reason
       ) ??
-      "web-colour-refresh";
+      "web-presentation-refresh";
 
     const operationAt =
       Date.now();
 
-    const webs =
-      applyWebColourProfileToPopulation(
-        this.state.webs,
-        profile
-      );
-
     const previousState =
       this.state;
+
+    const webs =
+      profile.id ===
+        previousState.colourProfileId
+        ? previousState.webs
+        : applyWebColourProfileToPopulation(
+            previousState.webs,
+            profile
+          );
 
     try {
       this.renderService.render(
         webs,
-        previousState.configuration.rendering
+        createRenderingConfiguration(
+          previousState.configuration.rendering,
+          resolvedThicknessMultiplier
+        )
       );
     } catch (error) {
       try {
         this.renderService.render(
           previousState.webs,
-          previousState.configuration.rendering
+          createRenderingConfiguration(
+            previousState.configuration.rendering,
+            previousState.thicknessMultiplier
+          )
         );
 
         this.state = {
@@ -278,10 +319,40 @@ export class WebRuntimeService {
         profile.id,
       colourProfile:
         profile,
+      thicknessMultiplier:
+        resolvedThicknessMultiplier,
       webs
     };
 
     return this.createDiagnosticSnapshot();
+  }
+
+  /** Preserve the v0.2 colour-refresh entry point as a focused wrapper. */
+  refreshColourProfile({
+    profileId,
+    reason =
+      "web-colour-refresh"
+  } = {}) {
+    return this.refreshPresentation({
+      profileId,
+      thicknessMultiplier:
+        this.state.thicknessMultiplier,
+      reason
+    });
+  }
+
+  /** Apply a thickness-only visual refresh. */
+  refreshThickness({
+    thicknessMultiplier,
+    reason =
+      "web-thickness-refresh"
+  } = {}) {
+    return this.refreshPresentation({
+      profileId:
+        this.state.colourProfileId,
+      thicknessMultiplier,
+      reason
+    });
   }
 
   /** Clear all local generated geometry and rendering. */
@@ -428,6 +499,19 @@ export class WebRuntimeService {
       }
     );
   }
+}
+
+function createRenderingConfiguration(
+  rendering,
+  thicknessMultiplier
+) {
+  return Object.freeze({
+    ...rendering,
+    thicknessMultiplier:
+      normaliseSceneWebThickness(
+        thicknessMultiplier
+      )
+  });
 }
 
 function createSceneGeometrySummary(

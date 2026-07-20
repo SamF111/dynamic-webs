@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.2.0
+## Current baseline — v0.2.1
 
 Completed:
 
@@ -25,12 +25,15 @@ Completed:
 - Full migration of Ambient Critters away from web ownership
 - JSON-authored Scene colour profiles
 - Visual-only colour refreshes that preserve deterministic geometry and identifiers
+- Scene-owned visible thickness from `0.5×` to `4×`
+- Visual-only thickness refreshes that preserve blueprint and collision widths
 
 Current Scene flags:
 
 ```text
 flags.dynamic-webs.webDensity
 flags.dynamic-webs.webColour
+flags.dynamic-webs.webThickness
 ```
 
 Current density values:
@@ -167,6 +170,19 @@ dynamicWebs.api.colours.getProfile("blood-red");
 - Every strand role resolves its own colour and alpha.
 - Repeated colour changes replace rendering rather than stacking containers.
 - Colour selection does not contribute to generation seeds or candidate selection.
+
+### Visibility refinement — complete
+
+**Delivered:** v0.2.1
+
+- Added Scene flag `flags.dynamic-webs.webThickness`.
+- Added a numeric Scene Configuration control from `0.5×` to `4×` with `0.25×` steps.
+- Added `dynamicWebs.api.scene.getThickness()` and `setThickness()`.
+- Thickness changes redraw the existing population without advancing generation identity.
+- Base strand `widthPx`, collision widths, points, bounds, perches, supporting walls, seeds and identifiers remain unchanged.
+- Silk and under-stroke widths scale together at render time.
+- Combined colour and thickness updates are applied through one presentation refresh.
+- Diagnostics report the active thickness multiplier.
 
 ---
 

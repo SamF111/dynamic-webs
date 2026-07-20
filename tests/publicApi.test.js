@@ -91,6 +91,13 @@ function createEnvironment() {
         return "arcane-blue";
       }
 
+      if (
+        key ===
+          "webThickness"
+      ) {
+        return 1.5;
+      }
+
       return undefined;
     },
 
@@ -122,7 +129,7 @@ function createEnvironment() {
       get:
         () => ({
           version:
-            "0.2.0"
+            "0.2.1"
         })
     },
     scenes: {
@@ -397,6 +404,52 @@ test(
 );
 
 test(
+  "public thickness operations read and persist supported multipliers",
+  async () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const api =
+        createPublicApi(
+          environment.runtime
+        );
+
+      assert.equal(
+        api.scene.getThickness(),
+        1.5
+      );
+
+      await api.scene.setThickness(
+        2.25
+      );
+
+      assert.deepEqual(
+        environment.calls.setFlag.at(-1),
+        {
+          namespace:
+            "dynamic-webs",
+          key:
+            "webThickness",
+          value:
+            2.25
+        }
+      );
+
+      await assert.rejects(
+        () =>
+          api.scene.setThickness(
+            6
+          ),
+        /between 0.5 and 4/u
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
   "GM-only operations reject non-GM callers",
   async () => {
     const environment =
@@ -430,9 +483,16 @@ test(
           ),
         /only be performed by a GM/u
       );
+
+      await assert.rejects(
+        () =>
+          api.scene.setThickness(
+            2
+          ),
+        /only be performed by a GM/u
+      );
     } finally {
       environment.restore();
     }
   }
 );
-

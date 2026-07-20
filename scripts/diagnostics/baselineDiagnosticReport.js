@@ -67,7 +67,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.2.0",
+        "0.2.1",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -103,6 +103,8 @@ export function createBaselineDiagnosticReport({
         state.densityId,
       colourProfileId:
         state.colourProfileId,
+      thicknessMultiplier:
+        state.thicknessMultiplier,
       gridSize:
         state.sceneGeometry?.gridSize ??
         null,
@@ -122,6 +124,8 @@ export function createBaselineDiagnosticReport({
         state.presentationRevision,
       colourProfileId:
         state.colourProfileId,
+      thicknessMultiplier:
+        state.thicknessMultiplier,
       reason:
         state.generationReason,
       generatedAt:
@@ -398,4 +402,3 @@ function deepFreeze(
         value
       );
 }
-

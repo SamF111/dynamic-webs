@@ -292,10 +292,21 @@ test(
         _namespace,
         key
       ) {
-        return key ===
-          "webColour"
-          ? "yellowed"
-          : "dense";
+        if (
+          key ===
+            "webColour"
+        ) {
+          return "yellowed";
+        }
+
+        if (
+          key ===
+            "webThickness"
+        ) {
+          return 1.75;
+        }
+
+        return "dense";
       }
     };
 
@@ -321,6 +332,11 @@ test(
     assert.equal(
       context.fieldNames.webColour,
       "flags.dynamic-webs.webColour"
+    );
+
+    assert.equal(
+      context.configuration.webThickness,
+      1.75
     );
 
     assert.equal(

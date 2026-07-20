@@ -254,6 +254,41 @@ test(
 );
 
 test(
+  "README documents Scene thickness as visual-only presentation",
+  async () => {
+    const readme =
+      await readFile(
+        README_URL,
+        "utf8"
+      );
+
+    assert.ok(
+      readme.includes(
+        "flags.dynamic-webs.webThickness"
+      )
+    );
+
+    assert.ok(
+      readme.includes(
+        "0.5×` to `4×"
+      )
+    );
+
+    assert.ok(
+      readme.includes(
+        "Functional `collisionWidthPx` values"
+      )
+    );
+
+    assert.ok(
+      readme.includes(
+        "The Scene thickness multiplier is not baked into immutable geometry."
+      )
+    );
+  }
+);
+
+test(
   "roadmap closes coloured webs and preserves later barrier planning",
   async () => {
     const [
@@ -308,6 +343,18 @@ test(
     assert.ok(
       roadmap.includes(
         "Changing colour does not advance the generation ID."
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "### Visibility refinement — complete"
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "flags.dynamic-webs.webThickness"
       )
     );
 

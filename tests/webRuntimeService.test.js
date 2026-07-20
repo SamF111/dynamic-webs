@@ -334,6 +334,11 @@ test(
       );
 
       assert.equal(
+        snapshot.thicknessMultiplier,
+        1
+      );
+
+      assert.equal(
         snapshot.sceneGeometry.gridSize,
         100
       );
@@ -544,6 +549,142 @@ test(
 
       assert.equal(
         environment.renderCalls.length,
+        2
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "runtime thickness refresh preserves geometry, identifiers and collision width",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const before =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          densityId:
+            "dense",
+          reason:
+            "runtime-test"
+        });
+
+      const beforeWeb =
+        environment.service.getState().webs[0];
+
+      const beforeStrand =
+        beforeWeb.strands[0];
+
+      const after =
+        environment.service.refreshThickness({
+          thicknessMultiplier:
+            3,
+          reason:
+            "scene-web-thickness-update"
+        });
+
+      const afterWeb =
+        environment.service.getState().webs[0];
+
+      assert.equal(
+        after.generationId,
+        before.generationId
+      );
+
+      assert.equal(
+        after.generatedAt,
+        before.generatedAt
+      );
+
+      assert.equal(
+        after.presentationRevision,
+        before.presentationRevision +
+          1
+      );
+
+      assert.equal(
+        after.thicknessMultiplier,
+        3
+      );
+
+      assert.equal(
+        afterWeb,
+        beforeWeb
+      );
+
+      assert.equal(
+        afterWeb.strands[0],
+        beforeStrand
+      );
+
+      assert.equal(
+        afterWeb.strands[0].widthPx,
+        1.2
+      );
+
+      assert.equal(
+        afterWeb.strands[0].collisionWidthPx,
+        2.25
+      );
+
+      assert.equal(
+        environment.renderCalls.at(-1).configuration.thicknessMultiplier,
+        3
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "combined colour and thickness refresh applies one presentation revision",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const before =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          reason:
+            "runtime-test"
+        });
+
+      const after =
+        environment.service.refreshPresentation({
+          profileId:
+            "blood-red",
+          thicknessMultiplier:
+            2,
+          reason:
+            "scene-web-presentation-update"
+        });
+
+      assert.equal(
+        after.presentationRevision,
+        before.presentationRevision +
+          1
+      );
+
+      assert.equal(
+        after.colourProfileId,
+        "blood-red"
+      );
+
+      assert.equal(
+        after.thicknessMultiplier,
+        2
+      );
+
+      assert.equal(
+        environment.renderCalls.at(-1).configuration.thicknessMultiplier,
         2
       );
     } finally {

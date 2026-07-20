@@ -90,6 +90,8 @@ test(
           "standard",
         colourProfileId:
           "natural-white",
+        thicknessMultiplier:
+          1.75,
         presentationRevision:
           3,
         sceneGeometry:
@@ -230,6 +232,11 @@ test(
       );
 
       assert.equal(
+        report.scene.thicknessMultiplier,
+        1.75
+      );
+
+      assert.equal(
         report.integrity.uniqueWebIdCount,
         1
       );
@@ -269,4 +276,3 @@ test(
     }
   }
 );
-

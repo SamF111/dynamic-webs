@@ -14,7 +14,7 @@ The web subsystem was extracted from Ambient Critters. Dynamic Webs is now the s
 - **Baseline diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
-- **Current version:** `0.2.0`
+- **Current version:** `0.2.1`
 - **Entry point:** `scripts/dynamic-webs.js`
 - **Baseline hardening:** complete
 
@@ -61,11 +61,12 @@ Ground webs are generated freely inside the active Scene rectangle. They use det
 
 ## Scene configuration
 
-Dynamic Webs owns two Scene-level flags:
+Dynamic Webs owns three Scene-level flags:
 
 ```text
 flags.dynamic-webs.webDensity
 flags.dynamic-webs.webColour
+flags.dynamic-webs.webThickness
 ```
 
 Supported density values are:
@@ -76,7 +77,7 @@ Supported density values are:
 - `dense`
 - `infested`
 
-The Scene Configuration interface contains a standalone **Dynamic Webs** tab with **Web density** and **Web colour** selectors.
+The Scene Configuration interface contains a standalone **Dynamic Webs** tab with **Web density**, **Web colour** and **Web thickness** controls.
 
 There is intentionally no:
 
@@ -137,6 +138,27 @@ Changing `flags.dynamic-webs.webColour` performs a visual-only refresh. Dynamic 
 - Web and strand counts
 
 Only strand presentation fields and the transient PIXI container are replaced.
+
+## Web thickness
+
+Version `0.2.1` adds a Scene-owned visible-thickness multiplier:
+
+```text
+flags.dynamic-webs.webThickness
+```
+
+The supported range is `0.5×` to `4×`, with a Scene Configuration input step of `0.25×`. The default is `1×`.
+
+Thickness is deliberately independent from colour profiles and deterministic geometry. Changing it performs a visual-only redraw that preserves:
+
+- Generation ID and generation timestamp
+- Scene and category seeds
+- Web and strand identifiers
+- Hubs, bounds, points, perches and supporting walls
+- Base `widthPx` values on immutable strand blueprints
+- Functional `collisionWidthPx` values
+
+The multiplier is applied only when PIXI line widths are resolved. Both the silk stroke and its under-stroke scale together, while future collision and interaction tolerances remain unchanged.
 
 ## Deterministic generation contract
 
@@ -255,8 +277,10 @@ Strands include:
 - Profile-resolved visual alpha
 - Profile-resolved silk colour
 - Profile-resolved under-stroke colour
-- Visual width
+- Base visual width
 - Functional collision width
+
+The Scene thickness multiplier is not baked into immutable geometry. It is applied by the renderer to the base visual width only.
 
 Visual width and interaction width are separate concerns. A thin-looking strand may use a wider interaction tolerance for reliable future intersection testing.
 
@@ -282,7 +306,7 @@ Dynamic Webs does not create:
 - Walls
 - Other Scene embedded documents
 
-Repeated generation and visual-only colour refreshes destroy and replace the current container rather than stacking duplicate containers or graphics. A failed partial render is cleaned up before the error is propagated.
+Repeated generation and visual-only colour or thickness refreshes destroy and replace the current container rather than stacking duplicate containers or graphics. A failed partial render is cleaned up before the error is propagated.
 
 ## Lifecycle
 
@@ -292,10 +316,10 @@ Dynamic Webs owns its lifecycle independently of Ambient Critters.
 
 On `canvasReady`:
 
-1. Read `flags.dynamic-webs.webDensity`.
+1. Read the Scene density, colour and thickness flags.
 2. Clear webs when density is `disabled`.
 3. Generate webs when density is active.
-4. Render the immutable blueprints.
+4. Resolve colour presentation and render at the selected visible thickness.
 
 ### Canvas teardown
 
@@ -327,7 +351,14 @@ When the active Scene colour changes:
 - Strand presentation is re-resolved from the selected profile.
 - Rendering is replaced without advancing the generation ID.
 
-Relevant Scene geometry changes schedule a rebuild. Unrelated flags belonging to other modules do not rebuild Dynamic Webs.
+When the active Scene thickness changes:
+
+- Existing immutable web and strand objects are retained.
+- Visible silk and under-stroke widths are multiplied by the selected value.
+- Collision widths, geometry and generation identity remain unchanged.
+- Rendering is replaced without advancing the generation ID.
+
+A combined colour-and-thickness Scene update is applied in one presentation refresh. Relevant Scene geometry changes schedule a rebuild. Unrelated flags belonging to other modules do not rebuild Dynamic Webs.
 
 ### Wall lifecycle
 
@@ -411,6 +442,18 @@ await dynamicWebs.api.scene.setColour("blood-red", sceneId);
 
 Changing colour is GM-only and is persisted through `Scene.setFlag()`.
 
+### Scene thickness
+
+```javascript
+dynamicWebs.api.scene.getThickness();
+dynamicWebs.api.scene.getThickness(sceneId);
+
+await dynamicWebs.api.scene.setThickness(2);
+await dynamicWebs.api.scene.setThickness(2, sceneId);
+```
+
+Changing thickness is GM-only and is persisted through `Scene.setFlag()`. Supported values are between `0.5` and `4`.
+
 ### Colour profiles
 
 ```javascript
@@ -435,7 +478,7 @@ The report includes:
 
 - Module, public API, blueprint and diagnostic schema versions
 - Foundry version and generation
-- Active Scene, density, colour profile and geometry summary
+- Active Scene, density, colour profile, thickness multiplier and geometry summary
 - Generation reason, timestamps and category seeds
 - Web counts by category
 - Strand counts by role
@@ -638,8 +681,9 @@ The v0.2 regression suite covers:
 - Baseline diagnostic and determinism reporting
 - Documentation and release-contract drift
 - Colour-profile validation and frozen profile lookup
-- Scene colour flag persistence and UI context
+- Scene colour and thickness flag persistence and UI context
 - Visual-only redraws that preserve generation identity and geometry
+- Visible width scaling without changing blueprint or collision widths
 
 ## Live Foundry release verification
 
@@ -652,10 +696,11 @@ For each supported Foundry generation:
 3. Open a Scene with structural walls.
 4. Test `disabled`, `sparse`, `standard`, `dense` and `infested`.
 5. Test every web colour profile and confirm the population does not move.
-6. Reload the canvas and reopen the Scene.
-7. Create, move and delete a wall.
-8. Confirm repeated generation and colour changes replace rather than stack rendering.
-9. Run:
+6. Test thickness values from `0.5×` through `4×` and confirm collision widths and population geometry do not change.
+7. Reload the canvas and reopen the Scene.
+8. Create, move and delete a wall.
+9. Confirm repeated generation and presentation changes replace rather than stack rendering.
+10. Run:
 
 ```javascript
 dynamicWebs.api.diagnostics.showBaselineReport();
@@ -666,6 +711,7 @@ The report should show:
 - `runtimeReady: true`
 - Matching generated and rendered web counts
 - The expected `colourProfileId`
+- The expected `thicknessMultiplier`
 - No duplicate web or strand identifiers
 - All schema checks true
 - All immutability checks true
@@ -716,4 +762,3 @@ Feature work follows this process:
 7. Run the relevant automated and browser-console checks.
 
 Ambient Critters may be inspected as a reference implementation, but Dynamic Webs must independently implement equivalent behaviour and must not depend on Ambient Critters internals.
-
