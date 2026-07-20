@@ -1,4 +1,8 @@
 import {
+  WEB_BLUEPRINT_SCHEMA_VERSION
+} from "../../module/moduleConstants.js";
+
+import {
   createSeededRandom
 } from "../../util/seededRandom.js";
 
@@ -17,6 +21,10 @@ import {
 import {
   WallSpanWebGenerator
 } from "./WallSpanWebGenerator.js";
+
+import {
+  assertWebPopulationIntegrity
+} from "./webBlueprintContract.js";
 
 /** Deterministic, Foundry-independent web-blueprint generation service. */
 export class WebGenerationService {
@@ -46,23 +54,37 @@ export class WebGenerationService {
         context.sceneId
       );
 
+    const categorySeeds =
+      Object.freeze({
+        corner:
+          `${configuration.seed}:wall-corner`,
+        span:
+          `${configuration.seed}:wall-span`,
+        ground:
+          `${configuration.seed}:ground`
+      });
+
     const cornerRandom =
       createSeededRandom(
-        `${configuration.seed}:wall-corner`
+        categorySeeds.corner
       );
 
     const spanRandom =
       createSeededRandom(
-        `${configuration.seed}:wall-span`
+        categorySeeds.span
       );
 
     const groundRandom =
       createSeededRandom(
-        `${configuration.seed}:ground`
+        categorySeeds.ground
       );
 
     const cornerWebs =
       this.wallCornerGenerator.generate({
+        sceneId:
+          context.sceneId,
+        generationSeed:
+          categorySeeds.corner,
         wallSegments:
           context.wallSegments,
         gridSize:
@@ -75,6 +97,10 @@ export class WebGenerationService {
 
     const spanWebs =
       this.wallSpanGenerator.generate({
+        sceneId:
+          context.sceneId,
+        generationSeed:
+          categorySeeds.span,
         wallSegments:
           context.wallSegments,
         gridSize:
@@ -87,6 +113,10 @@ export class WebGenerationService {
 
     const groundWebs =
       this.groundGenerator.generate({
+        sceneId:
+          context.sceneId,
+        generationSeed:
+          categorySeeds.ground,
         sceneRect:
           context.sceneRect,
         gridSize:
@@ -104,31 +134,111 @@ export class WebGenerationService {
         ...groundWebs
       ]);
 
+    assertWebPopulationIntegrity(
+      webs,
+      {
+        expectedSceneId:
+          context.sceneId
+      }
+    );
+
     return Object.freeze({
+      blueprintSchemaVersion:
+        WEB_BLUEPRINT_SCHEMA_VERSION,
       sceneId:
         context.sceneId,
       seed:
         configuration.seed,
+      categorySeeds,
       configuration,
       webs,
       counts:
-        Object.freeze({
-          total:
-            webs.length,
-          corner:
-            cornerWebs.length,
-          span:
-            spanWebs.length,
-          ground:
-            groundWebs.length,
-          strands:
-            webs.reduce(
-              (total, web) => total + web.strands.length,
-              0
-            )
+        createGenerationCounts({
+          webs,
+          cornerWebs,
+          spanWebs,
+          groundWebs
         })
     });
   }
+}
+
+
+function createGenerationCounts({
+  webs,
+  cornerWebs,
+  spanWebs,
+  groundWebs
+}) {
+  const byStrandKind = {
+    structural:
+      0,
+    capture:
+      0,
+    decorative:
+      0
+  };
+
+  for (
+    const web of
+    webs
+  ) {
+    for (
+      const strand of
+      web.strands
+    ) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          byStrandKind,
+          strand.kind
+        )
+      ) {
+        byStrandKind[
+          strand.kind
+        ] +=
+          1;
+      }
+    }
+  }
+
+  const strandCount =
+    Object.values(
+      byStrandKind
+    ).reduce(
+      (
+        total,
+        count
+      ) =>
+        total +
+        count,
+      0
+    );
+
+  return Object.freeze({
+    total:
+      webs.length,
+    corner:
+      cornerWebs.length,
+    span:
+      spanWebs.length,
+    ground:
+      groundWebs.length,
+    strands:
+      strandCount,
+    byWebKind:
+      Object.freeze({
+        "wall-corner":
+          cornerWebs.length,
+        "wall-span":
+          spanWebs.length,
+        ground:
+          groundWebs.length
+      }),
+    byStrandKind:
+      Object.freeze(
+        byStrandKind
+      )
+  });
 }
 
 function validateContext(context) {
@@ -146,4 +256,6 @@ function validateContext(context) {
     );
   }
 }
+
+
 

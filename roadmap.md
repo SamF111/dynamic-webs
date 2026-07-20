@@ -6,22 +6,22 @@ This roadmap orders future work according to architectural dependencies rather t
 
 Completed:
 
-- Standalone module skeleton and manifest
-- Standalone bootstrap
-- Deterministic web generation
-- Wall-corner webs
-- Wall-span webs
-- Ground webs
+- Standalone module skeleton, manifest and bootstrap
+- Deterministic wall-corner, wall-span and ground web generation
 - Organic radial geometry
-- JSON-authored defaults
-- JSON-authored density presets
-- Standalone Scene Configuration tab
-- Standalone Scene flags
-- Independent runtime state
-- Independent PIXI rendering
-- Independent lifecycle
+- JSON-authored defaults and density presets
+- Standalone Scene Configuration tab and Scene flag
+- Independent runtime state, PIXI rendering and lifecycle
 - Debounced wall rebuilding
-- Public API
+- Versioned public API
+- Blueprint schema version `1`
+- Stable Scene-qualified web identifiers
+- Stable web-qualified strand identifiers
+- Independent category seed streams
+- Deeply immutable web populations and public snapshots
+- Comprehensive baseline and determinism diagnostics
+- Syntax, import, data-contract, API, lifecycle, rendering and generation regression tests
+- Release validation through `npm run validate`
 - Full migration of Ambient Critters away from web ownership
 
 Current Scene flag:
@@ -40,48 +40,81 @@ Current density values:
 
 ---
 
-## Milestone 0 — Baseline hardening
+## Milestone 0 — Baseline hardening — complete
 
-**Target:** v0.1.x
+**Delivered:** v0.1.0
 
-Preserve the extracted implementation as a reliable foundation before extending behaviour.
+The extracted implementation has been hardened as the reference foundation for all later milestones.
 
-### Implement
+### Delivered contracts
 
 - Blueprint schema versioning
-- Stable web identifiers
-- Stable strand identifiers
-- Frozen public API snapshots
+- Stable Scene-qualified web identifiers
+- Stable web-qualified strand identifiers
+- Independent deterministic category streams
+- Frozen geometry, runtime snapshots and public API surfaces
+- Strict JSON data contracts
 - Determinism regression tests
-- Scene rebuild regression tests
-- Wall rebuild regression tests
+- Scene and wall rebuild regression tests
 - Density-change regression tests
-- Rendering replacement tests
+- Rendering replacement and cleanup tests
+- Runtime failure-path tests
+- Foundry compatibility-adapter tests
 - A comprehensive browser-console diagnostic
 - Explicit separation between authored configuration, immutable geometry and future mutable state
+- Cross-platform syntax and full regression validation commands
 
 ### Diagnostic output
 
-The baseline diagnostic should report:
+The v0.1 baseline diagnostic reports:
 
-- Module version
-- Active Scene identifier
+- Module, API, blueprint and diagnostic schema versions
+- Active Scene identifier and name
 - Density preset
-- Generation seed
-- Blueprint schema version
+- Generation and category seeds
+- Scene rectangle, grid size and structural wall count
 - Web counts by category
 - Strand counts by role
 - Rendered container status
-- Pending rebuild status
-- Wall candidate counts
-- Determinism comparison result
+- Lifecycle registration and pending rebuild status
+- Identifier uniqueness
+- Schema and immutability checks
+- Non-destructive determinism hashes
+- Comparison against the active runtime population
 
-### Exit criteria
+Run it with:
+
+```javascript
+dynamicWebs.api.diagnostics.showBaselineReport();
+```
+
+### Identifier contract
+
+Web IDs use:
+
+```text
+<web-kind>:<encoded-scene-id>:<encoded-source-key>
+```
+
+Strand IDs use:
+
+```text
+<web-id>:<encoded-local-strand-id>
+```
+
+Consumers must treat identifiers as opaque. Stability is guaranteed for equivalent inputs under the same blueprint schema and seed versions, not across an explicitly documented future migration boundary.
+
+### Exit criteria — met
 
 - Equivalent inputs reproduce equivalent identifiers and geometry.
 - Repeated generation does not stack rendering containers.
+- Partial render failures clean up transient rendering.
 - Public API consumers cannot mutate internal state.
+- Unrelated category changes do not reshuffle other category streams.
 - Tests establish a stable reference before blueprint schemas evolve.
+- `npm run validate` performs syntax and regression validation.
+
+Final live Foundry smoke testing remains a release activity and should be performed on both v13 and v14 whenever a distributable package is prepared.
 
 ---
 
@@ -161,7 +194,7 @@ Each detected level should receive its own full density allocation. Counts must 
 
 For `dense` on three detected levels, each level independently receives:
 
-- Up to 20 corner webs
+- Up to 48 corner webs
 - Up to 10 span webs
 - 10 ground webs
 
@@ -436,9 +469,9 @@ Mutable interaction state must remain separate from immutable blueprints.
 
 ```javascript
 {
-  webId: "wall-corner-12",
+  webId: "<stable-web-id>",
   brokenStrandIds: [
-    "strand-4"
+    "<stable-web-qualified-strand-id>"
   ],
   occupiedByEntityIds: [],
   trappedEntityIds: [],
@@ -592,10 +625,10 @@ Persist only deviations such as:
 {
   schemaVersion: 1,
   webs: {
-    "wall-corner-12": {
+    "<stable-web-id>": {
       brokenStrandIds: [
-        "strand-4",
-        "strand-8"
+        "<stable-web-qualified-strand-id-a>",
+        "<stable-web-qualified-strand-id-b>"
       ],
       revision: 3
     }
@@ -732,7 +765,7 @@ Test:
 
 # Recommended implementation order
 
-1. Baseline hardening
+1. Baseline hardening — complete in v0.1.0
 2. Coloured webs
 3. Level-aware web populations
 4. Region-aware webs

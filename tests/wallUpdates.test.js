@@ -50,3 +50,112 @@ test(
     );
   }
 );
+
+
+test(
+  "all supported wall coordinate differential forms rebuild webs",
+  () => {
+    for (
+      const changed of
+      [
+        {
+          coords: [
+            0,
+            0,
+            10,
+            10
+          ]
+        },
+        {
+          coordinates: [
+            0,
+            0,
+            10,
+            10
+          ]
+        },
+        {
+          x1:
+            0
+        },
+        {
+          y1:
+            0
+        },
+        {
+          x2:
+            10
+        },
+        {
+          y2:
+            10
+        },
+        {
+          "c.0":
+            5
+        },
+        {
+          c: {
+            0:
+              5
+          }
+        }
+      ]
+    ) {
+      assert.equal(
+        doesWallUpdateAffectWebs(
+          changed
+        ),
+        true
+      );
+    }
+  }
+);
+
+test(
+  "door type changes rebuild while restrictions and metadata do not",
+  () => {
+    assert.equal(
+      doesWallUpdateAffectWebs({
+        doorType:
+          2
+      }),
+      true
+    );
+
+    for (
+      const changed of
+      [
+        {
+          move:
+            0
+        },
+        {
+          light:
+            0
+        },
+        {
+          sound:
+            0
+        },
+        {
+          flags: {
+            test:
+              true
+          }
+        },
+        {
+          name:
+            "Renamed"
+        }
+      ]
+    ) {
+      assert.equal(
+        doesWallUpdateAffectWebs(
+          changed
+        ),
+        false
+      );
+    }
+  }
+);

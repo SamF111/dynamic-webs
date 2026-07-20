@@ -33,7 +33,9 @@ export function generatePublicWebs(
   ).generateForActiveScene({
     scene:
       requireCurrentCanvasScene(),
-    options
+    options,
+    reason:
+      "public-api-generate"
   });
 }
 
@@ -54,7 +56,9 @@ export function clearPublicWebs(
 
   return Object.freeze({
     cleared:
-      service.clear(),
+      service.clear(
+        "public-api-clear"
+      ),
     state:
       service.createDiagnosticSnapshot()
   });
@@ -177,3 +181,4 @@ function validateRuntime(
     );
   }
 }
+

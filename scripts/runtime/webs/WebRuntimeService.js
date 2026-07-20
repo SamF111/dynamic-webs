@@ -11,6 +11,10 @@ import {
 } from "../../rendering/webs/WebRenderService.js";
 
 import {
+  runDeterminismDiagnostic
+} from "../../diagnostics/determinismDiagnostics.js";
+
+import {
   createWebRuntimeSnapshot,
   createWebRuntimeState
 } from "./webRuntimeState.js";
@@ -61,17 +65,28 @@ export class WebRuntimeService {
    * @param {object|null} [options.scene=canvas.scene] - Active Scene.
    * @param {object} [options.options={}] - Generation overrides.
    * @param {string|null} [options.densityId=null] - Active density ID.
+   * @param {string|null} [options.reason=null] - Generation reason.
    * @returns {Readonly<object>} Diagnostic snapshot.
    */
   generateForActiveScene({
     scene =
       globalThis.canvas?.scene,
     options = {},
-    densityId = null
+    densityId = null,
+    reason = null
   } = {}) {
     const nextGenerationId =
       this.state.generationId +
       1;
+
+    const operationReason =
+      normaliseOptionalIdentifier(
+        reason
+      ) ??
+      "generate";
+
+    const operationAt =
+      Date.now();
 
     const context =
       createActiveWebSceneContext(
@@ -91,9 +106,18 @@ export class WebRuntimeService {
       );
     } catch (error) {
       this.state =
-        createWebRuntimeState(
-          this.state.generationId
-        );
+        createWebRuntimeState({
+          generationId:
+            this.state.generationId,
+          generationReason:
+            this.state.generationReason,
+          generatedAt:
+            this.state.generatedAt,
+          lastOperationReason:
+            `${operationReason}-failed`,
+          lastOperationAt:
+            operationAt
+        });
 
       throw error;
     }
@@ -101,15 +125,31 @@ export class WebRuntimeService {
     this.state = {
       active:
         true,
+      blueprintSchemaVersion:
+        generated.blueprintSchemaVersion,
       sceneId:
         generated.sceneId,
       generationId:
         nextGenerationId,
+      generationReason:
+        operationReason,
+      generatedAt:
+        operationAt,
+      lastOperationReason:
+        operationReason,
+      lastOperationAt:
+        operationAt,
       seed:
         generated.seed,
+      categorySeeds:
+        generated.categorySeeds,
       densityId:
         normaliseOptionalIdentifier(
           densityId
+        ),
+      sceneGeometry:
+        createSceneGeometrySummary(
+          context
         ),
       configuration:
         generated.configuration,
@@ -125,26 +165,126 @@ export class WebRuntimeService {
   /**
    * Clear all local generated geometry and rendering.
    *
+   * @param {string|null} [reason=null] - Clear reason.
    * @returns {boolean} True when state or rendering existed.
    */
-  clear() {
-    const generationId =
-      this.state.generationId;
+  clear(
+    reason = null
+  ) {
+    const previousState =
+      this.state;
 
     const wasActive =
-      this.state.active ===
+      previousState.active ===
         true;
 
     const clearedRendering =
       this.renderService.clear();
 
     this.state =
-      createWebRuntimeState(
-        generationId
-      );
+      createWebRuntimeState({
+        generationId:
+          previousState.generationId,
+        generationReason:
+          previousState.generationReason,
+        generatedAt:
+          previousState.generatedAt,
+        lastOperationReason:
+          normaliseOptionalIdentifier(
+            reason
+          ) ??
+          "clear",
+        lastOperationAt:
+          Date.now()
+      });
 
     return wasActive ||
       clearedRendering;
+  }
+
+  /**
+   * Run a non-destructive deterministic-generation comparison.
+   *
+   * @param {object|null} [scene=canvas.scene] - Scene used for the comparison.
+   * @returns {Readonly<object>} Frozen comparison result.
+   */
+  createDeterminismDiagnostic(
+    scene =
+      globalThis.canvas?.scene
+  ) {
+    if (
+      this.state.active !==
+        true ||
+      !this.state.configuration
+    ) {
+      return Object.freeze({
+        executed:
+          false,
+        deterministic:
+          null,
+        matchesRuntimeState:
+          null,
+        reason:
+          "No active generated web population is available."
+      });
+    }
+
+    try {
+      const context =
+        createActiveWebSceneContext(
+          scene
+        );
+
+      if (
+        context.sceneId !==
+          this.state.sceneId
+      ) {
+        return Object.freeze({
+          executed:
+            false,
+          deterministic:
+            null,
+          matchesRuntimeState:
+            null,
+          reason:
+            "The active Scene does not match the generated runtime population."
+        });
+      }
+
+      return runDeterminismDiagnostic({
+        generationService:
+          this.generationService,
+        context,
+        configuration:
+          this.state.configuration,
+        currentWebs:
+          this.state.webs
+      });
+    } catch (error) {
+      return Object.freeze({
+        executed:
+          false,
+        deterministic:
+          null,
+        matchesRuntimeState:
+          null,
+        reason:
+          "The non-destructive determinism check failed.",
+        error:
+          Object.freeze({
+            name:
+              String(
+                error?.name ??
+                "Error"
+              ),
+            message:
+              String(
+                error?.message ??
+                error
+              )
+          })
+      });
+    }
   }
 
   /** @returns {object} Mutable internal state for runtime ownership only. */
@@ -159,6 +299,37 @@ export class WebRuntimeService {
       this.renderService.createDiagnosticSnapshot()
     );
   }
+
+  /**
+   * Return runtime telemetry without copying the complete web population.
+   *
+   * @returns {Readonly<object>} Frozen lightweight telemetry.
+   */
+  createTelemetrySnapshot() {
+    return createWebRuntimeSnapshot(
+      this.state,
+      this.renderService.createDiagnosticSnapshot(),
+      {
+        includeWebs:
+          false
+      }
+    );
+  }
+}
+
+function createSceneGeometrySummary(
+  context
+) {
+  return Object.freeze({
+    gridSize:
+      Number(
+        context.gridSize
+      ),
+    sceneRect:
+      context.sceneRect,
+    structuralWallCount:
+      context.wallSegments.length
+  });
 }
 
 function normaliseOptionalIdentifier(

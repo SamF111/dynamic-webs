@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:v01": "node --test tests/*.test.js",
+    "check:syntax": "node tools/check-syntax.mjs",
+    "validate": "npm run check:syntax && npm run test:v01"
   }
 }

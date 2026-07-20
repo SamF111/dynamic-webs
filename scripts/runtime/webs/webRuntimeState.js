@@ -1,66 +1,261 @@
-/** Create the transient runtime state owned by WebRuntimeService. */
-export function createWebRuntimeState(generationId = 0) {
+import {
+  WEB_BLUEPRINT_SCHEMA_VERSION
+} from "../../module/moduleConstants.js";
+
+/**
+ * Create the transient runtime state owned by WebRuntimeService.
+ *
+ * @param {object|number} [options={}] - State values or legacy generation ID.
+ * @returns {object} Mutable service-owned state.
+ */
+export function createWebRuntimeState(
+  options = {}
+) {
+  const values =
+    Number.isInteger(
+      options
+    )
+      ? {
+          generationId:
+            options
+        }
+      : (
+          options &&
+          typeof options ===
+            "object" &&
+          !Array.isArray(
+            options
+          )
+            ? options
+            : {}
+        );
+
   return {
     active:
       false,
+    blueprintSchemaVersion:
+      WEB_BLUEPRINT_SCHEMA_VERSION,
     sceneId:
       null,
-    generationId,
+    generationId:
+      Number.isInteger(
+        values.generationId
+      )
+        ? values.generationId
+        : 0,
+    generationReason:
+      normaliseOptionalString(
+        values.generationReason
+      ),
+    generatedAt:
+      normaliseOptionalTimestamp(
+        values.generatedAt
+      ),
+    lastOperationReason:
+      normaliseOptionalString(
+        values.lastOperationReason
+      ),
+    lastOperationAt:
+      normaliseOptionalTimestamp(
+        values.lastOperationAt
+      ),
     seed:
       null,
+    categorySeeds:
+      null,
     densityId:
+      null,
+    sceneGeometry:
       null,
     configuration:
       null,
     webs:
       Object.freeze([]),
     counts:
-      Object.freeze({
-        total: 0,
-        corner: 0,
-        span: 0,
-        ground: 0,
-        strands: 0
-      })
+      createEmptyCounts()
   };
 }
 
 /** Create a deeply frozen public/diagnostic snapshot without PIXI references. */
-export function createWebRuntimeSnapshot(state, renderDiagnostics = null) {
+export function createWebRuntimeSnapshot(
+  state,
+  renderDiagnostics = null,
+  {
+    includeWebs = true
+  } = {}
+) {
   return deepFreeze({
     active:
-      state?.active === true,
+      state?.active ===
+        true,
+    blueprintSchemaVersion:
+      Number.isInteger(
+        state?.blueprintSchemaVersion
+      )
+        ? state.blueprintSchemaVersion
+        : WEB_BLUEPRINT_SCHEMA_VERSION,
     sceneId:
-      state?.sceneId ?? null,
+      state?.sceneId ??
+      null,
     generationId:
-      Number.isInteger(state?.generationId)
+      Number.isInteger(
+        state?.generationId
+      )
         ? state.generationId
         : 0,
+    generationReason:
+      state?.generationReason ??
+      null,
+    generatedAt:
+      state?.generatedAt ??
+      null,
+    lastOperationReason:
+      state?.lastOperationReason ??
+      null,
+    lastOperationAt:
+      state?.lastOperationAt ??
+      null,
     seed:
-      state?.seed ?? null,
+      state?.seed ??
+      null,
+    categorySeeds:
+      state?.categorySeeds ??
+      null,
     densityId:
-      state?.densityId ?? null,
+      state?.densityId ??
+      null,
+    sceneGeometry:
+      state?.sceneGeometry ??
+      null,
     configuration:
-      state?.configuration ?? null,
+      state?.configuration ??
+      null,
     counts:
-      state?.counts ?? null,
+      state?.counts ??
+      createEmptyCounts(),
     webs:
-      state?.webs ?? [],
+      includeWebs
+        ? state?.webs ??
+          []
+        : null,
     rendering:
       renderDiagnostics
   });
 }
 
-function deepFreeze(value) {
-  if (value === null || typeof value !== "object") return value;
-  if (Array.isArray(value)) {
-    return Object.freeze(value.map(deepFreeze));
-  }
-  const clone = {};
-  for (const [key, entry] of Object.entries(value)) {
-    clone[key] = deepFreeze(entry);
-  }
-  return Object.freeze(clone);
+function createEmptyCounts() {
+  return Object.freeze({
+    total:
+      0,
+    corner:
+      0,
+    span:
+      0,
+    ground:
+      0,
+    strands:
+      0,
+    byWebKind:
+      Object.freeze({
+        "wall-corner":
+          0,
+        "wall-span":
+          0,
+        ground:
+          0
+      }),
+    byStrandKind:
+      Object.freeze({
+        structural:
+          0,
+        capture:
+          0,
+        decorative:
+          0
+      })
+  });
 }
 
+function normaliseOptionalString(
+  value
+) {
+  if (
+    typeof value !==
+      "string"
+  ) {
+    return null;
+  }
 
+  const text =
+    value.trim();
+
+  return text.length >
+    0
+    ? text
+    : null;
+}
+
+function normaliseOptionalTimestamp(
+  value
+) {
+  const numericValue =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    numericValue
+  ) &&
+    numericValue >
+      0
+    ? numericValue
+    : null;
+}
+
+function deepFreeze(
+  value
+) {
+  if (
+    value ===
+      null ||
+    typeof value !==
+      "object"
+  ) {
+    return value;
+  }
+
+  if (
+    Array.isArray(
+      value
+    )
+  ) {
+    return Object.freeze(
+      value.map(
+        deepFreeze
+      )
+    );
+  }
+
+  const clone =
+    {};
+
+  for (
+    const [
+      key,
+      entry
+    ] of Object.entries(
+      value
+    )
+  ) {
+    clone[
+      key
+    ] =
+      deepFreeze(
+        entry
+      );
+  }
+
+  return Object.freeze(
+    clone
+  );
+}

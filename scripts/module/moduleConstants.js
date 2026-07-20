@@ -13,6 +13,19 @@ export const PUBLIC_API_VERSION =
   1;
 
 /**
+ * Schema version for immutable generated web and strand blueprints.
+ *
+ * This is intentionally independent from the public API and JSON data schema
+ * versions so geometry contracts can evolve without conflating concerns.
+ */
+export const WEB_BLUEPRINT_SCHEMA_VERSION =
+  1;
+
+/** Schema version for the copyable baseline diagnostic report. */
+export const BASELINE_DIAGNOSTIC_SCHEMA_VERSION =
+  1;
+
+/**
  * Generic Foundry canvas placement modes supported by generated webs.
  */
 export const WEB_RENDER_LAYER_MODES =

@@ -57,6 +57,21 @@ export class SceneWebLifecycleController {
 
     this.pendingReason =
       null;
+
+    this.lastRequestedReason =
+      null;
+
+    this.lastRequestedAt =
+      null;
+
+    this.lastCompletedReason =
+      null;
+
+    this.lastCompletedAt =
+      null;
+
+    this.synchronisationCount =
+      0;
   }
 
   /**
@@ -65,7 +80,9 @@ export class SceneWebLifecycleController {
    * @returns {boolean} True when registered by this call.
    */
   registerHooks() {
-    if (this.registered) {
+    if (
+      this.registered
+    ) {
       return false;
     }
 
@@ -191,7 +208,9 @@ export class SceneWebLifecycleController {
 
     this.runtime
       .getWebRuntimeService()
-      .clear();
+      .clear(
+        "lifecycle-dispose"
+      );
   }
 
   /** Synchronise the newly ready active Scene. */
@@ -209,7 +228,9 @@ export class SceneWebLifecycleController {
 
     this.runtime
       .getWebRuntimeService()
-      .clear();
+      .clear(
+        "canvas-teardown"
+      );
   }
 
   /**
@@ -279,7 +300,13 @@ export class SceneWebLifecycleController {
       return;
     }
 
-    this.handleCanvasTearDown();
+    this.clearPendingRebuild();
+
+    this.runtime
+      .getWebRuntimeService()
+      .clear(
+        "scene-deleted"
+      );
   }
 
   /**
@@ -354,11 +381,19 @@ export class SceneWebLifecycleController {
   scheduleRebuild(
     reason
   ) {
-    this.pendingReason =
-      String(
-        reason ??
-        "geometry-update"
+    const normalisedReason =
+      normaliseReason(
+        reason
       );
+
+    this.pendingReason =
+      normalisedReason;
+
+    this.lastRequestedReason =
+      normalisedReason;
+
+    this.lastRequestedAt =
+      Date.now();
 
     if (
       this.pendingRebuildHandle !==
@@ -436,6 +471,17 @@ export class SceneWebLifecycleController {
   synchroniseActiveScene(
     reason
   ) {
+    const normalisedReason =
+      normaliseReason(
+        reason
+      );
+
+    this.lastRequestedReason =
+      normalisedReason;
+
+    this.lastRequestedAt =
+      Date.now();
+
     const scene =
       globalThis.canvas?.scene ??
       null;
@@ -448,11 +494,56 @@ export class SceneWebLifecycleController {
       return null;
     }
 
-    return synchroniseSceneWebs({
-      runtime:
-        this.runtime,
-      scene,
-      reason
+    const snapshot =
+      synchroniseSceneWebs({
+        runtime:
+          this.runtime,
+        scene,
+        reason:
+          normalisedReason
+      });
+
+    if (
+      snapshot
+    ) {
+      this.lastCompletedReason =
+        normalisedReason;
+
+      this.lastCompletedAt =
+        Date.now();
+
+      this.synchronisationCount +=
+        1;
+    }
+
+    return snapshot;
+  }
+
+  /** @returns {Readonly<object>} Lifecycle telemetry without timer handles. */
+  createDiagnosticSnapshot() {
+    return Object.freeze({
+      registered:
+        this.registered ===
+          true,
+      hookRegistrationCount:
+        this.hookRegistrations.length,
+      debounceMilliseconds:
+        this.debounceMs,
+      pendingRebuild:
+        this.pendingRebuildHandle !==
+          null,
+      pendingReason:
+        this.pendingReason,
+      lastRequestedReason:
+        this.lastRequestedReason,
+      lastRequestedAt:
+        this.lastRequestedAt,
+      lastCompletedReason:
+        this.lastCompletedReason,
+      lastCompletedAt:
+        this.lastCompletedAt,
+      synchronisationCount:
+        this.synchronisationCount
     });
   }
 
@@ -491,7 +582,9 @@ export class SceneWebLifecycleController {
     const activeSceneId =
       globalThis.canvas?.scene?.id;
 
-    if (!activeSceneId) {
+    if (
+      !activeSceneId
+    ) {
       return false;
     }
 
@@ -518,4 +611,19 @@ export class SceneWebLifecycleController {
           activeSceneId
         );
   }
+}
+
+function normaliseReason(
+  value
+) {
+  const text =
+    String(
+      value ??
+      "scene-lifecycle"
+    ).trim();
+
+  return text.length >
+    0
+    ? text
+    : "scene-lifecycle";
 }

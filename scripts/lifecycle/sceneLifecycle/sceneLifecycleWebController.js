@@ -36,6 +36,12 @@ export function synchroniseSceneWebs({
     return null;
   }
 
+  const normalisedReason =
+    String(
+      reason ??
+      "scene-lifecycle"
+    );
+
   try {
     const configuration =
       getSceneWebDensityConfiguration(
@@ -46,7 +52,9 @@ export function synchroniseSceneWebs({
       configuration.enabled !==
         true
     ) {
-      service.clear();
+      service.clear(
+        normalisedReason
+      );
 
       const snapshot =
         service.createDiagnosticSnapshot();
@@ -56,10 +64,7 @@ export function synchroniseSceneWebs({
         snapshot,
         {
           reason:
-            String(
-              reason ??
-              "scene-lifecycle"
-            )
+            normalisedReason
         }
       );
 
@@ -72,7 +77,9 @@ export function synchroniseSceneWebs({
         options:
           configuration.generationOptions,
         densityId:
-          configuration.densityId
+          configuration.densityId,
+        reason:
+          normalisedReason
       });
 
     globalThis.Hooks?.callAll?.(
@@ -80,10 +87,7 @@ export function synchroniseSceneWebs({
       snapshot,
       {
         reason:
-          String(
-            reason ??
-            "scene-lifecycle"
-          )
+          normalisedReason
       }
     );
 
@@ -101,17 +105,16 @@ export function synchroniseSceneWebs({
           scene?.id ??
           null,
         reason:
-          String(
-            reason ??
-            "scene-lifecycle"
-          )
+          normalisedReason
       },
       nextAction:
         "Check the Dynamic Webs Scene density and JSON-backed density presets.",
       error
     });
 
-    service.clear();
+    service.clear(
+      `${normalisedReason}-failed`
+    );
 
     return null;
   }

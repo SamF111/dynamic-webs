@@ -12,6 +12,11 @@ import {
   randomScaledIntegerInclusive
 } from "./organicRadialWebGeometry.js";
 
+import {
+  WEB_BLUEPRINT_KINDS,
+  createStableWebId
+} from "./webBlueprintContract.js";
+
 /**
  * Generate deterministic wall-to-wall webs across narrow passages.
  *
@@ -23,6 +28,8 @@ import {
  */
 export class WallSpanWebGenerator {
   generate({
+    sceneId,
+    generationSeed,
     wallSegments,
     gridSize,
     configuration,
@@ -60,10 +67,11 @@ export class WallSpanWebGenerator {
 
     return Object.freeze(
       selected.map(
-        (candidate, index) =>
+        (candidate) =>
           createSpanWeb({
             candidate,
-            index,
+            sceneId,
+            generationSeed,
             gridSize,
             configuration,
             random
@@ -697,7 +705,8 @@ function selectSpacedCandidates({
 
 function createSpanWeb({
   candidate,
-  index,
+  sceneId,
+  generationSeed,
   gridSize,
   configuration,
   random
@@ -933,6 +942,9 @@ function createSpanWeb({
   const coordinateKey =
     `${Math.round(candidate.midpoint.x)}-${Math.round(candidate.midpoint.y)}`;
 
+  const sourceKey =
+    `${candidate.corridorKey}:${coordinateKey}`;
+
   const sourcePerch =
     sourceAnchors[
       Math.floor(
@@ -953,9 +965,18 @@ function createSpanWeb({
 
   return createWebBlueprint({
     id:
-      `span:${wallIds.join(":")}:${coordinateKey}:${index}`,
+      createStableWebId({
+        sceneId,
+        kind:
+          WEB_BLUEPRINT_KINDS.WALL_SPAN,
+        sourceKey
+      }),
+    sceneId,
+    seed:
+      generationSeed,
+    sourceKey,
     kind:
-      "wall-span",
+      WEB_BLUEPRINT_KINDS.WALL_SPAN,
     hub,
     strands:
       geometry.strands,
@@ -1303,4 +1324,5 @@ function vectorLength(
     Number(vector?.y)
   );
 }
+
 

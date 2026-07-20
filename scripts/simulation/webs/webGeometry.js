@@ -1,3 +1,13 @@
+import {
+  WEB_BLUEPRINT_SCHEMA_VERSION
+} from "../../module/moduleConstants.js";
+
+import {
+  assertWebBlueprintIntegrity,
+  createStableStrandId,
+  deepFreezeWebValue
+} from "./webBlueprintContract.js";
+
 /** Generic geometry helpers shared by deterministic web generators. */
 
 export const WEB_STRAND_KINDS =
@@ -9,6 +19,13 @@ export const WEB_STRAND_KINDS =
     DECORATIVE:
       "decorative"
   });
+
+const SUPPORTED_STRAND_KINDS =
+  new Set(
+    Object.values(
+      WEB_STRAND_KINDS
+    )
+  );
 
 const STRAND_VISUAL_RANGES =
   Object.freeze({
@@ -38,6 +55,12 @@ const STRAND_VISUAL_RANGES =
       })
   });
 
+/**
+ * Create one immutable web-local strand.
+ *
+ * The final globally unique strand ID is assigned by createWebBlueprint(),
+ * which qualifies this stable local ID with the owning web ID.
+ */
 export function createWebStrand({
   id,
   kind,
@@ -45,192 +68,672 @@ export function createWebStrand({
   random,
   alphaMultiplier = 1
 }) {
-  const range =
-    STRAND_VISUAL_RANGES[kind] ??
-    STRAND_VISUAL_RANGES[WEB_STRAND_KINDS.CAPTURE];
+  const localId =
+    requireIdentifier(
+      id,
+      "local strand ID"
+    );
+
+  const strandKind =
+    requireIdentifier(
+      kind,
+      `kind for strand "${localId}"`
+    );
+
+  if (
+    !SUPPORTED_STRAND_KINDS.has(
+      strandKind
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Strand "${localId}" has unsupported kind "${strandKind}".`
+    );
+  }
+
+  if (
+    typeof random !==
+      "function"
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Strand "${localId}" requires a deterministic random function.`
+    );
+  }
 
   const safePoints =
-    Array.isArray(points)
+    Array.isArray(
+      points
+    )
       ? points
-          .filter(isFinitePoint)
-          .map((point) => Object.freeze({
-            x: Number(point.x),
-            y: Number(point.y)
-          }))
+          .filter(
+            isFinitePoint
+          )
+          .map(
+            (
+              point
+            ) => ({
+              x:
+                Number(
+                  point.x
+                ),
+              y:
+                Number(
+                  point.y
+                )
+            })
+          )
       : [];
 
-  if (safePoints.length < 2) return null;
+  if (
+    safePoints.length <
+      2
+  ) {
+    throw new Error(
+      `Dynamic Webs | Strand "${localId}" must contain at least two finite points.`
+    );
+  }
 
-  const randomNumber =
-    typeof random === "function"
-      ? random
-      : Math.random;
+  const range =
+    STRAND_VISUAL_RANGES[
+      strandKind
+    ];
 
-  return Object.freeze({
+  const safeAlphaMultiplier =
+    Number.isFinite(
+      Number(
+        alphaMultiplier
+      )
+    )
+      ? Number(
+          alphaMultiplier
+        )
+      : 1;
+
+  return deepFreezeWebValue({
+    schemaVersion:
+      WEB_BLUEPRINT_SCHEMA_VERSION,
     id:
-      String(id),
+      localId,
+    localId,
     kind:
-      kind ?? WEB_STRAND_KINDS.CAPTURE,
+      strandKind,
     points:
-      Object.freeze(safePoints),
+      safePoints,
     alpha:
       clamp(
-        randomBetween(randomNumber, range.minimumAlpha, range.maximumAlpha) *
-          alphaMultiplier,
+        randomBetween(
+          random,
+          range.minimumAlpha,
+          range.maximumAlpha
+        ) *
+          safeAlphaMultiplier,
         0.05,
         1
       ),
     widthPx:
-      randomBetween(randomNumber, range.minimumWidthPx, range.maximumWidthPx),
+      randomBetween(
+        random,
+        range.minimumWidthPx,
+        range.maximumWidthPx
+      ),
     collisionWidthPx:
       range.collisionWidthPx
   });
 }
 
+/**
+ * Create one complete immutable generated-web blueprint.
+ *
+ * @param {object} options - Blueprint values.
+ * @returns {Readonly<object>} Validated immutable blueprint.
+ */
 export function createWebBlueprint({
   id,
+  sceneId,
+  seed,
+  sourceKey,
   kind,
   hub,
   strands,
   perches = [],
   supportingWallIds = []
 }) {
-  const safeStrands =
-    Object.freeze(
-      (Array.isArray(strands) ? strands : [])
-        .filter(Boolean)
+  const webId =
+    requireIdentifier(
+      id,
+      "web ID"
     );
 
-  const safeHub =
-    Object.freeze({
-      x: Number(hub?.x ?? 0),
-      y: Number(hub?.y ?? 0)
-    });
+  const safeSceneId =
+    requireIdentifier(
+      sceneId,
+      `Scene ID for web "${webId}"`
+    );
+
+  const safeSeed =
+    requireIdentifier(
+      seed,
+      `generation seed for web "${webId}"`
+    );
+
+  const safeSourceKey =
+    requireIdentifier(
+      sourceKey,
+      `source key for web "${webId}"`
+    );
+
+  const safeKind =
+    requireIdentifier(
+      kind,
+      `kind for web "${webId}"`
+    );
+
+  if (
+    !isFinitePoint(
+      hub
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Web "${webId}" requires a finite hub point.`
+    );
+  }
+
+  const localStrandIds =
+    new Set();
+
+  const safeStrands =
+    (
+      Array.isArray(
+        strands
+      )
+        ? strands
+        : []
+    )
+      .filter(
+        Boolean
+      )
+      .map(
+        (
+          strand
+        ) => {
+          const localId =
+            requireIdentifier(
+              strand?.localId ??
+                strand?.id,
+              `local strand ID for web "${webId}"`
+            );
+
+          if (
+            localStrandIds.has(
+              localId
+            )
+          ) {
+            throw new Error(
+              `Dynamic Webs | Web "${webId}" contains duplicate local strand ID "${localId}".`
+            );
+          }
+
+          localStrandIds.add(
+            localId
+          );
+
+          return {
+            ...strand,
+            schemaVersion:
+              WEB_BLUEPRINT_SCHEMA_VERSION,
+            id:
+              createStableStrandId(
+                webId,
+                localId
+              ),
+            localId
+          };
+        }
+      );
+
+  const safeHub = {
+    x:
+      Number(
+        hub.x
+      ),
+    y:
+      Number(
+        hub.y
+      )
+  };
 
   const safePerches =
-    Object.freeze(
-      (Array.isArray(perches) ? perches : [])
-        .filter((perch) => isFinitePoint(perch))
-        .map((perch) => Object.freeze({
-          id: String(perch.id),
-          x: Number(perch.x),
-          y: Number(perch.y),
-          rotation: Number.isFinite(Number(perch.rotation))
-            ? Number(perch.rotation)
-            : 0
-        }))
+    (
+      Array.isArray(
+        perches
+      )
+        ? perches
+        : []
+    )
+      .filter(
+        isFinitePoint
+      )
+      .map(
+        (
+          perch
+        ) => ({
+          id:
+            requireIdentifier(
+              perch.id,
+              `perch ID for web "${webId}"`
+            ),
+          x:
+            Number(
+              perch.x
+            ),
+          y:
+            Number(
+              perch.y
+            ),
+          rotation:
+            Number.isFinite(
+              Number(
+                perch.rotation
+              )
+            )
+              ? Number(
+                  perch.rotation
+                )
+              : 0
+        })
+      );
+
+  const safeSupportingWallIds =
+    [
+      ...new Set(
+        (
+          Array.isArray(
+            supportingWallIds
+          )
+            ? supportingWallIds
+            : []
+        )
+          .filter(
+            (
+              wallId
+            ) =>
+              wallId !==
+                null &&
+              wallId !==
+                undefined
+          )
+          .map(
+            String
+          )
+      )
+    ].sort(
+      (
+        first,
+        second
+      ) =>
+        first.localeCompare(
+          second
+        )
     );
 
-  return Object.freeze({
-    id:
-      String(id),
-    kind:
-      String(kind),
-    hub:
-      safeHub,
-    bounds:
-      Object.freeze(calculatePointBounds([
+  const blueprint =
+    deepFreezeWebValue({
+      schemaVersion:
+        WEB_BLUEPRINT_SCHEMA_VERSION,
+      id:
+        webId,
+      sceneId:
+        safeSceneId,
+      seed:
+        safeSeed,
+      sourceKey:
+        safeSourceKey,
+      kind:
+        safeKind,
+      hub:
         safeHub,
-        ...safeStrands.flatMap((strand) => strand.points)
-      ])),
-    strands:
-      safeStrands,
-    perches:
-      safePerches,
-    supportingWallIds:
-      Object.freeze(
-        [...new Set(
-          supportingWallIds
-            .filter((wallId) => wallId !== null && wallId !== undefined)
-            .map(String)
-        )]
-      )
-  });
+      bounds:
+        calculatePointBounds([
+          safeHub,
+          ...safeStrands.flatMap(
+            (
+              strand
+            ) =>
+              strand.points
+          )
+        ]),
+      strands:
+        safeStrands,
+      perches:
+        safePerches,
+      supportingWallIds:
+        safeSupportingWallIds
+    });
+
+  return assertWebBlueprintIntegrity(
+    blueprint,
+    {
+      expectedSceneId:
+        safeSceneId
+    }
+  );
 }
 
-export function sampleQuadraticBezier(start, control, end, steps = 8) {
-  const points = [];
-  const safeSteps = Math.max(1, Math.trunc(Number(steps) || 1));
+export function sampleQuadraticBezier(
+  start,
+  control,
+  end,
+  steps = 8
+) {
+  const points =
+    [];
 
-  for (let index = 0; index <= safeSteps; index += 1) {
-    const t = index / safeSteps;
-    const inverse = 1 - t;
+  const safeSteps =
+    Math.max(
+      1,
+      Math.trunc(
+        Number(
+          steps
+        ) ||
+        1
+      )
+    );
+
+  for (
+    let index = 0;
+    index <=
+      safeSteps;
+    index += 1
+  ) {
+    const t =
+      index /
+      safeSteps;
+
+    const inverse =
+      1 -
+      t;
+
     points.push({
       x:
-        inverse * inverse * start.x +
-        2 * inverse * t * control.x +
-        t * t * end.x,
+        inverse *
+          inverse *
+          start.x +
+        2 *
+          inverse *
+          t *
+          control.x +
+        t *
+          t *
+          end.x,
       y:
-        inverse * inverse * start.y +
-        2 * inverse * t * control.y +
-        t * t * end.y
+        inverse *
+          inverse *
+          start.y +
+        2 *
+          inverse *
+          t *
+          control.y +
+        t *
+          t *
+          end.y
     });
   }
 
   return points;
 }
 
-export function lerpPoint(start, end, t) {
+export function lerpPoint(
+  start,
+  end,
+  t
+) {
   return {
-    x: start.x + (end.x - start.x) * t,
-    y: start.y + (end.y - start.y) * t
+    x:
+      start.x +
+      (
+        end.x -
+        start.x
+      ) *
+      t,
+    y:
+      start.y +
+      (
+        end.y -
+        start.y
+      ) *
+      t
   };
 }
 
-export function addScaled(point, direction, length) {
+export function addScaled(
+  point,
+  direction,
+  length
+) {
   return {
-    x: point.x + direction.x * length,
-    y: point.y + direction.y * length
+    x:
+      point.x +
+      direction.x *
+      length,
+    y:
+      point.y +
+      direction.y *
+      length
   };
 }
 
-export function normaliseVector(vector) {
-  const length = Math.hypot(Number(vector?.x), Number(vector?.y));
-  if (!Number.isFinite(length) || length <= 0.000001) return { x: 0, y: 0 };
-  return {
-    x: Number(vector.x) / length,
-    y: Number(vector.y) / length
-  };
-}
+export function normaliseVector(
+  vector
+) {
+  const length =
+    Math.hypot(
+      Number(
+        vector?.x
+      ),
+      Number(
+        vector?.y
+      )
+    );
 
-export function randomBetween(random, minimum, maximum) {
-  if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) return 0;
-  if (maximum <= minimum) return minimum;
-  return minimum + random() * (maximum - minimum);
-}
-
-export function clamp(value, minimum, maximum) {
-  return Math.max(minimum, Math.min(maximum, value));
-}
-
-export function calculatePointBounds(points) {
-  const safePoints = (Array.isArray(points) ? points : []).filter(isFinitePoint);
-  if (safePoints.length === 0) {
-    return { x: 0, y: 0, width: 0, height: 0, right: 0, bottom: 0 };
+  if (
+    !Number.isFinite(
+      length
+    ) ||
+    length <=
+      0.000001
+  ) {
+    return {
+      x:
+        0,
+      y:
+        0
+    };
   }
 
-  const xs = safePoints.map((point) => Number(point.x));
-  const ys = safePoints.map((point) => Number(point.y));
-  const x = Math.min(...xs);
-  const y = Math.min(...ys);
-  const right = Math.max(...xs);
-  const bottom = Math.max(...ys);
+  return {
+    x:
+      Number(
+        vector.x
+      ) /
+      length,
+    y:
+      Number(
+        vector.y
+      ) /
+      length
+  };
+}
+
+export function randomBetween(
+  random,
+  minimum,
+  maximum
+) {
+  if (
+    typeof random !==
+      "function" ||
+    !Number.isFinite(
+      minimum
+    ) ||
+    !Number.isFinite(
+      maximum
+    )
+  ) {
+    return 0;
+  }
+
+  if (
+    maximum <=
+      minimum
+  ) {
+    return minimum;
+  }
+
+  return minimum +
+    random() *
+    (
+      maximum -
+      minimum
+    );
+}
+
+export function clamp(
+  value,
+  minimum,
+  maximum
+) {
+  return Math.max(
+    minimum,
+    Math.min(
+      maximum,
+      value
+    )
+  );
+}
+
+export function calculatePointBounds(
+  points
+) {
+  const safePoints =
+    (
+      Array.isArray(
+        points
+      )
+        ? points
+        : []
+    ).filter(
+      isFinitePoint
+    );
+
+  if (
+    safePoints.length ===
+      0
+  ) {
+    return {
+      x:
+        0,
+      y:
+        0,
+      width:
+        0,
+      height:
+        0,
+      right:
+        0,
+      bottom:
+        0
+    };
+  }
+
+  const xs =
+    safePoints.map(
+      (
+        point
+      ) =>
+        Number(
+          point.x
+        )
+    );
+
+  const ys =
+    safePoints.map(
+      (
+        point
+      ) =>
+        Number(
+          point.y
+        )
+    );
+
+  const x =
+    Math.min(
+      ...xs
+    );
+
+  const y =
+    Math.min(
+      ...ys
+    );
+
+  const right =
+    Math.max(
+      ...xs
+    );
+
+  const bottom =
+    Math.max(
+      ...ys
+    );
 
   return {
     x,
     y,
-    width: right - x,
-    height: bottom - y,
+    width:
+      right -
+      x,
+    height:
+      bottom -
+      y,
     right,
     bottom
   };
 }
 
-function isFinitePoint(point) {
+function isFinitePoint(
+  point
+) {
   return Boolean(
     point &&
-    Number.isFinite(Number(point.x)) &&
-    Number.isFinite(Number(point.y))
+    Number.isFinite(
+      Number(
+        point.x
+      )
+    ) &&
+    Number.isFinite(
+      Number(
+        point.y
+      )
+    )
   );
 }
 
+function requireIdentifier(
+  value,
+  label
+) {
+  const identifier =
+    String(
+      value ??
+      ""
+    ).trim();
+
+  if (
+    identifier.length ===
+      0
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | ${label} must be a non-empty identifier.`
+    );
+  }
+
+  return identifier;
+}

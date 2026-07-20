@@ -6,9 +6,16 @@ import {
   randomBetween
 } from "./webGeometry.js";
 
+import {
+  WEB_BLUEPRINT_KINDS,
+  createStableWebId
+} from "./webBlueprintContract.js";
+
 /** Generate deterministic irregular radial ground webs. */
 export class GroundWebGenerator {
   generate({
+    sceneId,
+    generationSeed,
     sceneRect,
     gridSize,
     configuration,
@@ -26,6 +33,8 @@ export class GroundWebGenerator {
     for (let index = 0; index < configuration.count; index += 1) {
       webs.push(createGroundWeb({
         index,
+        sceneId,
+        generationSeed,
         sceneRect,
         gridSize,
         configuration,
@@ -39,6 +48,8 @@ export class GroundWebGenerator {
 
 function createGroundWeb({
   index,
+  sceneId,
+  generationSeed,
   sceneRect,
   gridSize,
   configuration,
@@ -140,9 +151,23 @@ function createGroundWeb({
     }));
   }
 
+  const sourceKey =
+    `index-${index}`;
+
   return createWebBlueprint({
-    id: `ground:${index}`,
-    kind: "ground",
+    id:
+      createStableWebId({
+        sceneId,
+        kind:
+          WEB_BLUEPRINT_KINDS.GROUND,
+        sourceKey
+      }),
+    sceneId,
+    seed:
+      generationSeed,
+    sourceKey,
+    kind:
+      WEB_BLUEPRINT_KINDS.GROUND,
     hub,
     strands,
     perches: [{
@@ -160,4 +185,5 @@ function chooseCoordinate(random, minimum, maximum, margin) {
   if (innerMaximum <= innerMinimum) return (minimum + maximum) / 2;
   return randomBetween(random, innerMinimum, innerMaximum);
 }
+
 

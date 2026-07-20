@@ -15,9 +15,16 @@ import {
   randomScaledIntegerInclusive
 } from "./organicRadialWebGeometry.js";
 
+import {
+  WEB_BLUEPRINT_KINDS,
+  createStableWebId
+} from "./webBlueprintContract.js";
+
 /** Generate deterministic organic radial webs at structural wall corners. */
 export class WallCornerWebGenerator {
   generate({
+    sceneId,
+    generationSeed,
     wallSegments,
     gridSize,
     configuration,
@@ -50,12 +57,12 @@ export class WallCornerWebGenerator {
         )
         .map(
           (
-            candidate,
-            index
+            candidate
           ) =>
             createCornerWeb({
               candidate,
-              index,
+              sceneId,
+              generationSeed,
               gridSize,
               configuration,
               random
@@ -306,7 +313,8 @@ function buildCornerCandidates({
 
 function createCornerWeb({
   candidate,
-  index,
+  sceneId,
+  generationSeed,
   gridSize,
   configuration,
   random
@@ -562,14 +570,25 @@ function createCornerWeb({
       candidate.right.wallId
     ].sort();
 
-  const coordinateKey =
-    `${Math.round(corner.x)}-${Math.round(corner.y)}`;
+  const sourceKey =
+    createCandidateKey(
+      candidate
+    );
 
   return createWebBlueprint({
     id:
-      `corner:${wallIds.join(":")}:${coordinateKey}:${index}`,
+      createStableWebId({
+        sceneId,
+        kind:
+          WEB_BLUEPRINT_KINDS.WALL_CORNER,
+        sourceKey
+      }),
+    sceneId,
+    seed:
+      generationSeed,
+    sourceKey,
     kind:
-      "wall-corner",
+      WEB_BLUEPRINT_KINDS.WALL_CORNER,
     hub,
     strands,
     perches:
@@ -667,4 +686,5 @@ function createCandidateKey(
     ":"
   );
 }
+
 

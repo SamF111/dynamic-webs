@@ -11,6 +11,11 @@ import {
   setPublicSceneWebDensity
 } from "./api/webApi.js";
 
+import {
+  getPublicBaselineDiagnosticReport,
+  showPublicBaselineDiagnosticReport
+} from "./api/diagnosticApi.js";
+
 /**
  * Create the stable public Dynamic Webs API.
  *
@@ -65,6 +70,21 @@ export function createPublicApi(
           )
     });
 
+  const diagnostics =
+    Object.freeze({
+      getBaselineReport:
+        () =>
+          getPublicBaselineDiagnosticReport(
+            runtime
+          ),
+
+      showBaselineReport:
+        () =>
+          showPublicBaselineDiagnosticReport(
+            runtime
+          )
+    });
+
   return Object.freeze({
     version:
       PUBLIC_API_VERSION,
@@ -92,6 +112,7 @@ export function createPublicApi(
         }),
 
     webs,
-    scene
+    scene,
+    diagnostics
   });
 }

@@ -105,3 +105,165 @@ test(
     );
   }
 );
+
+
+test(
+  "invalid and non-string density values fail clearly",
+  () => {
+    assert.throws(
+      () =>
+        normaliseSceneWebDensity(
+          "unknown"
+        ),
+      /Unsupported Scene web density/u
+    );
+
+    assert.throws(
+      () =>
+        normaliseSceneWebDensity(
+          42
+        ),
+      /must be a string/u
+    );
+  }
+);
+
+test(
+  "Scene density can be read from plain flags when getFlag is unavailable",
+  () => {
+    const configuration =
+      getSceneWebDensityConfiguration({
+        flags: {
+          "dynamic-webs": {
+            webDensity:
+              "sparse"
+          }
+        }
+      });
+
+    assert.equal(
+      configuration.densityId,
+      "sparse"
+    );
+
+    assert.equal(
+      configuration.generationOptions.groundWebs.count,
+      2
+    );
+  }
+);
+
+test(
+  "density differential detection handles replacement and removal forms",
+  () => {
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        "flags.dynamic-webs.webDensity":
+          "dense"
+      }),
+      true
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        flags: {
+          "dynamic-webs": {
+            "-=webDensity":
+              null
+          }
+        }
+      }),
+      true
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        flags: {
+          "-=dynamic-webs":
+            null
+        }
+      }),
+      true
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        flags: {
+          "dynamic-webs":
+            null
+        }
+      }),
+      true
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        flags: {
+          "dynamic-webs": {
+            unrelated:
+              true
+          }
+        }
+      }),
+      false
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebDensity({
+        flags: {
+          "ambient-critters": {
+            webDensity:
+              "dense"
+          }
+        }
+      }),
+      false
+    );
+  }
+);
+
+test(
+  "all generation-relevant Scene geometry paths are classified",
+  () => {
+    for (
+      const changed of
+      [
+        {
+          width:
+            1000
+        },
+        {
+          height:
+            1000
+        },
+        {
+          padding:
+            0.2
+        },
+        {
+          "grid.size":
+            140
+        },
+        {
+          background: {
+            offsetX:
+              10
+          }
+        },
+        {
+          background: {
+            offsetY:
+              10
+          }
+        }
+      ]
+    ) {
+      assert.equal(
+        doesSceneUpdateAffectWebGeometry(
+          changed
+        ),
+        true
+      );
+    }
+  }
+);
