@@ -11,60 +11,32 @@ export const SCENE_WEB_FLAG_PATH =
 export const SCENE_WEB_FLAG_KEYS =
   Object.freeze({
     WEB_DENSITY:
-      "webDensity"
+      "webDensity",
+    WEB_COLOUR:
+      "webColour"
   });
 
-/**
- * Determine whether a Scene differential affects Dynamic Webs density.
- *
- * @param {unknown} changed - updateScene differential.
- * @returns {boolean} True when density changed or the namespace was removed.
- */
+/** Determine whether a Scene differential affects Dynamic Webs density. */
 export function doesSceneUpdateAffectWebDensity(
   changed
 ) {
-  return objectContainsPath(
+  return doesSceneUpdateAffectFlag(
     changed,
-    (
-      path,
-      child
-    ) => {
-      const exactPath =
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}`;
-
-      return (
-        path ===
-          exactPath ||
-        path.startsWith(
-          `${exactPath}.`
-        ) ||
-        path ===
-          `flags.${SCENE_WEB_FLAG_NAMESPACE}.-=${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}` ||
-        path ===
-          `flags.-=${SCENE_WEB_FLAG_NAMESPACE}` ||
-        (
-          path ===
-            SCENE_WEB_FLAG_PATH &&
-          (
-            !child ||
-            typeof child !==
-              "object" ||
-            Array.isArray(
-              child
-            )
-          )
-        )
-      );
-    }
+    SCENE_WEB_FLAG_KEYS.WEB_DENSITY
   );
 }
 
-/**
- * Determine whether a Scene differential changes geometry used by generation.
- *
- * @param {unknown} changed - updateScene differential.
- * @returns {boolean} True when Scene geometry may have changed.
- */
+/** Determine whether a Scene differential affects the web colour profile. */
+export function doesSceneUpdateAffectWebColour(
+  changed
+) {
+  return doesSceneUpdateAffectFlag(
+    changed,
+    SCENE_WEB_FLAG_KEYS.WEB_COLOUR
+  );
+}
+
+/** Determine whether a Scene differential changes generation geometry. */
 export function doesSceneUpdateAffectWebGeometry(
   changed
 ) {
@@ -93,6 +65,46 @@ export function doesSceneUpdateAffectWebGeometry(
             `${prefix}.`
           )
       )
+  );
+}
+
+function doesSceneUpdateAffectFlag(
+  changed,
+  flagKey
+) {
+  return objectContainsPath(
+    changed,
+    (
+      path,
+      child
+    ) => {
+      const exactPath =
+        `${SCENE_WEB_FLAG_PATH}.${flagKey}`;
+
+      return (
+        path ===
+          exactPath ||
+        path.startsWith(
+          `${exactPath}.`
+        ) ||
+        path ===
+          `flags.${SCENE_WEB_FLAG_NAMESPACE}.-=${flagKey}` ||
+        path ===
+          `flags.-=${SCENE_WEB_FLAG_NAMESPACE}` ||
+        (
+          path ===
+            SCENE_WEB_FLAG_PATH &&
+          (
+            !child ||
+            typeof child !==
+              "object" ||
+            Array.isArray(
+              child
+            )
+          )
+        )
+      );
+    }
   );
 }
 

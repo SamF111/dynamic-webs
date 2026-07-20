@@ -2,12 +2,7 @@ import {
   WEB_BLUEPRINT_SCHEMA_VERSION
 } from "../../module/moduleConstants.js";
 
-/**
- * Create the transient runtime state owned by WebRuntimeService.
- *
- * @param {object|number} [options={}] - State values or legacy generation ID.
- * @returns {object} Mutable service-owned state.
- */
+/** Create the transient runtime state owned by WebRuntimeService. */
 export function createWebRuntimeState(
   options = {}
 ) {
@@ -43,6 +38,12 @@ export function createWebRuntimeState(
       )
         ? values.generationId
         : 0,
+    presentationRevision:
+      Number.isInteger(
+        values.presentationRevision
+      )
+        ? values.presentationRevision
+        : 0,
     generationReason:
       normaliseOptionalString(
         values.generationReason
@@ -64,6 +65,10 @@ export function createWebRuntimeState(
     categorySeeds:
       null,
     densityId:
+      null,
+    colourProfileId:
+      null,
+    colourProfile:
       null,
     sceneGeometry:
       null,
@@ -103,6 +108,12 @@ export function createWebRuntimeSnapshot(
       )
         ? state.generationId
         : 0,
+    presentationRevision:
+      Number.isInteger(
+        state?.presentationRevision
+      )
+        ? state.presentationRevision
+        : 0,
     generationReason:
       state?.generationReason ??
       null,
@@ -123,6 +134,12 @@ export function createWebRuntimeSnapshot(
       null,
     densityId:
       state?.densityId ??
+      null,
+    colourProfileId:
+      state?.colourProfileId ??
+      null,
+    colourProfile:
+      state?.colourProfile ??
       null,
     sceneGeometry:
       state?.sceneGeometry ??

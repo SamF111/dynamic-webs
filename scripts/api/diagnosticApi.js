@@ -14,7 +14,7 @@ import {
   showDiagnosticTextarea
 } from "../diagnostics/diagnosticTextarea.js";
 
-/** Return the comprehensive immutable v0.1 baseline report. */
+/** Return the comprehensive immutable baseline report. */
 export function getPublicBaselineDiagnosticReport(
   runtime
 ) {
@@ -58,3 +58,4 @@ function validateRuntime(
     );
   }
 }
+

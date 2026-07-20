@@ -3,12 +3,7 @@ import {
   SCENE_WEB_FLAG_NAMESPACE
 } from "./sceneWebFlagPaths.js";
 
-/**
- * Read raw Dynamic Webs flags from one Scene.
- *
- * @param {object} scene - Scene document or Scene-like object.
- * @returns {object} Raw flag values.
- */
+/** Read raw Dynamic Webs flags from one Scene. */
 export function readRawSceneWebConfiguration(
   scene
 ) {
@@ -21,6 +16,11 @@ export function readRawSceneWebConfiguration(
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.WEB_DENSITY
+        ),
+      [SCENE_WEB_FLAG_KEYS.WEB_COLOUR]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.WEB_COLOUR
         )
     };
   }

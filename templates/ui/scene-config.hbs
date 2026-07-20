@@ -40,5 +40,36 @@
         {{webDensityControl.description}}
       </p>
     </div>
+
+    <div class="form-group">
+      <label
+        for="dynamic-webs-web-colour"
+        title="{{webColourControl.description}}"
+      >
+        {{webColourControl.label}}
+      </label>
+
+      <div class="form-fields">
+        <select
+          id="dynamic-webs-web-colour"
+          name="{{fieldNames.webColour}}"
+          title="{{webColourControl.description}}"
+          {{#unless editable}}disabled{{/unless}}
+        >
+          {{#each webColourControl.options}}
+            <option
+              value="{{value}}"
+              {{#if selected}}selected{{/if}}
+            >
+              {{label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <p class="hint">
+        {{webColourControl.description}}
+      </p>
+    </div>
   </fieldset>
 </section>

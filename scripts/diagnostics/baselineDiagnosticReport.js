@@ -6,7 +6,7 @@ import {
 } from "../module/moduleConstants.js";
 
 /**
- * Create the comprehensive v0.1 baseline diagnostic report.
+ * Create the comprehensive baseline diagnostic report.
  *
  * @param {object} options - Report dependencies.
  * @param {object} options.runtime - Dynamic Webs runtime.
@@ -67,7 +67,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.1.0",
+        "0.2.0",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -101,6 +101,8 @@ export function createBaselineDiagnosticReport({
         null,
       densityId:
         state.densityId,
+      colourProfileId:
+        state.colourProfileId,
       gridSize:
         state.sceneGeometry?.gridSize ??
         null,
@@ -116,6 +118,10 @@ export function createBaselineDiagnosticReport({
         state.active,
       generationId:
         state.generationId,
+      presentationRevision:
+        state.presentationRevision,
+      colourProfileId:
+        state.colourProfileId,
       reason:
         state.generationReason,
       generatedAt:
@@ -248,6 +254,34 @@ function createPopulationSummary(
                 )
             )
         )
+,
+      allWebsColourProfiled:
+        population.every(
+          (
+            web
+          ) =>
+            typeof web?.colourProfileId ===
+              "string" &&
+            web.colourProfileId.length >
+              0
+        ),
+      allStrandsColourResolved:
+        strands.every(
+          (
+            strand
+          ) =>
+            Number.isInteger(
+              strand?.colour
+            ) &&
+            Number.isInteger(
+              strand?.underColour
+            ) &&
+            Number.isFinite(
+              Number(
+                strand?.baseAlpha
+              )
+            )
+        )
     },
     immutabilityChecks: {
       webArrayFrozen:
@@ -364,3 +398,4 @@ function deepFreeze(
         value
       );
 }
+

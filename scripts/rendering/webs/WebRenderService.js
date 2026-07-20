@@ -120,7 +120,11 @@ export class WebRenderService {
                 strand.widthPx +
                 configuration.underWidthAdditionPx,
               colour:
-                configuration.underColour,
+                resolveStrandColour(
+                  strand.underColour,
+                  configuration?.underColour,
+                  0x111827
+                ),
               alpha:
                 strand.alpha *
                 configuration.underAlphaMultiplier
@@ -134,7 +138,11 @@ export class WebRenderService {
               width:
                 strand.widthPx,
               colour:
-                configuration.silkColour,
+                resolveStrandColour(
+                  strand.colour,
+                  configuration?.silkColour,
+                  0xe8edf2
+                ),
               alpha:
                 strand.alpha
             }
@@ -414,6 +422,41 @@ function resolveDisplayName(
       );
 }
 
+function resolveStrandColour(
+  strandColour,
+  legacyConfigurationColour,
+  fallback
+) {
+  for (
+    const value of
+    [
+      strandColour,
+      legacyConfigurationColour,
+      fallback
+    ]
+  ) {
+    const numericValue =
+      Number(
+        value
+      );
+
+    if (
+      Number.isInteger(
+        numericValue
+      ) &&
+      numericValue >=
+        0 &&
+      numericValue <=
+        0xffffff
+    ) {
+      return numericValue;
+    }
+  }
+
+  return fallback;
+}
+
+
 function requirePixi() {
   const pixi =
     globalThis.PIXI;
@@ -432,3 +475,4 @@ function requirePixi() {
 
   return pixi;
 }
+

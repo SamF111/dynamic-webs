@@ -148,6 +148,18 @@ export function createWebStrand({
         )
       : 1;
 
+  const baseAlpha =
+    clamp(
+      randomBetween(
+        random,
+        range.minimumAlpha,
+        range.maximumAlpha
+      ) *
+        safeAlphaMultiplier,
+      0.05,
+      1
+    );
+
   return deepFreezeWebValue({
     schemaVersion:
       WEB_BLUEPRINT_SCHEMA_VERSION,
@@ -158,17 +170,9 @@ export function createWebStrand({
       strandKind,
     points:
       safePoints,
+    baseAlpha,
     alpha:
-      clamp(
-        randomBetween(
-          random,
-          range.minimumAlpha,
-          range.maximumAlpha
-        ) *
-          safeAlphaMultiplier,
-        0.05,
-        1
-      ),
+      baseAlpha,
     widthPx:
       randomBetween(
         random,
@@ -737,3 +741,4 @@ function requireIdentifier(
 
   return identifier;
 }
+

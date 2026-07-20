@@ -20,7 +20,8 @@ const rawDefaults =
 
 const expectedKeys =
   [
-    "webDensity"
+    "webDensity",
+    "webColour"
   ];
 
 const actualKeys =
@@ -56,7 +57,7 @@ if (
     0
 ) {
   throw new Error(
-    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity.`
+    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity and webColour.`
   );
 }
 
@@ -66,8 +67,16 @@ export const DEFAULT_SCENE_CONFIGURATION =
       assertRequiredString(
         rawDefaults.webDensity,
         `${DEFAULTS_CONTEXT}.webDensity`
+      ),
+    webColour:
+      assertRequiredString(
+        rawDefaults.webColour,
+        `${DEFAULTS_CONTEXT}.webColour`
       )
   });
 
 export const DEFAULT_SCENE_WEB_DENSITY =
   DEFAULT_SCENE_CONFIGURATION.webDensity;
+
+export const DEFAULT_SCENE_WEB_COLOUR =
+  DEFAULT_SCENE_CONFIGURATION.webColour;

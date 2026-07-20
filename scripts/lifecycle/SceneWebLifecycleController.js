@@ -4,6 +4,7 @@ import {
 } from "../module/moduleConstants.js";
 
 import {
+  doesSceneUpdateAffectWebColour,
   doesSceneUpdateAffectWebDensity,
   doesSceneUpdateAffectWebGeometry
 } from "../config/sceneWebFlagPaths.js";
@@ -13,6 +14,7 @@ import {
 } from "./sceneLifecycle/sceneLifecycleWallUpdates.js";
 
 import {
+  synchroniseSceneWebColour,
   synchroniseSceneWebs
 } from "./sceneLifecycle/sceneLifecycleWebController.js";
 
@@ -260,6 +262,20 @@ export class SceneWebLifecycleController {
 
       this.synchroniseActiveScene(
         "scene-web-density-update"
+      );
+
+      return;
+    }
+
+    if (
+      doesSceneUpdateAffectWebColour(
+        changed
+      )
+    ) {
+      this.clearPendingRebuild();
+
+      this.synchroniseActiveSceneColour(
+        "scene-web-colour-update"
       );
 
       return;
@@ -519,6 +535,56 @@ export class SceneWebLifecycleController {
     return snapshot;
   }
 
+  /** Apply the active Scene colour without regenerating geometry. */
+  synchroniseActiveSceneColour(
+    reason
+  ) {
+    const normalisedReason =
+      normaliseReason(
+        reason
+      );
+
+    this.lastRequestedReason =
+      normalisedReason;
+
+    this.lastRequestedAt =
+      Date.now();
+
+    const scene =
+      globalThis.canvas?.scene ??
+      null;
+
+    if (
+      !scene ||
+      globalThis.canvas?.ready !==
+        true
+    ) {
+      return null;
+    }
+
+    const snapshot =
+      synchroniseSceneWebColour({
+        runtime:
+          this.runtime,
+        scene,
+        reason:
+          normalisedReason
+      });
+
+    if (snapshot) {
+      this.lastCompletedReason =
+        normalisedReason;
+
+      this.lastCompletedAt =
+        Date.now();
+
+      this.synchronisationCount +=
+        1;
+    }
+
+    return snapshot;
+  }
+
   /** @returns {Readonly<object>} Lifecycle telemetry without timer handles. */
   createDiagnosticSnapshot() {
     return Object.freeze({
@@ -627,3 +693,4 @@ function normaliseReason(
     ? text
     : "scene-lifecycle";
 }
+

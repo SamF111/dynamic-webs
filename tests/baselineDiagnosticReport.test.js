@@ -17,16 +17,24 @@ test(
     const web =
       Object.freeze({
         schemaVersion:
-          1,
+          2,
         id:
           "ground:scene:0",
+        colourProfileId:
+          "natural-white",
         strands:
           Object.freeze([
             Object.freeze({
               schemaVersion:
-                1,
+                2,
               id:
                 "ground:scene:0:structural-0",
+              baseAlpha:
+                0.7,
+              colour:
+                0xe8edf2,
+              underColour:
+                0x111827,
               points:
                 Object.freeze([
                   Object.freeze({
@@ -80,6 +88,10 @@ test(
           }),
         densityId:
           "standard",
+        colourProfileId:
+          "natural-white",
+        presentationRevision:
+          3,
         sceneGeometry:
           Object.freeze({
             gridSize:
@@ -174,7 +186,7 @@ test(
         get:
           () => ({
             version:
-              "0.1.0"
+              "0.2.0"
           })
       }
     };
@@ -208,12 +220,27 @@ test(
       );
 
       assert.equal(
+        report.scene.colourProfileId,
+        "natural-white"
+      );
+
+      assert.equal(
+        report.generation.presentationRevision,
+        3
+      );
+
+      assert.equal(
         report.integrity.uniqueWebIdCount,
         1
       );
 
       assert.equal(
         report.integrity.schemaChecks.allStrandsWebQualified,
+        true
+      );
+
+      assert.equal(
+        report.integrity.schemaChecks.allStrandsColourResolved,
         true
       );
 
@@ -242,3 +269,4 @@ test(
     }
   }
 );
+

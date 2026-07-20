@@ -59,10 +59,7 @@
   "rendering": {
     "layerMode": "under-tokens",
     "zIndex": -100,
-    "silkColour": "#e8edf2",
-    "underColour": "#111827",
     "underAlphaMultiplier": 0.42,
     "underWidthAdditionPx": 1.1
   }
 }
-

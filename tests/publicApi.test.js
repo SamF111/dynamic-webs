@@ -77,12 +77,21 @@ function createEnvironment() {
         "dynamic-webs"
       );
 
-      assert.equal(
-        key,
-        "webDensity"
-      );
+      if (
+        key ===
+          "webDensity"
+      ) {
+        return "dense";
+      }
 
-      return "dense";
+      if (
+        key ===
+          "webColour"
+      ) {
+        return "arcane-blue";
+      }
+
+      return undefined;
     },
 
     async setFlag(
@@ -113,7 +122,7 @@ function createEnvironment() {
       get:
         () => ({
           version:
-            "0.1.0"
+            "0.2.0"
         })
     },
     scenes: {
@@ -188,6 +197,13 @@ test(
       );
 
       assert.equal(
+        Object.isFrozen(
+          api.colours
+        ),
+        true
+      );
+
+      assert.equal(
         api.getState().webs,
         environment.runtime
           .getWebRuntimeService()
@@ -242,6 +258,11 @@ test(
               2
           }
         }
+      );
+
+      assert.equal(
+        environment.calls.generate[0].colourProfileId,
+        "arcane-blue"
       );
 
       const cleared =
@@ -313,6 +334,69 @@ test(
 );
 
 test(
+  "public colour operations expose frozen profiles and persist supported Scene colours",
+  async () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const api =
+        createPublicApi(
+          environment.runtime
+        );
+
+      assert.equal(
+        api.scene.getColour(),
+        "arcane-blue"
+      );
+
+      const profiles =
+        api.colours.getProfiles();
+
+      assert.equal(
+        Object.isFrozen(
+          profiles
+        ),
+        true
+      );
+
+      assert.equal(
+        api.colours.getProfile(
+          "blood-red"
+        ).label,
+        "Blood Red"
+      );
+
+      await api.scene.setColour(
+        "toxic-green"
+      );
+
+      assert.deepEqual(
+        environment.calls.setFlag.at(-1),
+        {
+          namespace:
+            "dynamic-webs",
+          key:
+            "webColour",
+          value:
+            "toxic-green"
+        }
+      );
+
+      await assert.rejects(
+        () =>
+          api.scene.setColour(
+            "impossible"
+          ),
+        /Unsupported Scene web colour/u
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
   "GM-only operations reject non-GM callers",
   async () => {
     const environment =
@@ -351,3 +435,4 @@ test(
     }
   }
 );
+

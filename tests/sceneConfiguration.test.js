@@ -267,3 +267,93 @@ test(
     }
   }
 );
+
+
+test(
+  "Scene colour resolves defaults, flags and immutable profiles",
+  async () => {
+    const {
+      getSceneWebColourConfiguration,
+      normaliseSceneWebColour
+    } = await import(
+      "../scripts/config/sceneWebColourConfiguration.js"
+    );
+
+    assert.equal(
+      normaliseSceneWebColour(
+        undefined
+      ),
+      "natural-white"
+    );
+
+    const configured =
+      getSceneWebColourConfiguration({
+        flags: {
+          "dynamic-webs": {
+            webColour:
+              "blood-red"
+          }
+        }
+      });
+
+    assert.equal(
+      configured.profileId,
+      "blood-red"
+    );
+
+    assert.equal(
+      configured.profile.label,
+      "Blood Red"
+    );
+
+    assert.equal(
+      Object.isFrozen(
+        configured.profile.configuration
+      ),
+      true
+    );
+
+    assert.throws(
+      () =>
+        normaliseSceneWebColour(
+          "missing"
+        ),
+      /Unsupported Scene web colour/u
+    );
+  }
+);
+
+test(
+  "Scene colour differential detection is independent from density and geometry",
+  async () => {
+    const {
+      doesSceneUpdateAffectWebColour
+    } = await import(
+      "../scripts/config/sceneWebFlagPaths.js"
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebColour({
+        flags: {
+          "dynamic-webs": {
+            webColour:
+              "toxic-green"
+          }
+        }
+      }),
+      true
+    );
+
+    assert.equal(
+      doesSceneUpdateAffectWebColour({
+        flags: {
+          "dynamic-webs": {
+            webDensity:
+              "dense"
+          }
+        }
+      }),
+      false
+    );
+  }
+);

@@ -41,8 +41,14 @@ const PRESETS_URL =
     import.meta.url
   );
 
+const COLOURS_URL =
+  new URL(
+    "../data/webs/colours.json",
+    import.meta.url
+  );
+
 test(
-  "README documents the final v0.1 public and blueprint contracts",
+  "README documents the v0.2 public, blueprint and colour contracts",
   async () => {
     const [
       readme,
@@ -151,6 +157,17 @@ test(
 
     assert.ok(
       readme.includes(
+        "npm run test:v02"
+      )
+    );
+
+    assert.equal(
+      packageManifest.scripts.validate,
+      "npm run check:syntax && npm run test:v02"
+    );
+
+    assert.ok(
+      readme.includes(
         "Complete this smoke test on both Foundry v13 and v14"
       )
     );
@@ -200,7 +217,44 @@ test(
 );
 
 test(
-  "roadmap closes baseline hardening and reflects current dense allocations",
+  "README colour documentation matches JSON-authored profiles",
+  async () => {
+    const [
+      readme,
+      colourData
+    ] =
+      await Promise.all([
+        readFile(
+          README_URL,
+          "utf8"
+        ),
+        readJson(
+          COLOURS_URL
+        )
+      ]);
+
+    assert.ok(
+      readme.includes(
+        "flags.dynamic-webs.webColour"
+      )
+    );
+
+    for (
+      const profile of
+      colourData.profiles
+    ) {
+      assert.ok(
+        readme.includes(
+          `- \`${profile.id}\``
+        ),
+        profile.id
+      );
+    }
+  }
+);
+
+test(
+  "roadmap closes coloured webs and preserves later barrier planning",
   async () => {
     const [
       roadmap,
@@ -236,6 +290,24 @@ test(
     assert.ok(
       roadmap.includes(
         "## Milestone 0 — Baseline hardening — complete"
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "## Milestone 1 — Coloured webs — complete"
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "**Delivered:** v0.2.0"
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "Changing colour does not advance the generation ID."
       )
     );
 

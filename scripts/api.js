@@ -12,16 +12,18 @@ import {
 } from "./api/webApi.js";
 
 import {
+  getPublicSceneWebColour,
+  getPublicWebColourProfile,
+  getPublicWebColourProfiles,
+  setPublicSceneWebColour
+} from "./api/colourApi.js";
+
+import {
   getPublicBaselineDiagnosticReport,
   showPublicBaselineDiagnosticReport
 } from "./api/diagnosticApi.js";
 
-/**
- * Create the stable public Dynamic Webs API.
- *
- * @param {object} runtime - Initialised runtime.
- * @returns {Readonly<object>} Frozen public API.
- */
+/** Create the stable public Dynamic Webs API. */
 export function createPublicApi(
   runtime
 ) {
@@ -67,6 +69,39 @@ export function createPublicApi(
           setPublicSceneWebDensity(
             densityId,
             sceneId
+          ),
+
+      getColour:
+        (
+          sceneId = null
+        ) =>
+          getPublicSceneWebColour(
+            sceneId
+          ),
+
+      setColour:
+        (
+          profileId,
+          sceneId = null
+        ) =>
+          setPublicSceneWebColour(
+            profileId,
+            sceneId
+          )
+    });
+
+  const colours =
+    Object.freeze({
+      getProfiles:
+        () =>
+          getPublicWebColourProfiles(),
+
+      getProfile:
+        (
+          profileId
+        ) =>
+          getPublicWebColourProfile(
+            profileId
           )
     });
 
@@ -104,7 +139,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.1.0",
+            "0.2.0",
           webs:
             getPublicWebState(
               runtime
@@ -113,6 +148,7 @@ export function createPublicApi(
 
     webs,
     scene,
+    colours,
     diagnostics
   });
 }

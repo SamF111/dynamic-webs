@@ -10,7 +10,7 @@ function createWeb(
 ) {
   return Object.freeze({
     schemaVersion:
-      1,
+      2,
     id:
       "ground:scene:test",
     kind:
@@ -48,7 +48,7 @@ function createWeb(
       Object.freeze([
         Object.freeze({
           schemaVersion:
-            1,
+            2,
           id:
             "ground:scene:test:structural-0",
           localId:
@@ -205,3 +205,4 @@ test(
     );
   }
 );
+

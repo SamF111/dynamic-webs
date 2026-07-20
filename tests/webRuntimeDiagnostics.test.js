@@ -7,7 +7,7 @@ import {
 } from "../scripts/runtime/webs/webRuntimeState.js";
 
 test(
-  "empty runtime diagnostics expose v0.1 telemetry and frozen count groups",
+  "empty runtime diagnostics expose v0.2 telemetry and frozen count groups",
   () => {
     const state =
       createWebRuntimeState({
@@ -34,12 +34,22 @@ test(
 
     assert.equal(
       snapshot.blueprintSchemaVersion,
-      1
+      2
     );
 
     assert.equal(
       snapshot.generationId,
       4
+    );
+
+    assert.equal(
+      snapshot.presentationRevision,
+      0
+    );
+
+    assert.equal(
+      snapshot.colourProfileId,
+      null
     );
 
     assert.equal(
@@ -197,3 +207,4 @@ test(
     );
   }
 );
+

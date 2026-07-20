@@ -459,16 +459,6 @@ export function normaliseWebGenerationConfiguration(
           renderingCandidate.zIndex,
           defaults.rendering.zIndex
         ),
-      silkColour:
-        normaliseColour(
-          renderingCandidate.silkColour,
-          defaults.rendering.silkColour
-        ),
-      underColour:
-        normaliseColour(
-          renderingCandidate.underColour,
-          defaults.rendering.underColour
-        ),
       underAlphaMultiplier:
         normaliseBoundedNumber(
           renderingCandidate.underAlphaMultiplier,
@@ -556,47 +546,6 @@ function normaliseBoundedNumber(value, fallback, minimum, maximum) {
   return Math.max(minimum, Math.min(maximum, numericValue));
 }
 
-function normaliseColour(
-  value,
-  fallback
-) {
-  const numericValue =
-    Number(
-      value
-    );
-
-  if (
-    Number.isInteger(
-      numericValue
-    ) &&
-    numericValue >=
-      0 &&
-    numericValue <=
-      0xffffff
-  ) {
-    return numericValue;
-  }
-
-  if (
-    typeof value ===
-      "string"
-  ) {
-    const match =
-      /^#?([0-9a-f]{6})$/iu.exec(
-        value.trim()
-      );
-
-    if (match) {
-      return Number.parseInt(
-        match[1],
-        16
-      );
-    }
-  }
-
-  return fallback;
-}
-
 function normaliseOptionalIdentifier(value) {
   if (typeof value !== "string") return null;
   const text = value.trim();
@@ -606,4 +555,5 @@ function normaliseOptionalIdentifier(value) {
 function isObject(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
+
 

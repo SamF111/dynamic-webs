@@ -8,6 +8,10 @@ import {
 } from "../config/sceneWebDensityConfiguration.js";
 
 import {
+  getSceneWebColourConfiguration
+} from "../config/sceneWebColourConfiguration.js";
+
+import {
   SCENE_WEB_FLAG_KEYS
 } from "../config/sceneWebFlagPaths.js";
 
@@ -28,12 +32,21 @@ export function generatePublicWebs(
 
   requireCurrentUserIsGM();
 
+  const scene =
+    requireCurrentCanvasScene();
+
+  const colourConfiguration =
+    getSceneWebColourConfiguration(
+      scene
+    );
+
   return requireWebRuntimeService(
     runtime
   ).generateForActiveScene({
-    scene:
-      requireCurrentCanvasScene(),
+    scene,
     options,
+    colourProfileId:
+      colourConfiguration.profileId,
     reason:
       "public-api-generate"
   });
@@ -181,4 +194,5 @@ function validateRuntime(
     );
   }
 }
+
 

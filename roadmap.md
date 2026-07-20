@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.1.0
+## Current baseline — v0.2.0
 
 Completed:
 
@@ -14,7 +14,7 @@ Completed:
 - Independent runtime state, PIXI rendering and lifecycle
 - Debounced wall rebuilding
 - Versioned public API
-- Blueprint schema version `1`
+- Blueprint schema version `2`
 - Stable Scene-qualified web identifiers
 - Stable web-qualified strand identifiers
 - Independent category seed streams
@@ -23,11 +23,14 @@ Completed:
 - Syntax, import, data-contract, API, lifecycle, rendering and generation regression tests
 - Release validation through `npm run validate`
 - Full migration of Ambient Critters away from web ownership
+- JSON-authored Scene colour profiles
+- Visual-only colour refreshes that preserve deterministic geometry and identifiers
 
-Current Scene flag:
+Current Scene flags:
 
 ```text
 flags.dynamic-webs.webDensity
+flags.dynamic-webs.webColour
 ```
 
 Current density values:
@@ -118,67 +121,52 @@ Final live Foundry smoke testing remains a release activity and should be perfor
 
 ---
 
-## Milestone 1 — Coloured webs
+## Milestone 1 — Coloured webs — complete
 
-**Target:** v0.2.0
+**Delivered:** v0.2.0
 
-Implement coloured webs first because the feature is useful, isolated and visually testable. It also establishes the visual-property model later used by regions and carpets.
+Dynamic Webs now resolves authored Scene colour profiles onto immutable strand blueprints without coupling presentation changes to procedural placement.
 
-### Configuration
+### Delivered configuration
 
-Add JSON-authored colour profiles, potentially in:
+- JSON-authored profiles in `data/webs/colours.json`
+- Scene flag `flags.dynamic-webs.webColour`
+- Scene Configuration colour selector
+- Natural white, dusty grey, yellowed, black, blood red, arcane blue and toxic green profiles
+- Separate structural, capture and decorative colours
+- Profile-owned under-stroke colour and alpha multiplier
 
-```text
-data/webs/colours.json
+### Delivered contracts
+
+- Strict colour-profile schema validation
+- Additive blueprint schema version `2` with identifier-preserving visual fields
+- Frozen public profile snapshots
+- Resolved `colour`, `underColour`, `baseAlpha` and presentation `alpha` on strands
+- Renderer consumption of strand-resolved colours
+- Visual-only runtime remapping and redraw
+- Stable web and strand identifiers across colour changes
+- Unchanged points, bounds, perches, support walls, seeds and generation IDs across colour changes
+- Diagnostics reporting the active colour profile and presentation revision
+- Public Scene colour API and read-only colour-profile API
+
+### Public API
+
+```javascript
+dynamicWebs.api.scene.getColour();
+await dynamicWebs.api.scene.setColour("blood-red");
+
+dynamicWebs.api.colours.getProfiles();
+dynamicWebs.api.colours.getProfile("blood-red");
 ```
 
-Initial profiles may include:
-
-- Natural white
-- Dusty grey
-- Yellowed
-- Black
-- Blood red
-- Arcane blue
-- Toxic green
-
-Example profile:
-
-```json
-{
-  "id": "dusty-grey",
-  "label": "Dusty Grey",
-  "configuration": {
-    "structuralColour": "#b7b2aa",
-    "captureColour": "#cbc5ba",
-    "decorativeColour": "#948f87",
-    "alphaMultiplier": 0.8
-  }
-}
-```
-
-### Implement
-
-- A Scene-level web colour selector
-- Strict colour-profile data contracts
-- Resolved colour properties on immutable strand blueprints
-- Renderer consumption of blueprint colours
-- Separate colours for structural, capture and decorative strands
-- Optional profile-level alpha multiplier
-- Re-rendering without unnecessary geometry regeneration
-- Deterministic geometry independent of colour choice
-
-### Constraints
-
-- Colour must not affect web placement or strand identifiers.
-- Visual line width and future interaction width must remain independent.
-- Authored colour data must remain in JSON.
-
-### Exit criteria
+### Exit criteria — met
 
 - Changing colour preserves web geometry and stable identifiers.
+- Changing colour does not advance the generation ID.
 - Reloading the Scene preserves the selected profile.
-- Every strand role can resolve its own colour and alpha.
+- Every strand role resolves its own colour and alpha.
+- Repeated colour changes replace rendering rather than stacking containers.
+- Colour selection does not contribute to generation seeds or candidate selection.
 
 ---
 
@@ -525,9 +513,106 @@ Hooks.callAll("dynamicWebs.strandBroken", payload);
 
 ---
 
-## Milestone 7 — Tokens destroying webs
+## Milestone 7 — Optional web barriers
 
 **Target:** v0.8.0
+
+Allow generated webs to optionally participate in Foundry wall behaviour. This feature must remain opt-in and separate from visual rendering, immutable geometry and ordinary authored Scene walls.
+
+### Scene policy
+
+Support a Scene-level barrier mode such as:
+
+- `none`
+- `vision`
+- `movement`
+- `vision-and-movement`
+
+The default must be `none`. Changing barrier mode should synchronise barrier behaviour from the existing immutable web population without reshuffling or regenerating web geometry.
+
+Example JSON-authored configuration:
+
+```json
+{
+  "webBarriers": {
+    "mode": "none",
+    "strandRoles": [
+      "structural"
+    ],
+    "intactOnly": true
+  }
+}
+```
+
+### Implement
+
+- A dedicated barrier service separate from generation and rendering
+- Stable barrier identifiers derived from stable web and strand identifiers
+- Vision-only barriers
+- Movement-only barriers
+- Combined vision and movement barriers
+- Configurable strand roles eligible to create barriers
+- Level-compatible barrier creation and filtering
+- Barrier reconciliation after deterministic regeneration
+- Barrier reconciliation after strand breakage or restoration
+- Cleanup on Scene change, canvas teardown and module disable
+- GM-authoritative creation when embedded Foundry WallDocuments are used
+- Diagnostics reporting authored structural walls and generated web barriers separately
+- Foundry v13 and v14 compatibility adapters
+
+The implementation may use flagged embedded WallDocuments or a compatibility-layer synthetic barrier representation, but consumers and generation code must observe the same ownership and feedback-prevention contracts.
+
+### Feedback-prevention contract
+
+Dynamic Webs barriers must never become source walls for further web generation. Otherwise one generated web could create barriers that create more webs, causing recursive population growth.
+
+When embedded WallDocuments are used:
+
+- Every module-owned barrier must carry an explicit ownership flag such as `flags.dynamic-webs.generatedWebBarrier`.
+- Structural wall collection must exclude module-owned barriers before corner or span candidate detection.
+- Module-owned barriers must not contribute to generation seeds, structural wall counts, candidate counts or `supportingWallIds`.
+- `createWall`, `updateWall` and `deleteWall` lifecycle handlers must ignore module-owned barriers.
+- Barrier synchronisation must not schedule a web-generation rebuild.
+- Cleanup must remove only explicitly flagged Dynamic Webs barriers and never authored walls.
+- Reload and reconciliation must replace or reuse barriers by stable identifier rather than duplicating them.
+
+Equivalent safeguards are required if the implementation uses synthetic barriers rather than embedded WallDocuments.
+
+### Constraints
+
+- Enabling or disabling barriers must not alter web placement, geometry or identifiers.
+- Vision and movement restriction must be independently selectable.
+- Broken strands must stop contributing barriers when `intactOnly` is enabled.
+- Level-incompatible tokens and vision sources must not interact with a web barrier.
+- Generated barriers must remain distinguishable from authored Scene walls in diagnostics and cleanup.
+- Barrier creation and deletion must be idempotent across repeated lifecycle synchronisations.
+
+### Regression tests
+
+Test that:
+
+- Web hashes and identifiers are identical with barriers disabled and enabled.
+- Repeated barrier synchronisation does not duplicate WallDocuments or synthetic barriers.
+- Generated barriers are excluded from wall-corner and wall-span candidate detection.
+- Generated barrier hook events do not schedule recursive rebuilds.
+- Repeated reload and rebuild cycles do not increase the generated web population.
+- Vision-only, movement-only and combined modes map to the intended Foundry restrictions.
+- Broken and restored strands update their barriers without regenerating unrelated geometry.
+
+### Exit criteria
+
+- A Scene can independently select no barriers, vision barriers, movement barriers or both.
+- Barrier state follows the current immutable geometry and mutable strand state.
+- Module-owned barriers never generate additional webs.
+- Repeated synchronisation produces no duplicate barriers or recursive web growth.
+- Authored Scene walls remain untouched.
+- Foundry v13 and v14 behaviour is verified.
+
+---
+
+## Milestone 8 — Tokens destroying webs
+
+**Target:** v0.9.0
 
 Token destruction should be built on the spatial index and mutable-state API.
 
@@ -594,9 +679,9 @@ Hooks.callAll("dynamicWebs.entityIntersectedStrand", payload);
 
 ---
 
-## Milestone 8 — Persistence and network state
+## Milestone 9 — Persistence and network state
 
-**Target:** v0.9.0
+**Target:** v0.10.0
 
 Once local destruction is reliable, make mutable state survive reloads and synchronise across clients.
 
@@ -646,9 +731,9 @@ Persist only deviations such as:
 
 ---
 
-## Milestone 9 — Generic trapping and occupancy
+## Milestone 10 — Generic trapping and occupancy
 
-**Target:** v0.10.0 or later
+**Target:** v0.11.0 or later
 
 Extend mutable state beyond strand damage.
 
@@ -680,7 +765,7 @@ Extend mutable state beyond strand damage.
 
 ---
 
-## Milestone 10 — Ambient Critters adapter and release hardening
+## Milestone 11 — Ambient Critters adapter and release hardening
 
 **Target:** v1.0.0
 
@@ -743,6 +828,10 @@ Test:
 - Coloured webs
 - Sparse through infested density
 - Carpet-heavy Scenes
+- Vision-only web barriers
+- Movement-only web barriers
+- Combined vision and movement web barriers
+- Barrier feedback-loop prevention
 - Token destruction
 - Multi-client state
 - Scene reloads
@@ -766,16 +855,17 @@ Test:
 # Recommended implementation order
 
 1. Baseline hardening — complete in v0.1.0
-2. Coloured webs
+2. Coloured webs — complete in v0.2.0
 3. Level-aware web populations
 4. Region-aware webs
 5. Spatial index and read-only query API
 6. Web carpets
 7. Mutable web state
-8. Tokens destroying webs
-9. Persistence and network state
-10. Generic trapping and occupancy
-11. Ambient Critters adapter and release hardening
+8. Optional web barriers
+9. Tokens destroying webs
+10. Persistence and network state
+11. Generic trapping and occupancy
+12. Ambient Critters adapter and release hardening
 
 ## Critical dependency chain
 
@@ -791,6 +881,8 @@ Spatial indexing
 Web carpets
     ↓
 Mutable strand state
+    ↓
+Optional web barriers
     ↓
 Token destruction
     ↓
@@ -817,3 +909,5 @@ Every milestone must preserve these rules:
 - JSON ownership of authored configuration
 - Focused services and classes rather than god files
 - Frozen snapshots rather than mutable internal objects
+- Module-owned web barriers must never be eligible source walls for generation
+- Generated barrier lifecycle events must not trigger recursive web rebuilds

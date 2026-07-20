@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "defaultProfileId": "natural-white",
+  "profiles": [
+    {
+      "id": "natural-white",
+      "label": "Natural White",
+      "configuration": {
+        "structuralColour": "#e8edf2",
+        "captureColour": "#f1f4f7",
+        "decorativeColour": "#cdd3da",
+        "underColour": "#111827",
+        "alphaMultiplier": 1
+      }
+    },
+    {
+      "id": "dusty-grey",
+      "label": "Dusty Grey",
+      "configuration": {
+        "structuralColour": "#b7b2aa",
+        "captureColour": "#cbc5ba",
+        "decorativeColour": "#948f87",
+        "underColour": "#171717",
+        "alphaMultiplier": 0.8
+      }
+    },
+    {
+      "id": "yellowed",
+      "label": "Yellowed",
+      "configuration": {
+        "structuralColour": "#d6c58f",
+        "captureColour": "#e3d5a6",
+        "decorativeColour": "#aa9764",
+        "underColour": "#211c12",
+        "alphaMultiplier": 0.9
+      }
+    },
+    {
+      "id": "black",
+      "label": "Black",
+      "configuration": {
+        "structuralColour": "#26272b",
+        "captureColour": "#35373d",
+        "decorativeColour": "#15161a",
+        "underColour": "#d4d4d8",
+        "alphaMultiplier": 0.9
+      }
+    },
+    {
+      "id": "blood-red",
+      "label": "Blood Red",
+      "configuration": {
+        "structuralColour": "#9f2424",
+        "captureColour": "#c23737",
+        "decorativeColour": "#721919",
+        "underColour": "#1f0909",
+        "alphaMultiplier": 0.95
+      }
+    },
+    {
+      "id": "arcane-blue",
+      "label": "Arcane Blue",
+      "configuration": {
+        "structuralColour": "#4ea5d9",
+        "captureColour": "#79c8f2",
+        "decorativeColour": "#2876a8",
+        "underColour": "#071722",
+        "alphaMultiplier": 1
+      }
+    },
+    {
+      "id": "toxic-green",
+      "label": "Toxic Green",
+      "configuration": {
+        "structuralColour": "#74b83e",
+        "captureColour": "#9cdb62",
+        "decorativeColour": "#4d8427",
+        "underColour": "#0d1b08",
+        "alphaMultiplier": 0.95
+      }
+    }
+  ]
+}

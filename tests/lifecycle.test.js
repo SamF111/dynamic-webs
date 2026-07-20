@@ -36,8 +36,13 @@ function createEnvironment() {
   const clearCalls =
     [];
 
+  const colourRefreshCalls =
+    [];
+
   const service = {
     state: {
+      active:
+        true,
       sceneId:
         "scene"
     },
@@ -54,6 +59,8 @@ function createEnvironment() {
       );
 
       this.state = {
+        active:
+          true,
         sceneId:
           options.scene.id
       };
@@ -63,6 +70,24 @@ function createEnvironment() {
           true,
         sceneId:
           options.scene.id
+      });
+    },
+
+
+    refreshColourProfile(
+      options
+    ) {
+      colourRefreshCalls.push(
+        options
+      );
+
+      return Object.freeze({
+        active:
+          true,
+        sceneId:
+          "scene",
+        colourProfileId:
+          options.profileId
       });
     },
 
@@ -93,9 +118,15 @@ function createEnvironment() {
   const scene = {
     id:
       "scene",
-    getFlag:
-      () =>
-        "standard"
+    getFlag(
+      _namespace,
+      key
+    ) {
+      return key ===
+        "webColour"
+        ? "natural-white"
+        : "standard";
+    }
   };
 
   globalThis.Hooks = {
@@ -168,6 +199,7 @@ function createEnvironment() {
     timeoutCallbacks,
     generateCalls,
     clearCalls,
+    colourRefreshCalls,
 
     runNextTimeout() {
       const [
@@ -470,6 +502,70 @@ test(
 );
 
 test(
+  "Scene colour updates redraw without scheduling geometry generation",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const controller =
+        new SceneWebLifecycleController({
+          runtime:
+            environment.runtime,
+          debounceMs:
+            200
+        });
+
+      environment.scene.getFlag =
+        (
+          _namespace,
+          key
+        ) =>
+          key ===
+            "webColour"
+            ? "blood-red"
+            : "standard";
+
+      controller.handleSceneUpdated(
+        environment.scene,
+        {
+          flags: {
+            "dynamic-webs": {
+              webColour:
+                "blood-red"
+            }
+          }
+        }
+      );
+
+      assert.equal(
+        environment.timeoutCallbacks.size,
+        0
+      );
+
+      assert.equal(
+        environment.generateCalls.length,
+        0
+      );
+
+      assert.deepEqual(
+        environment.colourRefreshCalls,
+        [
+          {
+            profileId:
+              "blood-red",
+            reason:
+              "scene-web-colour-update"
+          }
+        ]
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
   "deleting the active generated Scene clears runtime state",
   () => {
     const environment =
@@ -508,3 +604,4 @@ test(
     }
   }
 );
+

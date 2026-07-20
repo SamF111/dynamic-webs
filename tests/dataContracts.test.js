@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  validateWebColourProfiles,
   validateWebDensityPresets,
   validateWebGenerationDefaults
 } from "../scripts/data/webDataContracts.js";
@@ -121,10 +122,6 @@ const VALID_DEFAULTS =
         "under-tokens",
       zIndex:
         -100,
-      silkColour:
-        "#e8edf2",
-      underColour:
-        "#111827",
       underAlphaMultiplier:
         0.42,
       underWidthAdditionPx:
@@ -158,11 +155,6 @@ test(
     );
 
     assert.equal(
-      validated.rendering.silkColour,
-      0xe8edf2
-    );
-
-    assert.equal(
       Object.isFrozen(
         validated
       ),
@@ -179,7 +171,7 @@ test(
 );
 
 test(
-  "generation defaults reject unknown fields, invalid colours and reversed ranges",
+  "generation defaults reject unknown fields and reversed ranges",
   () => {
     const unknownField =
       clone(
@@ -195,22 +187,6 @@ test(
           unknownField
         ),
       /unsupported field/u
-    );
-
-    const invalidColour =
-      clone(
-        VALID_DEFAULTS
-      );
-
-    invalidColour.rendering.silkColour =
-      "white";
-
-    assert.throws(
-      () =>
-        validateWebGenerationDefaults(
-          invalidColour
-        ),
-      /six-digit CSS hex colour/u
     );
 
     const reversedRange =
@@ -295,6 +271,110 @@ test(
           ]
         }),
       /reserved/u
+    );
+  }
+);
+
+
+
+test(
+  "colour profiles validate strict colours, defaults and duplicate identifiers",
+  () => {
+    const valid = {
+      schemaVersion:
+        1,
+      defaultProfileId:
+        "natural-white",
+      profiles: [
+        {
+          id:
+            "natural-white",
+          label:
+            "Natural White",
+          configuration: {
+            structuralColour:
+              "#e8edf2",
+            captureColour:
+              "#f1f4f7",
+            decorativeColour:
+              "#cdd3da",
+            underColour:
+              "#111827",
+            alphaMultiplier:
+              1
+          }
+        }
+      ]
+    };
+
+    const validated =
+      validateWebColourProfiles(
+        clone(
+          valid
+        )
+      );
+
+    assert.equal(
+      validated.profiles[0].configuration.structuralColour,
+      0xe8edf2
+    );
+
+    assert.equal(
+      Object.isFrozen(
+        validated.profiles[0].configuration
+      ),
+      true
+    );
+
+    const invalidColour =
+      clone(
+        valid
+      );
+
+    invalidColour.profiles[0].configuration.captureColour =
+      "white";
+
+    assert.throws(
+      () =>
+        validateWebColourProfiles(
+          invalidColour
+        ),
+      /six-digit CSS hex colour/u
+    );
+
+    const duplicate =
+      clone(
+        valid
+      );
+
+    duplicate.profiles.push(
+      clone(
+        duplicate.profiles[0]
+      )
+    );
+
+    assert.throws(
+      () =>
+        validateWebColourProfiles(
+          duplicate
+        ),
+      /Duplicate web colour profile id/u
+    );
+
+    const missingDefault =
+      clone(
+        valid
+      );
+
+    missingDefault.defaultProfileId =
+      "missing";
+
+    assert.throws(
+      () =>
+        validateWebColourProfiles(
+          missingDefault
+        ),
+      /Default web colour profile/u
     );
   }
 );

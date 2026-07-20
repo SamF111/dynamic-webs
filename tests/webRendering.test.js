@@ -189,7 +189,11 @@ function createWeb(
           widthPx:
             1,
           alpha:
-            0.8
+            0.8,
+          colour:
+            0xabcdef,
+          underColour:
+            0x123456
         })
       ])
   });
@@ -292,6 +296,25 @@ test(
       assert.equal(
         firstContainer.children.length,
         1
+      );
+
+      const strokeCommands =
+        firstContainer.children[0].commands.filter(
+          (
+            command
+          ) =>
+            command[0] ===
+              "stroke"
+        );
+
+      assert.equal(
+        strokeCommands[0][1].color,
+        0x123456
+      );
+
+      assert.equal(
+        strokeCommands[1][1].color,
+        0xabcdef
       );
 
       const secondContainer =
@@ -438,3 +461,4 @@ test(
     }
   }
 );
+

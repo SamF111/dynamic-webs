@@ -232,6 +232,16 @@ export function assertWebBlueprintIntegrity(
     );
   }
 
+  if (
+    blueprint.colourProfileId !==
+      undefined
+  ) {
+    requireIdentifier(
+      blueprint.colourProfileId,
+      `colour profile for web "${webId}"`
+    );
+  }
+
   assertFinitePoint(
     blueprint.hub,
     `hub for web "${webId}"`
@@ -583,6 +593,52 @@ function assertStrandIntegrity(
   }
 
   if (
+    strand.baseAlpha !==
+      undefined &&
+    (
+      !Number.isFinite(
+        Number(
+          strand.baseAlpha
+        )
+      ) ||
+      strand.baseAlpha <=
+        0 ||
+      strand.baseAlpha >
+        1
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Strand "${strandId}" has invalid base alpha.`
+    );
+  }
+
+  for (
+    const colourField of
+    [
+      "colour",
+      "underColour"
+    ]
+  ) {
+    if (
+      strand[colourField] !==
+        undefined &&
+      (
+        !Number.isInteger(
+          strand[colourField]
+        ) ||
+        strand[colourField] <
+          0 ||
+        strand[colourField] >
+          0xffffff
+      )
+    ) {
+      throw new Error(
+        `Dynamic Webs | Strand "${strandId}" has invalid ${colourField}.`
+      );
+    }
+  }
+
+  if (
     !Number.isFinite(
       Number(
         strand.widthPx
@@ -765,3 +821,4 @@ function encodeIdentifierPart(
     value
   );
 }
+

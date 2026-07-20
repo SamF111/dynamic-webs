@@ -10,11 +10,11 @@ The web subsystem was extracted from Ambient Critters. Dynamic Webs is now the s
 - **Module ID:** `dynamic-webs`
 - **Runtime namespace:** `dynamicWebs`
 - **Public API version:** `1`
-- **Blueprint schema version:** `1`
+- **Blueprint schema version:** `2`
 - **Baseline diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
-- **Current version:** `0.1.0`
+- **Current version:** `0.2.0`
 - **Entry point:** `scripts/dynamic-webs.js`
 - **Baseline hardening:** complete
 
@@ -61,13 +61,14 @@ Ground webs are generated freely inside the active Scene rectangle. They use det
 
 ## Scene configuration
 
-Dynamic Webs owns one Scene-level flag:
+Dynamic Webs owns two Scene-level flags:
 
 ```text
 flags.dynamic-webs.webDensity
+flags.dynamic-webs.webColour
 ```
 
-Supported values are:
+Supported density values are:
 
 - `disabled`
 - `sparse`
@@ -75,7 +76,7 @@ Supported values are:
 - `dense`
 - `infested`
 
-The Scene Configuration interface contains a standalone **Dynamic Webs** tab with one **Web density** selector.
+The Scene Configuration interface contains a standalone **Dynamic Webs** tab with **Web density** and **Web colour** selectors.
 
 There is intentionally no:
 
@@ -85,7 +86,7 @@ There is intentionally no:
 - Per-Scene geometry editor
 - Per-category count input
 
-The default Scene value is authored in:
+The default Scene values are authored in:
 
 ```text
 data/scene-configuration-defaults.json
@@ -97,6 +98,12 @@ Density presets are authored in:
 data/webs/presets.json
 ```
 
+Colour profiles are authored in:
+
+```text
+data/webs/colours.json
+```
+
 Shared generation and rendering defaults are authored in:
 
 ```text
@@ -105,11 +112,37 @@ data/webs/defaults.json
 
 Runtime JavaScript consumes validated JSON-authored values rather than duplicating them as constants.
 
+
+## Colour profiles
+
+Version `0.2.0` adds Scene-owned visual profiles without changing procedural placement. The authored profiles are:
+
+- `natural-white`
+- `dusty-grey`
+- `yellowed`
+- `black`
+- `blood-red`
+- `arcane-blue`
+- `toxic-green`
+
+Each profile owns structural, capture and decorative strand colours, an under-stroke colour and an alpha multiplier. The selected profile is resolved onto immutable strand blueprints.
+
+Changing `flags.dynamic-webs.webColour` performs a visual-only refresh. Dynamic Webs preserves:
+
+- Generation ID and generation timestamp
+- Scene and category seeds
+- Web and strand identifiers
+- Hub, bounds and point geometry
+- Perches and supporting wall identifiers
+- Web and strand counts
+
+Only strand presentation fields and the transient PIXI container are replaced.
+
 ## Deterministic generation contract
 
 Web geometry is deterministic and precomputed during lifecycle rebuilds. It is not recalculated every animation frame.
 
-The Scene seed format for blueprint schema version 1 is:
+The Scene seed format remains:
 
 ```text
 dynamic-webs:web-generation:v2:<scene-id>
@@ -135,9 +168,11 @@ Changing one category's authored options should not unnecessarily reshuffle unre
 
 Determinism is scoped to the current generation and schema contracts. A deliberate future schema or seed-version change may produce new identifiers and geometry and must be documented as a migration boundary.
 
+Blueprint schema version `2` is an additive, identifier-preserving migration introduced in `v0.2.0`. It adds resolved colour-profile presentation fields while retaining the `v2` geometry seed and stable identifier formats from `v0.1.0`.
+
 ## Blueprint and identifier contract
 
-Every generated web and strand uses blueprint schema version `1`.
+Every generated web and strand uses blueprint schema version `2`.
 
 ### Stable web identifiers
 
@@ -216,7 +251,10 @@ Strands include:
 - Stable local identifier
 - Functional role
 - Immutable sampled points
-- Visual alpha
+- Base visual alpha
+- Profile-resolved visual alpha
+- Profile-resolved silk colour
+- Profile-resolved under-stroke colour
 - Visual width
 - Functional collision width
 
@@ -244,7 +282,7 @@ Dynamic Webs does not create:
 - Walls
 - Other Scene embedded documents
 
-Repeated generation destroys and replaces the current container rather than stacking duplicate containers or graphics. A failed partial render is cleaned up before the error is propagated.
+Repeated generation and visual-only colour refreshes destroy and replace the current container rather than stacking duplicate containers or graphics. A failed partial render is cleaned up before the error is propagated.
 
 ## Lifecycle
 
@@ -282,6 +320,12 @@ When the active Scene density changes:
 
 - `disabled` clears current webs.
 - An active preset regenerates and renders the Scene.
+
+When the active Scene colour changes:
+
+- Existing immutable geometry is retained.
+- Strand presentation is re-resolved from the selected profile.
+- Rendering is replaced without advancing the generation ID.
 
 Relevant Scene geometry changes schedule a rebuild. Unrelated flags belonging to other modules do not rebuild Dynamic Webs.
 
@@ -355,6 +399,27 @@ await dynamicWebs.api.scene.setDensity("dense", sceneId);
 
 Changing density is GM-only and is persisted through `Scene.setFlag()`.
 
+### Scene colour
+
+```javascript
+dynamicWebs.api.scene.getColour();
+dynamicWebs.api.scene.getColour(sceneId);
+
+await dynamicWebs.api.scene.setColour("blood-red");
+await dynamicWebs.api.scene.setColour("blood-red", sceneId);
+```
+
+Changing colour is GM-only and is persisted through `Scene.setFlag()`.
+
+### Colour profiles
+
+```javascript
+dynamicWebs.api.colours.getProfiles();
+dynamicWebs.api.colours.getProfile("blood-red");
+```
+
+Profile results are deeply frozen and do not expose mutable JSON import data.
+
 ### Baseline diagnostics
 
 ```javascript
@@ -370,7 +435,7 @@ The report includes:
 
 - Module, public API, blueprint and diagnostic schema versions
 - Foundry version and generation
-- Active Scene, density and geometry summary
+- Active Scene, density, colour profile and geometry summary
 - Generation reason, timestamps and category seeds
 - Web counts by category
 - Strand counts by role
@@ -499,6 +564,7 @@ dynamic-webs/
 ├── data/
 │   ├── scene-configuration-defaults.json
 │   └── webs/
+│       ├── colours.json
 │       ├── defaults.json
 │       └── presets.json
 ├── scripts/
@@ -541,7 +607,7 @@ This performs:
 
 ```bash
 npm run check:syntax
-npm run test:v01
+npm run test:v02
 ```
 
 Individual commands are also available:
@@ -549,10 +615,11 @@ Individual commands are also available:
 ```bash
 npm test
 npm run test:v01
+npm run test:v02
 npm run check:syntax
 ```
 
-The v0.1 regression suite covers:
+The v0.2 regression suite covers:
 
 - JSON parsing and strict data contracts
 - JavaScript syntax
@@ -570,6 +637,9 @@ The v0.1 regression suite covers:
 - Public API immutability and GM permissions
 - Baseline diagnostic and determinism reporting
 - Documentation and release-contract drift
+- Colour-profile validation and frozen profile lookup
+- Scene colour flag persistence and UI context
+- Visual-only redraws that preserve generation identity and geometry
 
 ## Live Foundry release verification
 
@@ -581,10 +651,11 @@ For each supported Foundry generation:
 2. Enable Dynamic Webs.
 3. Open a Scene with structural walls.
 4. Test `disabled`, `sparse`, `standard`, `dense` and `infested`.
-5. Reload the canvas and reopen the Scene.
-6. Create, move and delete a wall.
-7. Confirm repeated generation replaces rather than stacks rendering.
-8. Run:
+5. Test every web colour profile and confirm the population does not move.
+6. Reload the canvas and reopen the Scene.
+7. Create, move and delete a wall.
+8. Confirm repeated generation and colour changes replace rather than stack rendering.
+9. Run:
 
 ```javascript
 dynamicWebs.api.diagnostics.showBaselineReport();
@@ -594,6 +665,7 @@ The report should show:
 
 - `runtimeReady: true`
 - Matching generated and rendered web counts
+- The expected `colourProfileId`
 - No duplicate web or strand identifiers
 - All schema checks true
 - All immutability checks true
@@ -644,3 +716,4 @@ Feature work follows this process:
 7. Run the relevant automated and browser-console checks.
 
 Ambient Critters may be inspected as a reference implementation, but Dynamic Webs must independently implement equivalent behaviour and must not depend on Ambient Critters internals.
+

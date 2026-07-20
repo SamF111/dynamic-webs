@@ -13,6 +13,10 @@ import {
   WebGenerationService
 } from "../scripts/simulation/webs/WebGenerationService.js";
 
+import {
+  getWebColourProfile
+} from "../scripts/simulation/webs/webColourProfiles.js";
+
 function createEnvironment({
   renderFailure =
     null
@@ -52,7 +56,7 @@ function createEnvironment({
   const web =
     Object.freeze({
       schemaVersion:
-        1,
+        2,
       id:
         "ground:scene:index-0",
       kind:
@@ -63,6 +67,8 @@ function createEnvironment({
         "seed:ground",
       sourceKey:
         "index-0",
+      colourProfileId:
+        "natural-white",
       hub:
         Object.freeze({
           x:
@@ -86,7 +92,45 @@ function createEnvironment({
             20
         }),
       strands:
-        Object.freeze([]),
+        Object.freeze([
+          Object.freeze({
+            schemaVersion:
+              2,
+            id:
+              "ground:scene:index-0:structural-0",
+            localId:
+              "structural-0",
+            kind:
+              "structural",
+            points:
+              Object.freeze([
+                Object.freeze({
+                  x:
+                    10,
+                  y:
+                    10
+                }),
+                Object.freeze({
+                  x:
+                    20,
+                  y:
+                    20
+                })
+              ]),
+            baseAlpha:
+              0.7,
+            alpha:
+              0.7,
+            colour:
+              0xe8edf2,
+            underColour:
+              0x111827,
+            widthPx:
+              1.2,
+            collisionWidthPx:
+              2.25
+          })
+        ]),
       perches:
         Object.freeze([]),
       supportingWallIds:
@@ -96,7 +140,7 @@ function createEnvironment({
   const generated =
     Object.freeze({
       blueprintSchemaVersion:
-        1,
+        2,
       sceneId:
         "scene",
       seed:
@@ -110,6 +154,12 @@ function createEnvironment({
           ground:
             "seed:ground"
         }),
+      colourProfileId:
+        "natural-white",
+      colourProfile:
+        getWebColourProfile(
+          "natural-white"
+        ),
       configuration:
         Object.freeze({
           rendering:
@@ -133,7 +183,7 @@ function createEnvironment({
           ground:
             1,
           strands:
-            0,
+            1,
           byWebKind:
             Object.freeze({
               "wall-corner":
@@ -146,7 +196,7 @@ function createEnvironment({
           byStrandKind:
             Object.freeze({
               structural:
-                0,
+                1,
               capture:
                 0,
               decorative:
@@ -274,6 +324,16 @@ test(
       );
 
       assert.equal(
+        snapshot.colourProfileId,
+        "natural-white"
+      );
+
+      assert.equal(
+        snapshot.presentationRevision,
+        1
+      );
+
+      assert.equal(
         snapshot.sceneGeometry.gridSize,
         100
       );
@@ -398,6 +458,171 @@ test(
       assert.equal(
         snapshot.webs.length,
         0
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+
+
+test(
+  "runtime colour refresh preserves geometry generation identity and redraws presentation",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const before =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          densityId:
+            "dense",
+          reason:
+            "runtime-test"
+        });
+
+      const beforeWeb =
+        environment.service.getState().webs[0];
+
+      const beforePoints =
+        beforeWeb.strands[0].points;
+
+      const after =
+        environment.service.refreshColourProfile({
+          profileId:
+            "blood-red",
+          reason:
+            "scene-web-colour-update"
+        });
+
+      const afterWeb =
+        environment.service.getState().webs[0];
+
+      assert.equal(
+        after.generationId,
+        before.generationId
+      );
+
+      assert.equal(
+        after.generatedAt,
+        before.generatedAt
+      );
+
+      assert.equal(
+        after.presentationRevision,
+        before.presentationRevision +
+          1
+      );
+
+      assert.equal(
+        after.colourProfileId,
+        "blood-red"
+      );
+
+      assert.equal(
+        afterWeb.id,
+        beforeWeb.id
+      );
+
+      assert.equal(
+        afterWeb.hub,
+        beforeWeb.hub
+      );
+
+      assert.equal(
+        afterWeb.strands[0].points,
+        beforePoints
+      );
+
+      assert.equal(
+        afterWeb.strands[0].colour,
+        0x9f2424
+      );
+
+      assert.equal(
+        environment.renderCalls.length,
+        2
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "failed colour redraw restores the previous rendered profile and runtime state",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      environment.service.generateForActiveScene({
+        scene:
+          environment.scene,
+        reason:
+          "runtime-test"
+      });
+
+      const stableRender =
+        environment.service.renderService.render.bind(
+          environment.service.renderService
+        );
+
+      environment.service.renderService.render =
+        (
+          webs,
+          configuration
+        ) => {
+          if (
+            webs[0]?.colourProfileId ===
+              "blood-red"
+          ) {
+            throw new Error(
+              "colour redraw failed"
+            );
+          }
+
+          return stableRender(
+            webs,
+            configuration
+          );
+        };
+
+      assert.throws(
+        () =>
+          environment.service.refreshColourProfile({
+            profileId:
+              "blood-red",
+            reason:
+              "scene-web-colour-update"
+          }),
+        /colour redraw failed/u
+      );
+
+      const snapshot =
+        environment.service.createDiagnosticSnapshot();
+
+      assert.equal(
+        snapshot.active,
+        true
+      );
+
+      assert.equal(
+        snapshot.generationId,
+        1
+      );
+
+      assert.equal(
+        snapshot.colourProfileId,
+        "natural-white"
+      );
+
+      assert.equal(
+        snapshot.lastOperationReason,
+        "scene-web-colour-update-failed"
       );
     } finally {
       environment.restore();

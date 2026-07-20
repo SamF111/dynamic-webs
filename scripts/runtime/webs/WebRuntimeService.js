@@ -15,13 +15,16 @@ import {
 } from "../../diagnostics/determinismDiagnostics.js";
 
 import {
+  applyWebColourProfileToPopulation,
+  getWebColourProfile
+} from "../../simulation/webs/webColourProfiles.js";
+
+import {
   createWebRuntimeSnapshot,
   createWebRuntimeState
 } from "./webRuntimeState.js";
 
-/**
- * Own deterministic web blueprints and their transient local rendering.
- */
+/** Own deterministic web blueprints and their transient local rendering. */
 export class WebRuntimeService {
   constructor(
     options = {}
@@ -58,21 +61,13 @@ export class WebRuntimeService {
       createWebRuntimeState();
   }
 
-  /**
-   * Generate and render webs for the active Scene.
-   *
-   * @param {object} [options={}] - Generation values.
-   * @param {object|null} [options.scene=canvas.scene] - Active Scene.
-   * @param {object} [options.options={}] - Generation overrides.
-   * @param {string|null} [options.densityId=null] - Active density ID.
-   * @param {string|null} [options.reason=null] - Generation reason.
-   * @returns {Readonly<object>} Diagnostic snapshot.
-   */
+  /** Generate and render webs for the active Scene. */
   generateForActiveScene({
     scene =
       globalThis.canvas?.scene,
     options = {},
     densityId = null,
+    colourProfileId = null,
     reason = null
   } = {}) {
     const nextGenerationId =
@@ -96,7 +91,14 @@ export class WebRuntimeService {
     const generated =
       this.generationService.generate(
         context,
-        options
+        {
+          ...options,
+          ...(colourProfileId
+            ? {
+                colourProfileId
+              }
+            : {})
+        }
       );
 
     try {
@@ -109,6 +111,8 @@ export class WebRuntimeService {
         createWebRuntimeState({
           generationId:
             this.state.generationId,
+          presentationRevision:
+            this.state.presentationRevision,
           generationReason:
             this.state.generationReason,
           generatedAt:
@@ -131,6 +135,9 @@ export class WebRuntimeService {
         generated.sceneId,
       generationId:
         nextGenerationId,
+      presentationRevision:
+        this.state.presentationRevision +
+        1,
       generationReason:
         operationReason,
       generatedAt:
@@ -147,6 +154,10 @@ export class WebRuntimeService {
         normaliseOptionalIdentifier(
           densityId
         ),
+      colourProfileId:
+        generated.colourProfileId,
+      colourProfile:
+        generated.colourProfile,
       sceneGeometry:
         createSceneGeometrySummary(
           context
@@ -163,11 +174,117 @@ export class WebRuntimeService {
   }
 
   /**
-   * Clear all local generated geometry and rendering.
-   *
-   * @param {string|null} [reason=null] - Clear reason.
-   * @returns {boolean} True when state or rendering existed.
+   * Re-resolve and redraw web presentation without generating geometry.
    */
+  refreshColourProfile({
+    profileId,
+    reason = "web-colour-refresh"
+  } = {}) {
+    if (
+      this.state.active !==
+        true
+    ) {
+      return this.createDiagnosticSnapshot();
+    }
+
+    const profile =
+      getWebColourProfile(
+        profileId
+      );
+
+    const operationReason =
+      normaliseOptionalIdentifier(
+        reason
+      ) ??
+      "web-colour-refresh";
+
+    const operationAt =
+      Date.now();
+
+    const webs =
+      applyWebColourProfileToPopulation(
+        this.state.webs,
+        profile
+      );
+
+    const previousState =
+      this.state;
+
+    try {
+      this.renderService.render(
+        webs,
+        previousState.configuration.rendering
+      );
+    } catch (error) {
+      try {
+        this.renderService.render(
+          previousState.webs,
+          previousState.configuration.rendering
+        );
+
+        this.state = {
+          ...previousState,
+          lastOperationReason:
+            `${operationReason}-failed`,
+          lastOperationAt:
+            operationAt
+        };
+      } catch (rollbackError) {
+        this.state =
+          createWebRuntimeState({
+            generationId:
+              previousState.generationId,
+            presentationRevision:
+              previousState.presentationRevision,
+            generationReason:
+              previousState.generationReason,
+            generatedAt:
+              previousState.generatedAt,
+            lastOperationReason:
+              `${operationReason}-rollback-failed`,
+            lastOperationAt:
+              operationAt
+          });
+
+        try {
+          Object.defineProperty(
+            error,
+            "rollbackError",
+            {
+              value:
+                rollbackError,
+              configurable:
+                true
+            }
+          );
+        } catch (_defineError) {
+          // The original render error remains authoritative.
+        }
+      }
+
+      throw error;
+    }
+
+    this.state = {
+      ...previousState,
+      presentationRevision:
+        previousState.presentationRevision +
+        1,
+      lastOperationReason:
+        operationReason,
+      lastOperationAt:
+        operationAt,
+      colourProfileId:
+        profile.id,
+      colourProfile:
+        profile,
+      webs
+    };
+
+    return this.createDiagnosticSnapshot();
+  }
+
+  /** Clear all local generated geometry and rendering. */
   clear(
     reason = null
   ) {
@@ -185,6 +302,8 @@ export class WebRuntimeService {
       createWebRuntimeState({
         generationId:
           previousState.generationId,
+        presentationRevision:
+          previousState.presentationRevision,
         generationReason:
           previousState.generationReason,
         generatedAt:
@@ -202,12 +321,7 @@ export class WebRuntimeService {
       clearedRendering;
   }
 
-  /**
-   * Run a non-destructive deterministic-generation comparison.
-   *
-   * @param {object|null} [scene=canvas.scene] - Scene used for the comparison.
-   * @returns {Readonly<object>} Frozen comparison result.
-   */
+  /** Run a non-destructive deterministic-generation comparison. */
   createDeterminismDiagnostic(
     scene =
       globalThis.canvas?.scene
@@ -255,8 +369,11 @@ export class WebRuntimeService {
         generationService:
           this.generationService,
         context,
-        configuration:
-          this.state.configuration,
+        configuration: {
+          ...this.state.configuration,
+          colourProfileId:
+            this.state.colourProfileId
+        },
         currentWebs:
           this.state.webs
       });
@@ -300,11 +417,7 @@ export class WebRuntimeService {
     );
   }
 
-  /**
-   * Return runtime telemetry without copying the complete web population.
-   *
-   * @returns {Readonly<object>} Frozen lightweight telemetry.
-   */
+  /** Return runtime telemetry without copying the complete web population. */
   createTelemetrySnapshot() {
     return createWebRuntimeSnapshot(
       this.state,

@@ -26,32 +26,56 @@ import {
   assertWebPopulationIntegrity
 } from "./webBlueprintContract.js";
 
+import {
+  DEFAULT_WEB_COLOUR_PROFILE_ID,
+  applyWebColourProfileToPopulation,
+  getWebColourProfile
+} from "./webColourProfiles.js";
+
 /** Deterministic, Foundry-independent web-blueprint generation service. */
 export class WebGenerationService {
-  constructor(options = {}) {
+  constructor(
+    options = {}
+  ) {
     this.wallCornerGenerator =
-      options.wallCornerGenerator instanceof WallCornerWebGenerator
+      options.wallCornerGenerator instanceof
+        WallCornerWebGenerator
         ? options.wallCornerGenerator
         : new WallCornerWebGenerator();
 
     this.wallSpanGenerator =
-      options.wallSpanGenerator instanceof WallSpanWebGenerator
+      options.wallSpanGenerator instanceof
+        WallSpanWebGenerator
         ? options.wallSpanGenerator
         : new WallSpanWebGenerator();
 
     this.groundGenerator =
-      options.groundGenerator instanceof GroundWebGenerator
+      options.groundGenerator instanceof
+        GroundWebGenerator
         ? options.groundGenerator
         : new GroundWebGenerator();
   }
 
-  generate(context, options = {}) {
-    validateContext(context);
+  generate(
+    context,
+    options = {}
+  ) {
+    validateContext(
+      context
+    );
 
     const configuration =
       normaliseWebGenerationConfiguration(
         options,
         context.sceneId
+      );
+
+    const colourProfile =
+      getWebColourProfile(
+        typeof options?.colourProfileId ===
+          "string"
+          ? options.colourProfileId
+          : DEFAULT_WEB_COLOUR_PROFILE_ID
       );
 
     const categorySeeds =
@@ -63,21 +87,6 @@ export class WebGenerationService {
         ground:
           `${configuration.seed}:ground`
       });
-
-    const cornerRandom =
-      createSeededRandom(
-        categorySeeds.corner
-      );
-
-    const spanRandom =
-      createSeededRandom(
-        categorySeeds.span
-      );
-
-    const groundRandom =
-      createSeededRandom(
-        categorySeeds.ground
-      );
 
     const cornerWebs =
       this.wallCornerGenerator.generate({
@@ -92,7 +101,9 @@ export class WebGenerationService {
         configuration:
           configuration.cornerWebs,
         random:
-          cornerRandom
+          createSeededRandom(
+            categorySeeds.corner
+          )
       });
 
     const spanWebs =
@@ -108,7 +119,9 @@ export class WebGenerationService {
         configuration:
           configuration.spanWebs,
         random:
-          spanRandom
+          createSeededRandom(
+            categorySeeds.span
+          )
       });
 
     const groundWebs =
@@ -124,15 +137,23 @@ export class WebGenerationService {
         configuration:
           configuration.groundWebs,
         random:
-          groundRandom
+          createSeededRandom(
+            categorySeeds.ground
+          )
       });
 
-    const webs =
+    const geometryWebs =
       Object.freeze([
         ...spanWebs,
         ...cornerWebs,
         ...groundWebs
       ]);
+
+    const webs =
+      applyWebColourProfileToPopulation(
+        geometryWebs,
+        colourProfile
+      );
 
     assertWebPopulationIntegrity(
       webs,
@@ -151,6 +172,9 @@ export class WebGenerationService {
         configuration.seed,
       categorySeeds,
       configuration,
+      colourProfileId:
+        colourProfile.id,
+      colourProfile,
       webs,
       counts:
         createGenerationCounts({
@@ -162,7 +186,6 @@ export class WebGenerationService {
     });
   }
 }
-
 
 function createGenerationCounts({
   webs,
@@ -241,21 +264,31 @@ function createGenerationCounts({
   });
 }
 
-function validateContext(context) {
+function validateContext(
+  context
+) {
   if (
     !context ||
-    typeof context !== "object" ||
-    typeof context.sceneId !== "string" ||
+    typeof context !==
+      "object" ||
+    typeof context.sceneId !==
+      "string" ||
     !context.sceneRect ||
-    !Number.isFinite(Number(context.gridSize)) ||
-    Number(context.gridSize) <= 0 ||
-    !Array.isArray(context.wallSegments)
+    !Number.isFinite(
+      Number(
+        context.gridSize
+      )
+    ) ||
+    Number(
+      context.gridSize
+    ) <=
+      0 ||
+    !Array.isArray(
+      context.wallSegments
+    )
   ) {
     throw new TypeError(
       "Dynamic Webs | WebGenerationService requires a valid Scene context."
     );
   }
 }
-
-
-

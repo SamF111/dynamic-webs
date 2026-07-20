@@ -3,6 +3,10 @@ import {
 } from "../config/sceneWebDensityConfiguration.js";
 
 import {
+  getSceneWebColourConfiguration
+} from "../config/sceneWebColourConfiguration.js";
+
+import {
   SCENE_WEB_FLAG_KEYS,
   SCENE_WEB_FLAG_PATH
 } from "../config/sceneWebFlagPaths.js";
@@ -11,20 +15,22 @@ import {
   getWebDensityOptions
 } from "../simulation/webs/webDensityPresets.js";
 
-/**
- * Build the standalone Dynamic Webs SceneConfig part context.
- *
- * @param {object} options - Context values.
- * @param {object} options.application - SceneConfig application.
- * @param {object} options.scene - Configured Scene.
- * @returns {Promise<object>} Template context.
- */
+import {
+  getWebColourOptions
+} from "../simulation/webs/webColourProfiles.js";
+
+/** Build the standalone Dynamic Webs SceneConfig part context. */
 export async function createSceneConfigTemplateContext({
   application,
   scene
 }) {
-  const configuration =
+  const densityConfiguration =
     getSceneWebDensityConfiguration(
+      scene
+    );
+
+  const colourConfiguration =
+    getSceneWebColourConfiguration(
       scene
     );
 
@@ -35,21 +41,23 @@ export async function createSceneConfigTemplateContext({
 
     configuration: {
       webDensity:
-        configuration.densityId
+        densityConfiguration.densityId,
+      webColour:
+        colourConfiguration.profileId
     },
 
     fieldNames: {
       webDensity:
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}`
+        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}`,
+      webColour:
+        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_COLOUR}`
     },
 
     webDensityControl: {
       label:
         "Web density",
-
       description:
         "Choose how many procedural webs Dynamic Webs generates for this Scene.",
-
       options:
         getWebDensityOptions()
           .map(
@@ -62,7 +70,29 @@ export async function createSceneConfigTemplateContext({
                 option.label,
               selected:
                 option.id ===
-                  configuration.densityId
+                  densityConfiguration.densityId
+            })
+          )
+    },
+
+    webColourControl: {
+      label:
+        "Web colour",
+      description:
+        "Choose the visual colour profile used by all generated webs in this Scene.",
+      options:
+        getWebColourOptions()
+          .map(
+            (
+              option
+            ) => ({
+              value:
+                option.id,
+              label:
+                option.label,
+              selected:
+                option.id ===
+                  colourConfiguration.profileId
             })
           )
     }

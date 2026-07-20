@@ -244,10 +244,6 @@ const RENDERING_SCHEMA =
           value,
           contextLabel
         ),
-    silkColour:
-      parseHexColour,
-    underColour:
-      parseHexColour,
     underAlphaMultiplier:
       PROBABILITY,
     underWidthAdditionPx:
@@ -782,3 +778,159 @@ export function validateWebDensityPresets(
 }
 
 
+
+
+const WEB_COLOUR_PROFILES_CONTEXT =
+  "web colour profiles";
+
+export const WEB_COLOUR_PROFILES_SCHEMA_VERSION =
+  1;
+
+const WEB_COLOUR_PROFILE_CONFIGURATION_SCHEMA =
+  Object.freeze({
+    structuralColour:
+      parseHexColour,
+    captureColour:
+      parseHexColour,
+    decorativeColour:
+      parseHexColour,
+    underColour:
+      parseHexColour,
+    alphaMultiplier:
+      PROBABILITY
+  });
+
+/** Validate JSON-authored web-colour profiles. */
+export function validateWebColourProfiles(
+  data
+) {
+  const root =
+    assertJsonObject(
+      data,
+      WEB_COLOUR_PROFILES_CONTEXT
+    );
+
+  assertExactKeys(
+    root,
+    [
+      "schemaVersion",
+      "defaultProfileId",
+      "profiles"
+    ],
+    WEB_COLOUR_PROFILES_CONTEXT
+  );
+
+  const schemaVersion =
+    assertPositiveInteger(
+      root.schemaVersion,
+      `${WEB_COLOUR_PROFILES_CONTEXT}.schemaVersion`
+    );
+
+  if (
+    schemaVersion !==
+      WEB_COLOUR_PROFILES_SCHEMA_VERSION
+  ) {
+    throw new Error(
+      `Dynamic Webs | ${WEB_COLOUR_PROFILES_CONTEXT}.schemaVersion must be ${WEB_COLOUR_PROFILES_SCHEMA_VERSION}.`
+    );
+  }
+
+  const defaultProfileId =
+    assertRequiredString(
+      root.defaultProfileId,
+      `${WEB_COLOUR_PROFILES_CONTEXT}.defaultProfileId`
+    );
+
+  if (
+    !Array.isArray(
+      root.profiles
+    ) ||
+    root.profiles.length ===
+      0
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | ${WEB_COLOUR_PROFILES_CONTEXT}.profiles must be a non-empty array.`
+    );
+  }
+
+  const usedIds =
+    new Set();
+
+  const profiles =
+    root.profiles.map(
+      (
+        value,
+        index
+      ) => {
+        const contextLabel =
+          `${WEB_COLOUR_PROFILES_CONTEXT}.profiles.${index}`;
+
+        const profile =
+          assertJsonObject(
+            value,
+            contextLabel
+          );
+
+        assertExactKeys(
+          profile,
+          [
+            "id",
+            "label",
+            "configuration"
+          ],
+          contextLabel
+        );
+
+        const id =
+          assertRequiredString(
+            profile.id,
+            `${contextLabel}.id`
+          );
+
+        if (
+          usedIds.has(
+            id
+          )
+        ) {
+          throw new Error(
+            `Dynamic Webs | Duplicate web colour profile id "${id}".`
+          );
+        }
+
+        usedIds.add(
+          id
+        );
+
+        return {
+          id,
+          label:
+            assertRequiredString(
+              profile.label,
+              `${contextLabel}.label`
+            ),
+          configuration:
+            validateFields(
+              profile.configuration,
+              `${contextLabel}.configuration`,
+              WEB_COLOUR_PROFILE_CONFIGURATION_SCHEMA
+            )
+        };
+      }
+    );
+
+  if (
+    !usedIds.has(
+      defaultProfileId
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Default web colour profile "${defaultProfileId}" is not defined.`
+    );
+  }
+
+  return deepFreezeJsonData({
+    schemaVersion,
+    defaultProfileId,
+    profiles
+  });
+}

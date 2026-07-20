@@ -165,6 +165,11 @@ function createCanonicalWebProjection(
         web?.kind ??
         ""
       ),
+    colourProfileId:
+      String(
+        web?.colourProfileId ??
+        ""
+      ),
     sceneId:
       String(
         web?.sceneId ??
@@ -251,9 +256,22 @@ function createCanonicalWebProjection(
               ).map(
                 projectPoint
               ),
+            baseAlpha:
+              Number(
+                strand?.baseAlpha ??
+                strand?.alpha
+              ),
             alpha:
               Number(
                 strand?.alpha
+              ),
+            colour:
+              Number(
+                strand?.colour
+              ),
+            underColour:
+              Number(
+                strand?.underColour
               ),
             widthPx:
               Number(
@@ -477,3 +495,4 @@ function deepFreeze(
         value
       );
 }
+

@@ -10,15 +10,11 @@ import {
   getSceneWebDensityConfiguration
 } from "../../config/sceneWebDensityConfiguration.js";
 
-/**
- * Synchronise generated webs for one active Scene.
- *
- * @param {object} options - Synchronisation values.
- * @param {object|null} options.runtime - Dynamic Webs runtime.
- * @param {object|null} options.scene - Active Scene.
- * @param {string} options.reason - Diagnostic reason.
- * @returns {Readonly<object>|null} Web diagnostics or null.
- */
+import {
+  getSceneWebColourConfiguration
+} from "../../config/sceneWebColourConfiguration.js";
+
+/** Synchronise generated webs for one active Scene. */
 export function synchroniseSceneWebs({
   runtime,
   scene,
@@ -43,55 +39,47 @@ export function synchroniseSceneWebs({
     );
 
   try {
-    const configuration =
+    const densityConfiguration =
       getSceneWebDensityConfiguration(
         scene
       );
 
+    const colourConfiguration =
+      getSceneWebColourConfiguration(
+        scene
+      );
+
     if (
-      configuration.enabled !==
+      densityConfiguration.enabled !==
         true
     ) {
       service.clear(
         normalisedReason
       );
 
-      const snapshot =
-        service.createDiagnosticSnapshot();
-
-      globalThis.Hooks?.callAll?.(
-        `${MODULE_ID}.stateChanged`,
-        snapshot,
-        {
-          reason:
-            normalisedReason
-        }
+      return emitStateChanged(
+        service.createDiagnosticSnapshot(),
+        normalisedReason
       );
-
-      return snapshot;
     }
 
     const snapshot =
       service.generateForActiveScene({
         scene,
         options:
-          configuration.generationOptions,
+          densityConfiguration.generationOptions,
         densityId:
-          configuration.densityId,
+          densityConfiguration.densityId,
+        colourProfileId:
+          colourConfiguration.profileId,
         reason:
           normalisedReason
       });
 
-    globalThis.Hooks?.callAll?.(
-      `${MODULE_ID}.stateChanged`,
+    return emitStateChanged(
       snapshot,
-      {
-        reason:
-          normalisedReason
-      }
+      normalisedReason
     );
-
-    return snapshot;
   } catch (error) {
     reportDiagnostic({
       code:
@@ -108,7 +96,7 @@ export function synchroniseSceneWebs({
           normalisedReason
       },
       nextAction:
-        "Check the Dynamic Webs Scene density and JSON-backed density presets.",
+        "Check the Dynamic Webs Scene density, colour profile and JSON-backed presets.",
       error
     });
 
@@ -118,4 +106,119 @@ export function synchroniseSceneWebs({
 
     return null;
   }
+}
+
+/**
+ * Apply a Scene colour update without regenerating deterministic geometry.
+ */
+export function synchroniseSceneWebColour({
+  runtime,
+  scene,
+  reason
+}) {
+  const service =
+    runtime
+      ?.getWebRuntimeService
+      ?.();
+
+  if (
+    !service ||
+    !scene
+  ) {
+    return null;
+  }
+
+  const normalisedReason =
+    String(
+      reason ??
+      "scene-web-colour-update"
+    );
+
+  try {
+    const densityConfiguration =
+      getSceneWebDensityConfiguration(
+        scene
+      );
+
+    if (
+      densityConfiguration.enabled !==
+        true
+    ) {
+      return emitStateChanged(
+        service.createDiagnosticSnapshot(),
+        normalisedReason
+      );
+    }
+
+    const state =
+      service.getState();
+
+    if (
+      state.active !==
+        true ||
+      state.sceneId !==
+        scene.id
+    ) {
+      return synchroniseSceneWebs({
+        runtime,
+        scene,
+        reason:
+          normalisedReason
+      });
+    }
+
+    const colourConfiguration =
+      getSceneWebColourConfiguration(
+        scene
+      );
+
+    const snapshot =
+      service.refreshColourProfile({
+        profileId:
+          colourConfiguration.profileId,
+        reason:
+          normalisedReason
+      });
+
+    return emitStateChanged(
+      snapshot,
+      normalisedReason
+    );
+  } catch (error) {
+    reportDiagnostic({
+      code:
+        "webs.scene-colour-synchronisation-failed",
+      severity:
+        "warn",
+      message:
+        "The active web colour profile could not be applied.",
+      context: {
+        sceneId:
+          scene?.id ??
+          null,
+        reason:
+          normalisedReason
+      },
+      nextAction:
+        "Check the Scene web colour flag and data/webs/colours.json.",
+      error
+    });
+
+    return null;
+  }
+}
+
+function emitStateChanged(
+  snapshot,
+  reason
+) {
+  globalThis.Hooks?.callAll?.(
+    `${MODULE_ID}.stateChanged`,
+    snapshot,
+    {
+      reason
+    }
+  );
+
+  return snapshot;
 }
