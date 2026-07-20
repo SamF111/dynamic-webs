@@ -129,7 +129,7 @@ function createEnvironment() {
       get:
         () => ({
           version:
-            "0.2.1"
+            "0.2.2"
         })
     },
     scenes: {
@@ -488,6 +488,15 @@ test(
         () =>
           api.scene.setThickness(
             2
+          ),
+        /only be performed by a GM/u
+      );
+
+      await assert.rejects(
+        () =>
+          api.scene.setCategoryDensity(
+            "ground",
+            "dense"
           ),
         /only be performed by a GM/u
       );

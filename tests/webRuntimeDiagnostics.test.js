@@ -53,6 +53,16 @@ test(
     );
 
     assert.equal(
+      snapshot.categoryDensities,
+      null
+    );
+
+    assert.equal(
+      snapshot.categoryDensitySources,
+      null
+    );
+
+    assert.equal(
       snapshot.thicknessMultiplier,
       null
     );

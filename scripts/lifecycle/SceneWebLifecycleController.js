@@ -4,6 +4,7 @@ import {
 } from "../module/moduleConstants.js";
 
 import {
+  doesSceneUpdateAffectWebCategoryDensity,
   doesSceneUpdateAffectWebColour,
   doesSceneUpdateAffectWebDensity,
   doesSceneUpdateAffectWebGeometry,
@@ -254,15 +255,26 @@ export class SceneWebLifecycleController {
       return;
     }
 
-    if (
+    const legacyDensityChanged =
       doesSceneUpdateAffectWebDensity(
         changed
-      )
+      );
+
+    const categoryDensityChanged =
+      doesSceneUpdateAffectWebCategoryDensity(
+        changed
+      );
+
+    if (
+      legacyDensityChanged ||
+      categoryDensityChanged
     ) {
       this.clearPendingRebuild();
 
       this.synchroniseActiveScene(
-        "scene-web-density-update"
+        categoryDensityChanged
+          ? "scene-web-category-density-update"
+          : "scene-web-density-update"
       );
 
       return;

@@ -6,15 +6,17 @@ import {
   createSceneConfigTemplateContext
 } from "./sceneConfigTemplateContext.js";
 
+import {
+  activateSceneConfigDensitySliders
+} from "./sceneConfigDensitySliders.js";
+
 const registerSceneConfigHooksInternal =
   createSceneConfigHookRegistration({
     createTemplateContext:
       createSceneConfigTemplateContext,
 
     activateControls:
-      () => {
-        // The standalone tab contains only native form controls.
-      },
+      activateSceneConfigDensitySliders,
 
     registerAdditionalHooks:
       () => {

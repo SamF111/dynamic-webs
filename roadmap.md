@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.2.1
+## Current baseline — v0.2.2
 
 Completed:
 
@@ -27,11 +27,18 @@ Completed:
 - Visual-only colour refreshes that preserve deterministic geometry and identifiers
 - Scene-owned visible thickness from `0.5×` to `4×`
 - Visual-only thickness refreshes that preserve blueprint and collision widths
+- Independent corner, span, ground and reserved carpet density sliders
+- Backwards-compatible category fallback from `webDensity`
+- Category-isolated deterministic regeneration
 
 Current Scene flags:
 
 ```text
 flags.dynamic-webs.webDensity
+flags.dynamic-webs.cornerWebDensity
+flags.dynamic-webs.spanWebDensity
+flags.dynamic-webs.groundWebDensity
+flags.dynamic-webs.carpetWebDensity
 flags.dynamic-webs.webColour
 flags.dynamic-webs.webThickness
 ```
@@ -186,7 +193,111 @@ dynamicWebs.api.colours.getProfile("blood-red");
 
 ---
 
-## Milestone 2 — Level-aware web populations
+## Milestone 2 — Per-category density controls — complete
+
+**Delivered:** v0.2.2
+
+Dynamic Webs now resolves abundance independently for corner, span, ground and future carpet web categories while preserving the original combined density flag as a backwards-compatible fallback.
+
+### Delivered Scene controls
+
+The standalone Scene Configuration tab contains one labelled discrete slider for each category:
+
+- Corner-web density
+- Span-web density
+- Ground-web density
+- Carpet-web density
+
+Every slider uses the shared ordered JSON-authored states:
+
+```text
+disabled → sparse → standard → dense → infested
+```
+
+The current state is displayed beside each slider. The carpet slider is persisted now but remains generation-dormant until web carpets are implemented.
+
+### Delivered persistence and migration
+
+Independent Scene flags are:
+
+```text
+flags.dynamic-webs.cornerWebDensity
+flags.dynamic-webs.spanWebDensity
+flags.dynamic-webs.groundWebDensity
+flags.dynamic-webs.carpetWebDensity
+```
+
+The original flag remains supported:
+
+```text
+flags.dynamic-webs.webDensity
+```
+
+Migration behaviour is non-destructive:
+
+- Existing Scenes with only `webDensity` resolve every available category from that value.
+- The UI reports whether each value is explicit or inherited from the legacy fallback.
+- Saving the Scene Configuration form persists all four category-specific values.
+- A category set to `disabled` produces no webs of that category without disabling others.
+- An active carpet value is stored but cannot keep the current population active by itself.
+
+### Delivered generation contract
+
+- Corner density selects the preset-owned corner maximum count.
+- Span density selects maximum count and minimum spacing together.
+- Ground density selects the ground-web count.
+- Carpet density is absence-safe until carpet-specific coverage presets exist.
+- Category changes are generation changes rather than presentation redraws.
+- Independent category random streams remain unchanged.
+- Changing one category reproduces identical web IDs, strand IDs, points and canonical projections for unrelated categories.
+- Changing one category density must preserve unrelated category geometry and identifiers.
+
+### Public API
+
+```javascript
+dynamicWebs.api.scene.getCategoryDensities();
+dynamicWebs.api.scene.getCategoryDensity("wall-corner");
+
+await dynamicWebs.api.scene.setCategoryDensity("wall-span", "dense");
+await dynamicWebs.api.scene.setCategoryDensities({
+  "wall-corner": "dense",
+  "wall-span": "sparse",
+  ground: "infested",
+  "web-carpet": "disabled"
+});
+```
+
+Batch mutations use one Scene update when available. Public category identifiers match the web-kind contract.
+
+### Diagnostics and tests
+
+Diagnostics report:
+
+- Resolved density state for every category
+- Explicit versus legacy-fallback source for every category
+- Generated counts by category
+- Category-specific generation reasons through lifecycle telemetry
+
+Regression coverage confirms:
+
+- Legacy Scenes preserve their initial category output.
+- Every slider accepts only the five supported states.
+- Disabling one category leaves unrelated categories active.
+- Unchanged categories retain identical geometry and identifiers.
+- Repeated saves replace rather than stack rendering.
+- Carpet density remains dormant and absence-safe.
+
+### Exit criteria — met
+
+- Corner, span and ground density are independently selectable through labelled sliders.
+- Every implemented category can be disabled independently.
+- Existing `webDensity` Scenes migrate without changing initial output.
+- Unchanged categories retain deterministic geometry and stable identifiers.
+- The data, UI and API contracts include a separate future carpet-density slider.
+
+---
+
+## Milestone 3 — Level-aware web populations
 
 **Target:** v0.3.0
 
@@ -256,7 +367,7 @@ dynamic-webs:web-generation:v3:<scene-id>:<level-id>:<web-kind>
 
 ---
 
-## Milestone 3 — Region-aware webs
+## Milestone 4 — Region-aware webs
 
 **Target:** v0.4.0
 
@@ -320,7 +431,7 @@ Unrelated region changes must not reshuffle unaffected webs.
 
 ---
 
-## Milestone 4 — Spatial index and read-only query API
+## Milestone 5 — Spatial index and read-only query API
 
 **Target:** v0.5.0
 
@@ -389,7 +500,7 @@ Support filters such as:
 
 ---
 
-## Milestone 5 — Web carpets
+## Milestone 6 — Web carpets
 
 **Target:** v0.6.0
 
@@ -463,7 +574,7 @@ Use coverage-style configuration rather than a simple count:
 
 ---
 
-## Milestone 6 — Mutable web state
+## Milestone 7 — Mutable web state
 
 **Target:** v0.7.0
 
@@ -529,7 +640,7 @@ Hooks.callAll("dynamicWebs.strandBroken", payload);
 
 ---
 
-## Milestone 7 — Optional web barriers
+## Milestone 8 — Optional web barriers
 
 **Target:** v0.8.0
 
@@ -626,7 +737,7 @@ Test that:
 
 ---
 
-## Milestone 8 — Tokens destroying webs
+## Milestone 9 — Tokens destroying webs
 
 **Target:** v0.9.0
 
@@ -695,7 +806,7 @@ Hooks.callAll("dynamicWebs.entityIntersectedStrand", payload);
 
 ---
 
-## Milestone 9 — Persistence and network state
+## Milestone 10 — Persistence and network state
 
 **Target:** v0.10.0
 
@@ -747,7 +858,7 @@ Persist only deviations such as:
 
 ---
 
-## Milestone 10 — Generic trapping and occupancy
+## Milestone 11 — Generic trapping and occupancy
 
 **Target:** v0.11.0 or later
 
@@ -781,7 +892,7 @@ Extend mutable state beyond strand damage.
 
 ---
 
-## Milestone 11 — Ambient Critters adapter and release hardening
+## Milestone 12 — Ambient Critters adapter and release hardening
 
 **Target:** v1.0.0
 
@@ -872,21 +983,24 @@ Test:
 
 1. Baseline hardening — complete in v0.1.0
 2. Coloured webs — complete in v0.2.0
-3. Level-aware web populations
-4. Region-aware webs
-5. Spatial index and read-only query API
-6. Web carpets
-7. Mutable web state
-8. Optional web barriers
-9. Tokens destroying webs
-10. Persistence and network state
-11. Generic trapping and occupancy
-12. Ambient Critters adapter and release hardening
+3. Per-category density controls — complete in v0.2.2
+4. Level-aware web populations
+5. Region-aware webs
+6. Spatial index and read-only query API
+7. Web carpets
+8. Mutable web state
+9. Optional web barriers
+10. Tokens destroying webs
+11. Persistence and network state
+12. Generic trapping and occupancy
+13. Ambient Critters adapter and release hardening
 
 ## Critical dependency chain
 
 ```text
 Baseline stability
+    ↓
+Per-category density controls
     ↓
 Level awareness
     ↓
@@ -908,6 +1022,8 @@ Trapping and occupancy
 ```
 
 Coloured webs sit near the beginning because they are mostly independent and establish the visual-property model later reused by region overrides and web carpets.
+
+Per-category density controls precede level awareness so each level can receive independently resolved corner, span, ground and future carpet allocations from the outset.
 
 ## Architecture rules throughout the roadmap
 

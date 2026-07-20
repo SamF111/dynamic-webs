@@ -1,3 +1,8 @@
+
+import {
+  getSceneWebCategoryDensityConfiguration
+} from "../config/sceneWebCategoryDensityConfiguration.js";
+
 import {
   BASELINE_DIAGNOSTIC_SCHEMA_VERSION,
   MODULE_ID,
@@ -56,6 +61,23 @@ export function createBaselineDiagnosticReport({
     globalThis.canvas?.scene ??
     null;
 
+  const sceneCategoryDensityConfiguration =
+    activeScene
+      ? getSceneWebCategoryDensityConfiguration(
+          activeScene
+        )
+      : null;
+
+  const categoryDensities =
+    state.categoryDensities ??
+    sceneCategoryDensityConfiguration?.categoryDensities ??
+    null;
+
+  const categoryDensitySources =
+    state.categoryDensitySources ??
+    sceneCategoryDensityConfiguration?.categoryDensitySources ??
+    null;
+
   return deepFreeze({
     reportSchemaVersion:
       BASELINE_DIAGNOSTIC_SCHEMA_VERSION,
@@ -67,7 +89,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.2.1",
+        "0.2.2",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -101,6 +123,8 @@ export function createBaselineDiagnosticReport({
         null,
       densityId:
         state.densityId,
+      categoryDensities,
+      categoryDensitySources,
       colourProfileId:
         state.colourProfileId,
       thicknessMultiplier:
@@ -134,6 +158,8 @@ export function createBaselineDiagnosticReport({
         state.seed,
       categorySeeds:
         state.categorySeeds,
+      categoryDensities,
+      categoryDensitySources,
       counts:
         state.counts,
       lastOperationReason:

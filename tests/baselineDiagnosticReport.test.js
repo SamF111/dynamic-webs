@@ -88,6 +88,28 @@ test(
           }),
         densityId:
           "standard",
+        categoryDensities:
+          Object.freeze({
+            "wall-corner":
+              "dense",
+            "wall-span":
+              "sparse",
+            ground:
+              "standard",
+            "web-carpet":
+              "disabled"
+          }),
+        categoryDensitySources:
+          Object.freeze({
+            "wall-corner":
+              "explicit",
+            "wall-span":
+              "explicit",
+            ground:
+              "legacy-fallback",
+            "web-carpet":
+              "explicit"
+          }),
         colourProfileId:
           "natural-white",
         thicknessMultiplier:
@@ -188,7 +210,7 @@ test(
         get:
           () => ({
             version:
-              "0.2.0"
+              "0.2.2"
           })
       }
     };
@@ -224,6 +246,16 @@ test(
       assert.equal(
         report.scene.colourProfileId,
         "natural-white"
+      );
+
+      assert.equal(
+        report.scene.categoryDensities["wall-span"],
+        "sparse"
+      );
+
+      assert.equal(
+        report.generation.categoryDensitySources.ground,
+        "legacy-fallback"
       );
 
       assert.equal(

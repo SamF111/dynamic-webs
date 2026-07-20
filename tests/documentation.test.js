@@ -106,6 +106,10 @@ test(
         "dynamicWebs.api.webs.clear();",
         "dynamicWebs.api.scene.getDensity();",
         "dynamicWebs.api.scene.setDensity(\"dense\")",
+        "dynamicWebs.api.scene.getCategoryDensities();",
+        "dynamicWebs.api.scene.getCategoryDensity(\"wall-corner\")",
+        "dynamicWebs.api.scene.setCategoryDensity(\"wall-span\", \"sparse\")",
+        "dynamicWebs.api.scene.setCategoryDensities({",
         "dynamicWebs.api.diagnostics.getBaselineReport();",
         "dynamicWebs.api.diagnostics.showBaselineReport();"
       ]
@@ -216,6 +220,53 @@ test(
   }
 );
 
+
+test(
+  "README documents independent category-density migration and API",
+  async () => {
+    const readme =
+      await readFile(
+        README_URL,
+        "utf8"
+      );
+
+    for (
+      const flag of
+      [
+        "flags.dynamic-webs.cornerWebDensity",
+        "flags.dynamic-webs.spanWebDensity",
+        "flags.dynamic-webs.groundWebDensity",
+        "flags.dynamic-webs.carpetWebDensity"
+      ]
+    ) {
+      assert.ok(
+        readme.includes(
+          flag
+        ),
+        flag
+      );
+    }
+
+    assert.ok(
+      readme.includes(
+        "Existing Scenes that only contain `webDensity` initially show the same inherited state on every slider."
+      )
+    );
+
+    assert.ok(
+      readme.includes(
+        "The carpet slider is persisted in `v0.2.2` but remains dormant"
+      )
+    );
+
+    assert.ok(
+      readme.includes(
+        "Changing one category may advance the runtime generation revision, but unchanged categories reproduce the same identifiers"
+      )
+    );
+  }
+);
+
 test(
   "README colour documentation matches JSON-authored profiles",
   async () => {
@@ -289,7 +340,7 @@ test(
 );
 
 test(
-  "roadmap closes coloured webs and preserves later barrier planning",
+  "roadmap records completed independent category-density sliders and preserves later milestones",
   async () => {
     const [
       roadmap,
@@ -320,6 +371,12 @@ test(
 
     assert.ok(
       dense
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "## Current baseline — v0.2.2"
+      )
     );
 
     assert.ok(
@@ -409,13 +466,77 @@ test(
 
     assert.ok(
       roadmap.includes(
-        "## Milestone 7 — Optional web barriers"
+        "## Milestone 2 — Per-category density controls — complete"
       )
     );
 
     assert.ok(
       roadmap.includes(
-        "## Milestone 8 — Tokens destroying webs"
+        "**Delivered:** v0.2.2"
+      )
+    );
+
+    for (
+      const categoryControl of
+      [
+        "Corner-web density",
+        "Span-web density",
+        "Ground-web density",
+        "Carpet-web density"
+      ]
+    ) {
+      assert.ok(
+        roadmap.includes(
+          categoryControl
+        ),
+        categoryControl
+      );
+    }
+
+    assert.ok(
+      roadmap.includes(
+        "disabled → sparse → standard → dense → infested"
+      )
+    );
+
+    for (
+      const categoryFlag of
+      [
+        "flags.dynamic-webs.cornerWebDensity",
+        "flags.dynamic-webs.spanWebDensity",
+        "flags.dynamic-webs.groundWebDensity",
+        "flags.dynamic-webs.carpetWebDensity"
+      ]
+    ) {
+      assert.ok(
+        roadmap.includes(
+          categoryFlag
+        ),
+        categoryFlag
+      );
+    }
+
+    assert.ok(
+      roadmap.includes(
+        "Existing Scenes with only `webDensity` resolve every available category from that value."
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "Changing one category density must preserve unrelated category geometry and identifiers."
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "## Milestone 8 — Optional web barriers"
+      )
+    );
+
+    assert.ok(
+      roadmap.includes(
+        "## Milestone 9 — Tokens destroying webs"
       )
     );
 

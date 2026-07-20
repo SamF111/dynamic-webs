@@ -14,7 +14,7 @@ The web subsystem was extracted from Ambient Critters. Dynamic Webs is now the s
 - **Baseline diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
-- **Current version:** `0.2.1`
+- **Current version:** `0.2.2`
 - **Entry point:** `scripts/dynamic-webs.js`
 - **Baseline hardening:** complete
 
@@ -61,15 +61,24 @@ Ground webs are generated freely inside the active Scene rectangle. They use det
 
 ## Scene configuration
 
-Dynamic Webs owns three Scene-level flags:
+Dynamic Webs owns independent Scene flags for web abundance and appearance:
 
 ```text
-flags.dynamic-webs.webDensity
+flags.dynamic-webs.cornerWebDensity
+flags.dynamic-webs.spanWebDensity
+flags.dynamic-webs.groundWebDensity
+flags.dynamic-webs.carpetWebDensity
 flags.dynamic-webs.webColour
 flags.dynamic-webs.webThickness
 ```
 
-Supported density values are:
+The legacy combined flag remains supported as a backwards-compatible fallback:
+
+```text
+flags.dynamic-webs.webDensity
+```
+
+Every density control uses the same ordered JSON-authored states:
 
 - `disabled`
 - `sparse`
@@ -77,7 +86,16 @@ Supported density values are:
 - `dense`
 - `infested`
 
-The Scene Configuration interface contains a standalone **Dynamic Webs** tab with **Web density**, **Web colour** and **Web thickness** controls.
+The Scene Configuration interface contains a standalone **Dynamic Webs** tab with four discrete category sliders:
+
+- Corner-web density
+- Span-web density
+- Ground-web density
+- Carpet-web density
+
+The carpet slider is persisted in `v0.2.2` but remains dormant until web carpets are implemented. The tab also contains **Web colour** and **Web thickness** controls.
+
+Existing Scenes that only contain `webDensity` initially show the same inherited state on every slider. Saving the Scene Configuration form persists all four category-specific values. After that, changing one category does not override the others.
 
 There is intentionally no:
 
@@ -85,7 +103,7 @@ There is intentionally no:
 - Editable seed field
 - Regenerate button
 - Per-Scene geometry editor
-- Per-category count input
+- Raw per-category count input
 
 The default Scene values are authored in:
 
@@ -113,6 +131,20 @@ data/webs/defaults.json
 
 Runtime JavaScript consumes validated JSON-authored values rather than duplicating them as constants.
 
+## Per-category density
+
+Version `0.2.2` resolves density independently for `wall-corner`, `wall-span`, `ground` and the reserved future `web-carpet` category.
+
+Category behaviour is preset-owned:
+
+- Corner density selects the maximum corner-web count.
+- Span density selects both maximum span-web count and minimum span spacing.
+- Ground density selects the ground-web count.
+- Carpet density is stored now and will later select carpet coverage and abundance through carpet-specific preset data.
+
+A category set to `disabled` produces no webs of that category without disabling other categories. If all currently implemented categories are disabled, Dynamic Webs clears the active population even when a future carpet value is active.
+
+Category generation continues to use independent deterministic streams. Changing one category may advance the runtime generation revision, but unchanged categories reproduce the same identifiers, points and canonical hashes.
 
 ## Colour profiles
 
@@ -316,10 +348,11 @@ Dynamic Webs owns its lifecycle independently of Ambient Critters.
 
 On `canvasReady`:
 
-1. Read the Scene density, colour and thickness flags.
-2. Clear webs when density is `disabled`.
-3. Generate webs when density is active.
-4. Resolve colour presentation and render at the selected visible thickness.
+1. Resolve category densities from explicit category flags or the legacy `webDensity` fallback.
+2. Read the Scene colour and thickness flags.
+3. Clear webs when every implemented category is `disabled`.
+4. Generate each active category from its independently selected preset.
+5. Resolve colour presentation and render at the selected visible thickness.
 
 ### Canvas teardown
 
@@ -340,10 +373,13 @@ When the displayed Scene is deleted:
 
 ### Scene updates
 
-When the active Scene density changes:
+When a legacy or category-specific Scene density changes:
 
-- `disabled` clears current webs.
-- An active preset regenerates and renders the Scene.
+- The three implemented category configurations are resolved independently.
+- A disabled category is omitted while other active categories remain.
+- If every implemented category is disabled, current webs are cleared.
+- Active categories regenerate from their isolated deterministic streams.
+- Unchanged categories retain equivalent identifiers and geometry.
 
 When the active Scene colour changes:
 
@@ -416,9 +452,9 @@ dynamicWebs.api.webs.clear();
 
 Manual generation is intended for diagnostics and development. Normal use should rely on Scene configuration and lifecycle generation.
 
-`clear()` removes local generated geometry and rendering without changing the persisted Scene density flag.
+`clear()` removes local generated geometry and rendering without changing persisted Scene density, colour or thickness flags.
 
-### Scene density
+### Legacy Scene density
 
 ```javascript
 dynamicWebs.api.scene.getDensity();
@@ -428,7 +464,34 @@ await dynamicWebs.api.scene.setDensity("dense");
 await dynamicWebs.api.scene.setDensity("dense", sceneId);
 ```
 
-Changing density is GM-only and is persisted through `Scene.setFlag()`.
+These methods preserve the original combined `webDensity` contract. The value acts as a fallback only for categories without explicit category flags.
+
+### Category densities
+
+```javascript
+dynamicWebs.api.scene.getCategoryDensities();
+dynamicWebs.api.scene.getCategoryDensity("wall-corner");
+
+await dynamicWebs.api.scene.setCategoryDensity("wall-span", "sparse");
+
+await dynamicWebs.api.scene.setCategoryDensities({
+  "wall-corner": "dense",
+  "wall-span": "sparse",
+  ground: "infested",
+  "web-carpet": "disabled"
+});
+```
+
+Supported category identifiers are:
+
+```text
+wall-corner
+wall-span
+ground
+web-carpet
+```
+
+Density mutations are GM-only. Batch updates use one Scene update when available so several slider changes produce one lifecycle synchronisation.
 
 ### Scene colour
 
@@ -478,7 +541,7 @@ The report includes:
 
 - Module, public API, blueprint and diagnostic schema versions
 - Foundry version and generation
-- Active Scene, density, colour profile, thickness multiplier and geometry summary
+- Active Scene, legacy density fallback, resolved category densities, density sources, colour profile, thickness multiplier and geometry summary
 - Generation reason, timestamps and category seeds
 - Web counts by category
 - Strand counts by role
@@ -668,8 +731,8 @@ The v0.2 regression suite covers:
 - JavaScript syntax
 - Module imports and entrypoint registration
 - Manifest and package alignment
-- Scene configuration and flag paths
-- Deterministic category generation
+- Scene configuration, legacy fallback and category flag paths
+- Deterministic independently configured category generation
 - Stable web and strand identifiers
 - Blueprint integrity and deep immutability
 - Rendering replacement and cleanup
@@ -681,9 +744,11 @@ The v0.2 regression suite covers:
 - Baseline diagnostic and determinism reporting
 - Documentation and release-contract drift
 - Colour-profile validation and frozen profile lookup
-- Scene colour and thickness flag persistence and UI context
+- Scene category-density, colour and thickness persistence and UI context
 - Visual-only redraws that preserve generation identity and geometry
 - Visible width scaling without changing blueprint or collision widths
+- Four discrete density sliders and dormant future carpet persistence
+- Category-isolated geometry and identifier preservation
 
 ## Live Foundry release verification
 
@@ -694,13 +759,15 @@ For each supported Foundry generation:
 1. Install the current module files.
 2. Enable Dynamic Webs.
 3. Open a Scene with structural walls.
-4. Test `disabled`, `sparse`, `standard`, `dense` and `infested`.
-5. Test every web colour profile and confirm the population does not move.
-6. Test thickness values from `0.5×` through `4×` and confirm collision widths and population geometry do not change.
-7. Reload the canvas and reopen the Scene.
-8. Create, move and delete a wall.
-9. Confirm repeated generation and presentation changes replace rather than stack rendering.
-10. Run:
+4. Test every density state independently on corner, span and ground sliders.
+5. Confirm disabling one category leaves the other categories active.
+6. Save a future carpet density and confirm it has no current generation effect.
+7. Test every web colour profile and confirm the population does not move.
+8. Test thickness values from `0.5×` through `4×` and confirm collision widths and population geometry do not change.
+9. Reload the canvas and reopen the Scene.
+10. Create, move and delete a wall.
+11. Confirm repeated generation and presentation changes replace rather than stack rendering.
+12. Run:
 
 ```javascript
 dynamicWebs.api.diagnostics.showBaselineReport();
@@ -710,6 +777,7 @@ The report should show:
 
 - `runtimeReady: true`
 - Matching generated and rendered web counts
+- The expected `categoryDensities` and `categoryDensitySources`
 - The expected `colourProfileId`
 - The expected `thicknessMultiplier`
 - No duplicate web or strand identifiers

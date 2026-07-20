@@ -514,6 +514,167 @@ test(
   }
 );
 
+
+test(
+  "Scene category-density updates regenerate once with resolved independent options",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const controller =
+        new SceneWebLifecycleController({
+          runtime:
+            environment.runtime,
+          debounceMs:
+            200
+        });
+
+      environment.scene.getFlag =
+        (
+          _namespace,
+          key
+        ) => {
+          const values = {
+            webDensity:
+              "standard",
+            cornerWebDensity:
+              "disabled",
+            spanWebDensity:
+              "sparse",
+            groundWebDensity:
+              "infested",
+            carpetWebDensity:
+              "dense",
+            webColour:
+              "natural-white",
+            webThickness:
+              1
+          };
+
+          return values[
+            key
+          ];
+        };
+
+      controller.handleSceneUpdated(
+        environment.scene,
+        {
+          flags: {
+            "dynamic-webs": {
+              cornerWebDensity:
+                "disabled",
+              spanWebDensity:
+                "sparse",
+              groundWebDensity:
+                "infested"
+            }
+          }
+        }
+      );
+
+      assert.equal(
+        environment.generateCalls.length,
+        1
+      );
+
+      const call =
+        environment.generateCalls[0];
+
+      assert.equal(
+        call.reason,
+        "scene-web-category-density-update"
+      );
+
+      assert.deepEqual(
+        call.options.cornerWebs,
+        {
+          enabled:
+            false
+        }
+      );
+
+      assert.equal(
+        call.options.spanWebs.maximumCount,
+        3
+      );
+
+      assert.equal(
+        call.options.groundWebs.count,
+        54
+      );
+
+      assert.equal(
+        call.categoryDensities["web-carpet"],
+        "dense"
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "a future carpet density alone does not keep the current population active",
+  () => {
+    const environment =
+      createEnvironment();
+
+    try {
+      const controller =
+        new SceneWebLifecycleController({
+          runtime:
+            environment.runtime
+        });
+
+      environment.scene.getFlag =
+        (
+          _namespace,
+          key
+        ) => {
+          if (
+            key ===
+              "carpetWebDensity"
+          ) {
+            return "infested";
+          }
+
+          if (
+            key ===
+              "webColour"
+          ) {
+            return "natural-white";
+          }
+
+          if (
+            key ===
+              "webThickness"
+          ) {
+            return 1;
+          }
+
+          return "disabled";
+        };
+
+      controller.handleCanvasReady();
+
+      assert.equal(
+        environment.generateCalls.length,
+        0
+      );
+
+      assert.deepEqual(
+        environment.clearCalls,
+        [
+          "canvas-ready"
+        ]
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
 test(
   "Scene colour updates redraw without scheduling geometry generation",
   () => {

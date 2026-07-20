@@ -26,6 +26,26 @@ export function readRawSceneWebConfiguration(
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.WEB_THICKNESS
+        ),
+      [SCENE_WEB_FLAG_KEYS.CORNER_WEB_DENSITY]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.CORNER_WEB_DENSITY
+        ),
+      [SCENE_WEB_FLAG_KEYS.SPAN_WEB_DENSITY]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.SPAN_WEB_DENSITY
+        ),
+      [SCENE_WEB_FLAG_KEYS.GROUND_WEB_DENSITY]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.GROUND_WEB_DENSITY
+        ),
+      [SCENE_WEB_FLAG_KEYS.CARPET_WEB_DENSITY]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.CARPET_WEB_DENSITY
         )
     };
   }

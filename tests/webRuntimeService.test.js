@@ -299,6 +299,28 @@ test(
             environment.scene,
           densityId:
             "dense",
+          categoryDensities:
+            Object.freeze({
+              "wall-corner":
+                "dense",
+              "wall-span":
+                "sparse",
+              ground:
+                "standard",
+              "web-carpet":
+                "disabled"
+            }),
+          categoryDensitySources:
+            Object.freeze({
+              "wall-corner":
+                "explicit",
+              "wall-span":
+                "explicit",
+              ground:
+                "legacy-fallback",
+              "web-carpet":
+                "explicit"
+            }),
           reason:
             "runtime-test"
         });
@@ -321,6 +343,16 @@ test(
       assert.equal(
         snapshot.densityId,
         "dense"
+      );
+
+      assert.equal(
+        snapshot.categoryDensities["wall-span"],
+        "sparse"
+      );
+
+      assert.equal(
+        snapshot.categoryDensitySources.ground,
+        "legacy-fallback"
       );
 
       assert.equal(

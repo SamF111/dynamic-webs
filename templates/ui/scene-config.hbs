@@ -8,38 +8,68 @@
   data-dynamic-webs-scene-config
 >
   <fieldset>
-    <legend>Dynamic Webs</legend>
+    <legend>Web density by category</legend>
 
-    <div class="form-group">
-      <label
-        for="dynamic-webs-web-density"
-        title="{{webDensityControl.description}}"
+    {{#each webCategoryDensityControls}}
+      <div
+        class="form-group"
+        data-dynamic-webs-density-slider
+        data-web-category="{{categoryId}}"
+        data-density-id="{{densityId}}"
       >
-        {{webDensityControl.label}}
-      </label>
-
-      <div class="form-fields">
-        <select
-          id="dynamic-webs-web-density"
-          name="{{fieldNames.webDensity}}"
-          title="{{webDensityControl.description}}"
-          {{#unless editable}}disabled{{/unless}}
+        <label
+          for="{{domId}}"
+          title="{{description}}"
         >
-          {{#each webDensityControl.options}}
-            <option
-              value="{{value}}"
-              {{#if selected}}selected{{/if}}
-            >
-              {{label}}
-            </option>
-          {{/each}}
-        </select>
-      </div>
+          {{label}}
+          {{#if future}}
+            <span class="units">(future)</span>
+          {{/if}}
+        </label>
 
-      <p class="hint">
-        {{webDensityControl.description}}
-      </p>
-    </div>
+        <div class="form-fields">
+          <input
+            id="{{domId}}"
+            type="range"
+            value="{{sliderValue}}"
+            min="{{minimum}}"
+            max="{{maximum}}"
+            step="{{step}}"
+            aria-describedby="{{outputId}}"
+            title="{{description}}"
+            data-dynamic-webs-density-range
+            {{#unless ../editable}}disabled{{/unless}}
+          >
+
+          <input
+            type="hidden"
+            name="{{fieldName}}"
+            value="{{densityId}}"
+            data-dynamic-webs-density-value
+            {{#unless ../editable}}disabled{{/unless}}
+          >
+
+          <output
+            id="{{outputId}}"
+            for="{{domId}}"
+            data-density-id="{{densityId}}"
+            data-dynamic-webs-density-output
+          >
+            {{densityLabel}}
+          </output>
+        </div>
+
+        <p class="hint">
+          {{description}}
+          <br>
+          <small>{{sourceLabel}}</small>
+        </p>
+      </div>
+    {{/each}}
+  </fieldset>
+
+  <fieldset>
+    <legend>Web appearance</legend>
 
     <div class="form-group">
       <label

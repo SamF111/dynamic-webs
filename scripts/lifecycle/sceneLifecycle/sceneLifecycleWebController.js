@@ -11,6 +11,10 @@ import {
 } from "../../config/sceneWebDensityConfiguration.js";
 
 import {
+  getSceneWebCategoryDensityConfiguration
+} from "../../config/sceneWebCategoryDensityConfiguration.js";
+
+import {
   getSceneWebColourConfiguration
 } from "../../config/sceneWebColourConfiguration.js";
 
@@ -48,6 +52,11 @@ export function synchroniseSceneWebs({
         scene
       );
 
+    const categoryDensityConfiguration =
+      getSceneWebCategoryDensityConfiguration(
+        scene
+      );
+
     const colourConfiguration =
       getSceneWebColourConfiguration(
         scene
@@ -59,7 +68,7 @@ export function synchroniseSceneWebs({
       );
 
     if (
-      densityConfiguration.enabled !==
+      categoryDensityConfiguration.implementedEnabled !==
         true
     ) {
       service.clear(
@@ -76,9 +85,13 @@ export function synchroniseSceneWebs({
       service.generateForActiveScene({
         scene,
         options:
-          densityConfiguration.generationOptions,
+          categoryDensityConfiguration.generationOptions,
         densityId:
           densityConfiguration.densityId,
+        categoryDensities:
+          categoryDensityConfiguration.categoryDensities,
+        categoryDensitySources:
+          categoryDensityConfiguration.categoryDensitySources,
         colourProfileId:
           colourConfiguration.profileId,
         thicknessMultiplier:
@@ -107,7 +120,7 @@ export function synchroniseSceneWebs({
           normalisedReason
       },
       nextAction:
-        "Check the Dynamic Webs Scene density, colour profile and JSON-backed presets.",
+        "Check the Dynamic Webs category densities, colour profile and JSON-backed presets.",
       error
     });
 
@@ -146,15 +159,19 @@ export function synchroniseSceneWebPresentation({
     );
 
   try {
-    const densityConfiguration =
-      getSceneWebDensityConfiguration(
+    const categoryDensityConfiguration =
+      getSceneWebCategoryDensityConfiguration(
         scene
       );
 
     if (
-      densityConfiguration.enabled !==
+      categoryDensityConfiguration.implementedEnabled !==
         true
     ) {
+      service.clear(
+        normalisedReason
+      );
+
       return emitStateChanged(
         service.createDiagnosticSnapshot(),
         normalisedReason

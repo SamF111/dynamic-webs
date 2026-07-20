@@ -24,6 +24,13 @@ import {
 } from "./api/thicknessApi.js";
 
 import {
+  getPublicSceneWebCategoryDensities,
+  getPublicSceneWebCategoryDensity,
+  setPublicSceneWebCategoryDensities,
+  setPublicSceneWebCategoryDensity
+} from "./api/categoryDensityApi.js";
+
+import {
   getPublicBaselineDiagnosticReport,
   showPublicBaselineDiagnosticReport
 } from "./api/diagnosticApi.js";
@@ -110,6 +117,46 @@ export function createPublicApi(
           setPublicSceneWebThickness(
             thicknessMultiplier,
             sceneId
+          ),
+
+      getCategoryDensities:
+        (
+          sceneId = null
+        ) =>
+          getPublicSceneWebCategoryDensities(
+            sceneId
+          ),
+
+      getCategoryDensity:
+        (
+          categoryId,
+          sceneId = null
+        ) =>
+          getPublicSceneWebCategoryDensity(
+            categoryId,
+            sceneId
+          ),
+
+      setCategoryDensity:
+        (
+          categoryId,
+          densityId,
+          sceneId = null
+        ) =>
+          setPublicSceneWebCategoryDensity(
+            categoryId,
+            densityId,
+            sceneId
+          ),
+
+      setCategoryDensities:
+        (
+          values,
+          sceneId = null
+        ) =>
+          setPublicSceneWebCategoryDensities(
+            values,
+            sceneId
           )
     });
 
@@ -162,7 +209,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.2.1",
+            "0.2.2",
           webs:
             getPublicWebState(
               runtime

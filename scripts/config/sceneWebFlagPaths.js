@@ -15,7 +15,15 @@ export const SCENE_WEB_FLAG_KEYS =
     WEB_COLOUR:
       "webColour",
     WEB_THICKNESS:
-      "webThickness"
+      "webThickness",
+    CORNER_WEB_DENSITY:
+      "cornerWebDensity",
+    SPAN_WEB_DENSITY:
+      "spanWebDensity",
+    GROUND_WEB_DENSITY:
+      "groundWebDensity",
+    CARPET_WEB_DENSITY:
+      "carpetWebDensity"
   });
 
 /** Determine whether a Scene differential affects Dynamic Webs density. */
@@ -25,6 +33,27 @@ export function doesSceneUpdateAffectWebDensity(
   return doesSceneUpdateAffectFlag(
     changed,
     SCENE_WEB_FLAG_KEYS.WEB_DENSITY
+  );
+}
+
+
+/** Determine whether a Scene differential affects a category-specific density. */
+export function doesSceneUpdateAffectWebCategoryDensity(
+  changed
+) {
+  return [
+    SCENE_WEB_FLAG_KEYS.CORNER_WEB_DENSITY,
+    SCENE_WEB_FLAG_KEYS.SPAN_WEB_DENSITY,
+    SCENE_WEB_FLAG_KEYS.GROUND_WEB_DENSITY,
+    SCENE_WEB_FLAG_KEYS.CARPET_WEB_DENSITY
+  ].some(
+    (
+      flagKey
+    ) =>
+      doesSceneUpdateAffectFlag(
+        changed,
+        flagKey
+      )
   );
 }
 

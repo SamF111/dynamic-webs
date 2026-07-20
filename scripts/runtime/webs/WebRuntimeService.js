@@ -72,6 +72,8 @@ export class WebRuntimeService {
       globalThis.canvas?.scene,
     options = {},
     densityId = null,
+    categoryDensities = null,
+    categoryDensitySources = null,
     colourProfileId = null,
     thicknessMultiplier = null,
     reason = null
@@ -174,6 +176,14 @@ export class WebRuntimeService {
       densityId:
         normaliseOptionalIdentifier(
           densityId
+        ),
+      categoryDensities:
+        normaliseCategoryDensityMap(
+          categoryDensities
+        ),
+      categoryDensitySources:
+        normaliseCategoryDensitySourceMap(
+          categoryDensitySources
         ),
       colourProfileId:
         generated.colourProfileId,
@@ -526,6 +536,44 @@ function createSceneGeometrySummary(
       context.sceneRect,
     structuralWallCount:
       context.wallSegments.length
+  });
+}
+
+function normaliseCategoryDensityMap(
+  value
+) {
+  if (
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    ...value
+  });
+}
+
+function normaliseCategoryDensitySourceMap(
+  value
+) {
+  if (
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    ...value
   });
 }
 

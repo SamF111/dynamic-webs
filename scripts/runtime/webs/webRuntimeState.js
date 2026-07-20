@@ -66,6 +66,14 @@ export function createWebRuntimeState(
       null,
     densityId:
       null,
+    categoryDensities:
+      normaliseOptionalObject(
+        values.categoryDensities
+      ),
+    categoryDensitySources:
+      normaliseOptionalObject(
+        values.categoryDensitySources
+      ),
     colourProfileId:
       null,
     colourProfile:
@@ -139,6 +147,12 @@ export function createWebRuntimeSnapshot(
     densityId:
       state?.densityId ??
       null,
+    categoryDensities:
+      state?.categoryDensities ??
+      null,
+    categoryDensitySources:
+      state?.categoryDensitySources ??
+      null,
     colourProfileId:
       state?.colourProfileId ??
       null,
@@ -208,6 +222,25 @@ function createEmptyCounts() {
         decorative:
           0
       })
+  });
+}
+
+function normaliseOptionalObject(
+  value
+) {
+  if (
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze({
+    ...value
   });
 }
 
