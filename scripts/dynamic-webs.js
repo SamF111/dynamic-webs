@@ -27,6 +27,14 @@ import {
   reportDiagnostic
 } from "./diagnostics/diagnosticReporter.js";
 
+import {
+  registerModuleSettings
+} from "./config/moduleSettings.js";
+
+import {
+  getSceneWebLifecycleController
+} from "./lifecycle/sceneLifecycle.js";
+
 let initialisationPromise =
   null;
 
@@ -131,6 +139,15 @@ globalThis.Hooks.once(
  */
 async function initialiseDynamicWebs() {
   try {
+    registerModuleSettings({
+      onLevelProviderChanged:
+        () =>
+          getSceneWebLifecycleController()
+            ?.synchroniseActiveScene(
+              "world-level-provider-update"
+            )
+    });
+
     const runtime =
       initialiseRuntime();
 

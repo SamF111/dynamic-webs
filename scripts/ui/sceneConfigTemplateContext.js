@@ -1,23 +1,22 @@
 import {
-  getSceneWebCategoryDensityConfiguration,
-  WEB_CATEGORY_DENSITY_DEFINITIONS
-} from "../config/sceneWebCategoryDensityConfiguration.js";
-
-import {
-  getSceneWebColourConfiguration
-} from "../config/sceneWebColourConfiguration.js";
-
-import {
-  MAXIMUM_SCENE_WEB_THICKNESS,
-  MINIMUM_SCENE_WEB_THICKNESS,
-  SCENE_WEB_THICKNESS_STEP,
-  getSceneWebThicknessConfiguration
-} from "../config/sceneWebThicknessConfiguration.js";
+  createDefaultSceneWebPopulation,
+  getSceneWebPopulationConfiguration
+} from "../config/sceneWebPopulationConfiguration.js";
 
 import {
   SCENE_WEB_FLAG_KEYS,
   SCENE_WEB_FLAG_PATH
 } from "../config/sceneWebFlagPaths.js";
+
+import {
+  WEB_CATEGORY_DENSITY_DEFINITIONS
+} from "../config/sceneWebCategoryDensityConfiguration.js";
+
+import {
+  MAXIMUM_SCENE_WEB_THICKNESS,
+  MINIMUM_SCENE_WEB_THICKNESS,
+  SCENE_WEB_THICKNESS_STEP
+} from "../config/sceneWebThicknessConfiguration.js";
 
 import {
   WEB_DENSITY_OPTIONS,
@@ -28,196 +27,162 @@ import {
   getWebColourOptions
 } from "../simulation/webs/webColourProfiles.js";
 
-const DENSITY_LABELS_BY_ID =
-  new Map(
-    WEB_DENSITY_OPTIONS.map(
-      (
-        option
-      ) => [
-        option.id,
-        option.label
-      ]
-    )
-  );
+const DENSITY_LABELS = new Map(
+  WEB_DENSITY_OPTIONS.map((option) => [option.id, option.label])
+);
 
-/** Build the standalone Dynamic Webs SceneConfig part context. */
-export async function createSceneConfigTemplateContext({
-  application,
-  scene
-}) {
-  const categoryDensityConfiguration =
-    getSceneWebCategoryDensityConfiguration(
-      scene
-    );
+const COLOUR_LABELS = new Map(
+  getWebColourOptions().map((option) => [option.id, option.label])
+);
 
-  const colourConfiguration =
-    getSceneWebColourConfiguration(
-      scene
-    );
-
-  const thicknessConfiguration =
-    getSceneWebThicknessConfiguration(
-      scene
-    );
-
-  const categoryDensityControls =
-    WEB_CATEGORY_DENSITY_DEFINITIONS.map(
-      (
-        definition
-      ) => {
-        const resolved =
-          categoryDensityConfiguration.categories[
-            definition.categoryId
-          ];
-
-        const sliderValue =
-          Math.max(
-            0,
-            WEB_DENSITY_ORDER.indexOf(
-              resolved.densityId
-            )
-          );
-
-        const domId =
-          `dynamic-webs-${definition.flagKey}`;
-
-        return {
-          categoryId:
-            definition.categoryId,
-          domId,
-          outputId:
-            `${domId}-output`,
-          label:
-            definition.label,
-          description:
-            createCategoryDensityDescription(
-              definition.categoryId,
-              resolved.source
-            ),
-          future:
-            definition.implemented !==
-              true,
-          fieldName:
-            `${SCENE_WEB_FLAG_PATH}.${definition.flagKey}`,
-          densityId:
-            resolved.densityId,
-          densityLabel:
-            DENSITY_LABELS_BY_ID.get(
-              resolved.densityId
-            ) ??
-            resolved.densityId,
-          source:
-            resolved.source,
-          sourceLabel:
-            resolved.source ===
-              "explicit"
-              ? "Scene-specific value"
-              : `Inherited from legacy Web density: ${DENSITY_LABELS_BY_ID.get(
-                  categoryDensityConfiguration.legacyDensityId
-                ) ?? categoryDensityConfiguration.legacyDensityId}`,
-          sliderValue,
-          minimum:
-            0,
-          maximum:
-            WEB_DENSITY_ORDER.length -
-              1,
-          step:
-            1
-        };
-      }
-    );
+export async function createSceneConfigTemplateContext({ application, scene }) {
+  const configuration = getSceneWebPopulationConfiguration(scene);
+  const editable = application?.isEditable !== false;
 
   return {
-    editable:
-      application?.isEditable !==
-        false,
-
-    configuration: {
-      webDensity:
-        categoryDensityConfiguration.legacyDensityId,
-      categoryDensities:
-        categoryDensityConfiguration.categoryDensities,
-      webColour:
-        colourConfiguration.profileId,
-      webThickness:
-        thicknessConfiguration.thicknessMultiplier
-    },
-
+    editable,
     fieldNames: {
-      webDensity:
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_DENSITY}`,
-      webColour:
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_COLOUR}`,
-      webThickness:
-        `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_THICKNESS}`
+      webPopulations: `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS}`
     },
-
-    webCategoryDensityControls:
-      categoryDensityControls,
-
-    webColourControl: {
-      label:
-        "Web colour",
-      description:
-        "Choose the visual colour profile used by all generated webs in this Scene.",
-      options:
-        getWebColourOptions()
-          .map(
-            (
-              option
-            ) => ({
-              value:
-                option.id,
-              label:
-                option.label,
-              selected:
-                option.id ===
-                  colourConfiguration.profileId
-            })
+    populationValue: JSON.stringify(
+      configuration.populations.map(toPersistedPopulation)
+    ),
+    populationCards: configuration.populations.map((population, index) =>
+      createPopulationCardContext({
+        population,
+        index,
+        configuration,
+        editable
+      })
+    ),
+    newPopulationCard: createPopulationCardContext({
+      population: createDefaultSceneWebPopulation({
+        levels: configuration.levels,
+        usedIds: new Set(
+          configuration.populations.map(
+            (population) => population.id
           )
-    },
-
-    webThicknessControl: {
-      label:
-        "Web thickness",
-      description:
-        "Multiply visible strand thickness without changing web geometry or interaction width.",
-      value:
-        thicknessConfiguration.thicknessMultiplier,
-      minimum:
-        MINIMUM_SCENE_WEB_THICKNESS,
-      maximum:
-        MAXIMUM_SCENE_WEB_THICKNESS,
-      step:
-        SCENE_WEB_THICKNESS_STEP
-    }
+        )
+      }),
+      index: configuration.populations.length,
+      configuration,
+      editable,
+      template: true
+    }),
+    hasPopulations: configuration.populations.length > 0,
+    provider: configuration.provider,
+    levelProviderHint: createLevelProviderHint(configuration.provider)
   };
 }
 
-function createCategoryDensityDescription(
-  categoryId,
-  source
-) {
-  const sourceText =
-    source ===
-      "explicit"
-      ? "This Scene already has an independent value."
-      : "This currently inherits the legacy Web density until the Scene is saved.";
+function createPopulationCardContext({
+  population,
+  index,
+  configuration,
+  editable,
+  template = false
+}) {
+  const levelOptions = configuration.levels.map((level) => ({
+    value: level.id,
+    label: level.label ?? formatElevationBand(level.elevationBand) ?? level.id,
+    selected: level.id === population.levelId
+  }));
 
+  if (!levelOptions.some((option) => option.value === population.levelId)) {
+    levelOptions.unshift({
+      value: population.levelId,
+      label: `Unavailable level: ${population.levelId}`,
+      selected: true,
+      unavailable: true
+    });
+  }
+
+  const colourOptions = getWebColourOptions().map((option) => ({
+    value: option.id,
+    label: option.label,
+    selected: option.id === population.colourProfileId
+  }));
+
+  return {
+    index,
+    number: index + 1,
+    template,
+    id: population.id,
+    enabled: population.enabled === true,
+    levelId: population.levelId,
+    levelAvailable: population.levelAvailable !== false,
+    levelOptions,
+    colourProfileId: population.colourProfileId,
+    colourLabel: COLOUR_LABELS.get(population.colourProfileId) ?? population.colourProfileId,
+    colourOptions,
+    thicknessMultiplier: population.thicknessMultiplier,
+    thicknessMinimum: MINIMUM_SCENE_WEB_THICKNESS,
+    thicknessMaximum: MAXIMUM_SCENE_WEB_THICKNESS,
+    thicknessStep: SCENE_WEB_THICKNESS_STEP,
+    densityControls: WEB_CATEGORY_DENSITY_DEFINITIONS.map((definition) => {
+      const densityId = population.categoryDensities[definition.categoryId];
+
+      return {
+        categoryId: definition.categoryId,
+        label: definition.label,
+        future: definition.implemented !== true,
+        densityId,
+        densityLabel: DENSITY_LABELS.get(densityId) ?? densityId,
+        sliderValue: Math.max(0, WEB_DENSITY_ORDER.indexOf(densityId)),
+        minimum: 0,
+        maximum: WEB_DENSITY_ORDER.length - 1,
+        step: 1,
+        description: createDensityDescription(definition.categoryId)
+      };
+    }),
+    summaryTitle: `Web Population ${index + 1}`,
+    summaryDetail: `${population.enabled
+      ? resolveLevelLabel(levelOptions, population.levelId)
+      : "Disabled"} · ${COLOUR_LABELS.get(population.colourProfileId) ?? population.colourProfileId}`,
+    editable
+  };
+}
+
+function toPersistedPopulation(population) {
+  return {
+    id: population.id,
+    enabled: population.enabled,
+    levelId: population.levelId,
+    categoryDensities: population.categoryDensities,
+    colourProfileId: population.colourProfileId,
+    thicknessMultiplier: population.thicknessMultiplier
+  };
+}
+
+function resolveLevelLabel(options, id) {
+  return options.find((option) => option.value === id)?.label ?? id;
+}
+
+function formatElevationBand(band) {
+  if (!band || (band.bottom == null && band.top == null)) return null;
+  if (band.bottom === band.top || band.top == null) return `Elevation ${band.bottom}`;
+  return `Elevation ${band.bottom}–${band.top}`;
+}
+
+function createLevelProviderHint(provider) {
+  if (provider?.resolvedMode === "base") {
+    return "Web populations can currently target Base Level only. Enable theripper93's Levels in Foundry v13, or use native Scene levels in Foundry v14, for additional choices.";
+  }
+
+  return "Each population targets one detected level. Add another population to use different density, colour or thickness on another level.";
+}
+
+function createDensityDescription(categoryId) {
   switch (categoryId) {
     case "wall-corner":
-      return `Control the maximum number of webs generated from compatible wall corners. ${sourceText}`;
-
+      return "Maximum abundance at compatible wall corners on this population's level.";
     case "wall-span":
-      return `Control wall-span abundance and the preset-owned minimum spacing between span webs. ${sourceText}`;
-
+      return "Wall-span abundance and preset-owned spacing on this population's level.";
     case "ground":
-      return `Control the number of freely placed ground webs. ${sourceText}`;
-
+      return "Freely placed ground-web abundance on this population's level.";
     case "web-carpet":
-      return `Reserve the independent density for future region-bound web carpets. This value is saved now but has no generation effect until carpets are implemented. ${sourceText}`;
-
+      return "Reserved density for future region-bound web carpets; it currently has no generation effect.";
     default:
-      return sourceText;
+      return "Population-specific web density.";
   }
 }

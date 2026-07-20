@@ -1,7 +1,7 @@
 
 import {
-  getSceneWebCategoryDensityConfiguration
-} from "../config/sceneWebCategoryDensityConfiguration.js";
+  getSceneWebPopulationConfiguration
+} from "../config/sceneWebPopulationConfiguration.js";
 
 import {
   BASELINE_DIAGNOSTIC_SCHEMA_VERSION,
@@ -44,7 +44,8 @@ export function createBaselineDiagnosticReport({
 
   const population =
     createPopulationSummary(
-      rawState?.webs
+      rawState?.webs,
+      rawState?.sceneGeometry?.wallLevelById
     );
 
   const determinism =
@@ -61,22 +62,17 @@ export function createBaselineDiagnosticReport({
     globalThis.canvas?.scene ??
     null;
 
-  const sceneCategoryDensityConfiguration =
+  const scenePopulationConfiguration =
     activeScene
-      ? getSceneWebCategoryDensityConfiguration(
+      ? getSceneWebPopulationConfiguration(
           activeScene
         )
       : null;
 
-  const categoryDensities =
-    state.categoryDensities ??
-    sceneCategoryDensityConfiguration?.categoryDensities ??
-    null;
-
-  const categoryDensitySources =
-    state.categoryDensitySources ??
-    sceneCategoryDensityConfiguration?.categoryDensitySources ??
-    null;
+  const webPopulations =
+    state.populations ??
+    scenePopulationConfiguration?.populations ??
+    Object.freeze([]);
 
   return deepFreeze({
     reportSchemaVersion:
@@ -89,7 +85,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.2.2",
+        "0.3.1",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -121,14 +117,27 @@ export function createBaselineDiagnosticReport({
       name:
         activeScene?.name ??
         null,
+      webPopulations,
       densityId:
         state.densityId,
-      categoryDensities,
-      categoryDensitySources,
+      categoryDensities:
+        state.categoryDensities,
+      categoryDensitySources:
+        state.categoryDensitySources,
       colourProfileId:
         state.colourProfileId,
       thicknessMultiplier:
         state.thicknessMultiplier,
+      populationCount:
+        webPopulations.length,
+      activePopulationCount:
+        webPopulations.filter?.(
+          (population) => population.enabled === true
+        ).length ??
+        0,
+      unavailablePopulationIds:
+        scenePopulationConfiguration?.unavailablePopulationIds ??
+        Object.freeze([]),
       gridSize:
         state.sceneGeometry?.gridSize ??
         null,
@@ -137,6 +146,24 @@ export function createBaselineDiagnosticReport({
         null,
       structuralWallCount:
         state.sceneGeometry?.structuralWallCount ??
+        null,
+      detectedLevelCount:
+        state.sceneGeometry?.detectedLevelCount ??
+        null,
+      wallsByLevel:
+        state.sceneGeometry?.wallsByLevel ??
+        null,
+      unresolvedWallLevelCount:
+        state.sceneGeometry?.unresolvedWallLevelCount ??
+        null,
+      levelProvider:
+        state.levelProvider ??
+        null,
+      levels:
+        state.levels ??
+        null,
+      levelVisibility:
+        state.levelVisibility ??
         null
     },
     generation: {
@@ -146,10 +173,16 @@ export function createBaselineDiagnosticReport({
         state.generationId,
       presentationRevision:
         state.presentationRevision,
+      populations:
+        webPopulations,
       colourProfileId:
         state.colourProfileId,
       thicknessMultiplier:
         state.thicknessMultiplier,
+      categoryDensities:
+        state.categoryDensities,
+      categoryDensitySources:
+        state.categoryDensitySources,
       reason:
         state.generationReason,
       generatedAt:
@@ -158,8 +191,17 @@ export function createBaselineDiagnosticReport({
         state.seed,
       categorySeeds:
         state.categorySeeds,
-      categoryDensities,
-      categoryDensitySources,
+      populationSeeds:
+        state.categorySeeds,
+      levelProvider:
+        state.levelProvider ??
+        null,
+      levels:
+        state.levels ??
+        null,
+      levelVisibility:
+        state.levelVisibility ??
+        null,
       counts:
         state.counts,
       lastOperationReason:
@@ -180,7 +222,8 @@ export function createBaselineDiagnosticReport({
 }
 
 function createPopulationSummary(
-  webs
+  webs,
+  wallLevelById = null
 ) {
   const population =
     Array.isArray(
@@ -223,6 +266,59 @@ function createPopulationSummary(
         )
     );
 
+  const levelIds =
+    population.map(
+      (
+        web
+      ) =>
+        String(
+          web?.levelId ??
+          ""
+        )
+    );
+
+  const populationIds =
+    population.map(
+      (web) =>
+        String(
+          web?.populationId ??
+          ""
+        )
+    );
+
+  const supportLevelViolations =
+    population
+      .filter(
+        (
+          web
+        ) =>
+          (
+            Array.isArray(
+              web?.supportingWallIds
+            )
+              ? web.supportingWallIds
+              : []
+          ).some(
+            (
+              wallId
+            ) =>
+              wallLevelById?.[
+                wallId
+              ] !==
+                undefined &&
+              wallLevelById[
+                wallId
+              ] !==
+                web.levelId
+          )
+      )
+      .map(
+        (
+          web
+        ) =>
+          web.id
+      );
+
   return {
     webCount:
       webIds.length,
@@ -244,6 +340,27 @@ function createPopulationSummary(
       findDuplicates(
         strandIds
       ),
+    populationCount:
+      new Set(
+        populationIds
+      ).size,
+    populationIds:
+      Array.from(
+        new Set(
+          populationIds
+        )
+      ).sort(),
+    levelCount:
+      new Set(
+        levelIds
+      ).size,
+    levelIds:
+      Array.from(
+        new Set(
+          levelIds
+        )
+      ).sort(),
+    supportLevelViolations,
     schemaChecks: {
       allWebsVersioned:
         population.every(
@@ -285,6 +402,43 @@ function createPopulationSummary(
             )
         )
 ,
+      allWebsPopulationOwned:
+        population.every(
+          (web) =>
+            typeof web?.populationId ===
+              "string" &&
+            web.populationId.length >
+              0 &&
+            typeof web?.populationLabel ===
+              "string" &&
+            web.populationLabel.length >
+              0 &&
+            Number.isFinite(
+              Number(web?.thicknessMultiplier)
+            ) &&
+            Number(web.thicknessMultiplier) >
+              0
+        ),
+      allWebsLevelOwned:
+        population.every(
+          (
+            web
+          ) =>
+            typeof web?.levelProviderMode ===
+              "string" &&
+            web.levelProviderMode.length >
+              0 &&
+            typeof web?.levelId ===
+              "string" &&
+            web.levelId.length >
+              0 &&
+            web?.elevationBand &&
+            typeof web.elevationBand ===
+              "object"
+        ),
+      allSupportsSameLevel:
+        supportLevelViolations.length ===
+          0,
       allWebsColourProfiled:
         population.every(
           (
@@ -321,6 +475,15 @@ function createPopulationSummary(
       allWebsFrozen:
         population.every(
           Object.isFrozen
+        ),
+      allElevationBandsFrozen:
+        population.every(
+          (
+            web
+          ) =>
+            Object.isFrozen(
+              web?.elevationBand
+            )
         ),
       allStrandsFrozen:
         strands.every(

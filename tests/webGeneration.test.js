@@ -199,18 +199,20 @@ test(
 
     assert.equal(
       first.seed,
-      "dynamic-webs:web-generation:v2:scene-one"
+      "dynamic-webs:web-generation:v3:scene-one"
     );
 
     assert.deepEqual(
       first.categorySeeds,
       {
-        corner:
-          `${first.seed}:wall-corner`,
-        span:
-          `${first.seed}:wall-span`,
-        ground:
-          `${first.seed}:ground`
+        base: {
+          corner:
+            `${first.seed}:base:wall-corner`,
+          span:
+            `${first.seed}:base:wall-span`,
+          ground:
+            `${first.seed}:base:ground`
+        }
       }
     );
 

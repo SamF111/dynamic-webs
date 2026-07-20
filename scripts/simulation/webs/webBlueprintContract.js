@@ -33,16 +33,19 @@ const BOUNDS_TOLERANCE =
   0.000001;
 
 /**
- * Create one stable Scene-qualified web identifier.
+ * Create one stable Scene- and level-qualified web identifier.
  *
  * @param {object} options - Identifier values.
  * @param {string} options.sceneId - Owning Scene identifier.
+ * @param {string} options.levelId - Owning level identifier.
  * @param {string} options.kind - Web blueprint kind.
  * @param {string|number} options.sourceKey - Stable category-local source key.
  * @returns {string} Stable web identifier.
  */
 export function createStableWebId({
   sceneId,
+  populationId = "default",
+  levelId,
   kind,
   sourceKey
 }) {
@@ -68,6 +71,18 @@ export function createStableWebId({
       requireIdentifier(
         sceneId,
         "Scene ID"
+      )
+    ),
+    encodeIdentifierPart(
+      requireIdentifier(
+        populationId,
+        "web population ID"
+      )
+    ),
+    encodeIdentifierPart(
+      requireIdentifier(
+        levelId,
+        "web level ID"
       )
     ),
     encodeIdentifierPart(
@@ -193,6 +208,45 @@ export function assertWebBlueprintIntegrity(
       `Scene ID for web "${webId}"`
     );
 
+  const populationId =
+    requireIdentifier(
+      blueprint.populationId,
+      `population ID for web "${webId}"`
+    );
+
+  requireIdentifier(
+    blueprint.populationLabel,
+    `population label for web "${webId}"`
+  );
+
+  if (
+    !Number.isFinite(
+      Number(blueprint.thicknessMultiplier)
+    ) ||
+    Number(blueprint.thicknessMultiplier) <= 0
+  ) {
+    throw new Error(
+      `Dynamic Webs | Web "${webId}" has an invalid population thickness multiplier.`
+    );
+  }
+
+  const levelProviderMode =
+    requireIdentifier(
+      blueprint.levelProviderMode,
+      `level provider mode for web "${webId}"`
+    );
+
+  const levelId =
+    requireIdentifier(
+      blueprint.levelId,
+      `level ID for web "${webId}"`
+    );
+
+  assertElevationBand(
+    blueprint.elevationBand,
+    webId
+  );
+
   const kind =
     requireIdentifier(
       blueprint.kind,
@@ -229,6 +283,34 @@ export function assertWebBlueprintIntegrity(
   ) {
     throw new Error(
       `Dynamic Webs | Web "${webId}" has unsupported kind "${kind}".`
+    );
+  }
+
+  const expectedWebId =
+    createStableWebId({
+      sceneId,
+      populationId,
+      levelId,
+      kind,
+      sourceKey:
+        blueprint.sourceKey
+    });
+
+  if (
+    webId !==
+      expectedWebId
+  ) {
+    throw new Error(
+      `Dynamic Webs | Web "${webId}" is not correctly qualified by Scene "${sceneId}", population "${populationId}" and level "${levelId}".`
+    );
+  }
+
+  if (
+    levelProviderMode.length ===
+      0
+  ) {
+    throw new Error(
+      `Dynamic Webs | Web "${webId}" has an invalid level provider mode.`
     );
   }
 
@@ -377,6 +459,9 @@ export function assertWebBlueprintIntegrity(
     ) ||
     !Object.isFrozen(
       blueprint.bounds
+    ) ||
+    !Object.isFrozen(
+      blueprint.elevationBand
     ) ||
     !Object.isFrozen(
       blueprint.strands
@@ -673,6 +758,66 @@ function assertStrandIntegrity(
   }
 }
 
+function assertElevationBand(
+  band,
+  webId
+) {
+  if (
+    !band ||
+    typeof band !==
+      "object" ||
+    Array.isArray(
+      band
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Web "${webId}" requires an elevation-band object.`
+    );
+  }
+
+  for (
+    const key of
+    [
+      "bottom",
+      "top"
+    ]
+  ) {
+    const value =
+      band[key];
+
+    if (
+      value !==
+        null &&
+      !Number.isFinite(
+        Number(
+          value
+        )
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Web "${webId}" has an invalid elevation-band ${key}.`
+      );
+    }
+  }
+
+  if (
+    band.bottom !==
+      null &&
+    band.top !==
+      null &&
+    Number(
+      band.top
+    ) <
+      Number(
+        band.bottom
+      )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Web "${webId}" has an inverted elevation band.`
+    );
+  }
+}
+
 function assertBounds(
   bounds,
   webId
@@ -821,4 +966,3 @@ function encodeIdentifierPart(
     value
   );
 }
-

@@ -67,40 +67,38 @@ test(
 );
 
 test(
-  "Scene thickness is read from plain flags and exposed in Scene Configuration",
+  "population thickness is exposed in Scene Configuration",
   async () => {
     const scene = {
       flags: {
         "dynamic-webs": {
-          webDensity:
-            "dense",
-          webColour:
-            "yellowed",
-          webThickness:
-            2.5
+          webPopulations: [{
+            id:
+              "thick-webs",
+            label:
+              "Thick Webs",
+            enabled:
+              true,
+            levelId:
+              "base",
+            categoryDensities: {
+              "wall-corner":
+                "dense",
+              "wall-span":
+                "disabled",
+              ground:
+                "disabled",
+              "web-carpet":
+                "disabled"
+            },
+            colourProfileId:
+              "yellowed",
+            thicknessMultiplier:
+              2.5
+          }]
         }
       }
     };
-
-    const configuration =
-      getSceneWebThicknessConfiguration(
-        scene
-      );
-
-    assert.deepEqual(
-      configuration,
-      {
-        thicknessMultiplier:
-          2.5
-      }
-    );
-
-    assert.equal(
-      Object.isFrozen(
-        configuration
-      ),
-      true
-    );
 
     const context =
       await createSceneConfigTemplateContext({
@@ -111,28 +109,26 @@ test(
         scene
       });
 
+    const population =
+      context.populationCards[0];
+
     assert.equal(
-      context.configuration.webThickness,
+      population.thicknessMultiplier,
       2.5
     );
 
     assert.equal(
-      context.fieldNames.webThickness,
-      "flags.dynamic-webs.webThickness"
-    );
-
-    assert.equal(
-      context.webThicknessControl.minimum,
+      population.thicknessMinimum,
       MINIMUM_SCENE_WEB_THICKNESS
     );
 
     assert.equal(
-      context.webThicknessControl.maximum,
+      population.thicknessMaximum,
       MAXIMUM_SCENE_WEB_THICKNESS
     );
 
     assert.equal(
-      context.webThicknessControl.step,
+      population.thicknessStep,
       SCENE_WEB_THICKNESS_STEP
     );
   }

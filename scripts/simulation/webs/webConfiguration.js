@@ -487,7 +487,7 @@ function normaliseSeed(value, sceneId) {
   return [
     MODULE_ID,
     "web-generation",
-    "v2",
+    "v3",
     normaliseOptionalIdentifier(sceneId) ?? "no-scene"
   ].join(":");
 }
@@ -555,5 +555,3 @@ function normaliseOptionalIdentifier(value) {
 function isObject(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
-
-

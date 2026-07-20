@@ -1,8 +1,8 @@
 {
   "id": "dynamic-webs",
   "title": "Dynamic Webs",
-  "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic, independently density-configurable, colour- and thickness-configurable corner, wall-span, and ground spider webs for Foundry Virtual Tabletop Scenes.</p>",
-  "version": "0.2.2",
+  "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic, level-aware modular web populations with independent density, colour and thickness controls.</p>",
+  "version": "0.3.1",
   "authors": [
     {
       "name": "mintchoc",
@@ -16,5 +16,14 @@
   "socket": true,
   "esmodules": [
     "scripts/dynamic-webs.js"
-  ]
+  ],
+  "relationships": {
+    "recommends": [
+      {
+        "id": "levels",
+        "type": "module",
+        "reason": "Optional integration for Foundry v13 worlds. Dynamic Webs can use theripper93's Levels when available; Foundry v14 uses native Scene levels."
+      }
+    ]
+  }
 }

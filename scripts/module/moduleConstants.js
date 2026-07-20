@@ -19,7 +19,7 @@ export const PUBLIC_API_VERSION =
  * versions so geometry contracts can evolve without conflating concerns.
  */
 export const WEB_BLUEPRINT_SCHEMA_VERSION =
-  2;
+  4;
 
 /** Schema version for the copyable baseline diagnostic report. */
 export const BASELINE_DIAGNOSTIC_SCHEMA_VERSION =
@@ -48,4 +48,3 @@ export const WEB_RENDER_LAYER_MODES =
 
 export const DEFAULT_WEB_RENDER_LAYER_MODE =
   WEB_RENDER_LAYER_MODES.UNDER_TOKENS;
-

@@ -29,6 +29,10 @@ import {
 export class WallSpanWebGenerator {
   generate({
     sceneId,
+    populationId = "default",
+    populationLabel = "Default Web Population",
+    thicknessMultiplier = 1,
+    level,
     generationSeed,
     wallSegments,
     gridSize,
@@ -71,6 +75,10 @@ export class WallSpanWebGenerator {
           createSpanWeb({
             candidate,
             sceneId,
+            populationId,
+            populationLabel,
+            thicknessMultiplier,
+            level,
             generationSeed,
             gridSize,
             configuration,
@@ -706,6 +714,10 @@ function selectSpacedCandidates({
 function createSpanWeb({
   candidate,
   sceneId,
+  populationId,
+  populationLabel,
+  thicknessMultiplier,
+  level,
   generationSeed,
   gridSize,
   configuration,
@@ -967,11 +979,23 @@ function createSpanWeb({
     id:
       createStableWebId({
         sceneId,
+        populationId,
+        levelId:
+          level.id,
         kind:
           WEB_BLUEPRINT_KINDS.WALL_SPAN,
         sourceKey
       }),
     sceneId,
+    populationId,
+    populationLabel,
+    thicknessMultiplier,
+    levelProviderMode:
+      level.providerMode,
+    levelId:
+      level.id,
+    elevationBand:
+      level.elevationBand,
     seed:
       generationSeed,
     sourceKey,
@@ -1324,5 +1348,3 @@ function vectorLength(
     Number(vector?.y)
   );
 }
-
-

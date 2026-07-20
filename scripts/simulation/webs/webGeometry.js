@@ -193,6 +193,12 @@ export function createWebStrand({
 export function createWebBlueprint({
   id,
   sceneId,
+  populationId = "default",
+  populationLabel = "Default Web Population",
+  thicknessMultiplier = 1,
+  levelProviderMode,
+  levelId,
+  elevationBand,
   seed,
   sourceKey,
   kind,
@@ -212,6 +218,67 @@ export function createWebBlueprint({
       sceneId,
       `Scene ID for web "${webId}"`
     );
+
+  const safePopulationId =
+    requireIdentifier(
+      populationId,
+      `population ID for web "${webId}"`
+    );
+
+  const safePopulationLabel =
+    requireIdentifier(
+      populationLabel,
+      `population label for web "${webId}"`
+    );
+
+  const safeThicknessMultiplier =
+    Number(thicknessMultiplier);
+
+  if (
+    !Number.isFinite(safeThicknessMultiplier) ||
+    safeThicknessMultiplier <= 0
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Web "${webId}" requires a positive thickness multiplier.`
+    );
+  }
+
+  const safeLevelProviderMode =
+    requireIdentifier(
+      levelProviderMode,
+      `level provider mode for web "${webId}"`
+    );
+
+  const safeLevelId =
+    requireIdentifier(
+      levelId,
+      `level ID for web "${webId}"`
+    );
+
+  const safeElevationBand =
+    {
+      bottom:
+        normaliseOptionalFiniteNumber(
+          elevationBand?.bottom
+        ),
+      top:
+        normaliseOptionalFiniteNumber(
+          elevationBand?.top
+        )
+    };
+
+  if (
+    safeElevationBand.bottom !==
+      null &&
+    safeElevationBand.top !==
+      null &&
+    safeElevationBand.top <
+      safeElevationBand.bottom
+  ) {
+    throw new Error(
+      `Dynamic Webs | Web "${webId}" has an inverted elevation band.`
+    );
+  }
 
   const safeSeed =
     requireIdentifier(
@@ -387,6 +454,18 @@ export function createWebBlueprint({
         webId,
       sceneId:
         safeSceneId,
+      populationId:
+        safePopulationId,
+      populationLabel:
+        safePopulationLabel,
+      thicknessMultiplier:
+        safeThicknessMultiplier,
+      levelProviderMode:
+        safeLevelProviderMode,
+      levelId:
+        safeLevelId,
+      elevationBand:
+        safeElevationBand,
       seed:
         safeSeed,
       sourceKey:
@@ -702,6 +781,36 @@ export function calculatePointBounds(
   };
 }
 
+function normaliseOptionalFiniteNumber(
+  value
+) {
+  if (
+    value ===
+      null ||
+    value ===
+      undefined ||
+    value ===
+      "" ||
+    value ===
+      Infinity ||
+    value ===
+      -Infinity
+  ) {
+    return null;
+  }
+
+  const numericValue =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    numericValue
+  )
+    ? numericValue
+    : null;
+}
+
 function isFinitePoint(
   point
 ) {
@@ -741,4 +850,3 @@ function requireIdentifier(
 
   return identifier;
 }
-

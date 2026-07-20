@@ -1,5 +1,7 @@
 {
   "webDensity": "disabled",
   "webColour": "natural-white",
-  "webThickness": 1
+  "webThickness": 1,
+  "webPopulationDensity": "standard",
+  "webPopulations": []
 }

@@ -15,6 +15,10 @@ import {
 export class GroundWebGenerator {
   generate({
     sceneId,
+    populationId = "default",
+    populationLabel = "Default Web Population",
+    thicknessMultiplier = 1,
+    level,
     generationSeed,
     sceneRect,
     gridSize,
@@ -34,6 +38,10 @@ export class GroundWebGenerator {
       webs.push(createGroundWeb({
         index,
         sceneId,
+        populationId,
+        populationLabel,
+        thicknessMultiplier,
+        level,
         generationSeed,
         sceneRect,
         gridSize,
@@ -49,6 +57,10 @@ export class GroundWebGenerator {
 function createGroundWeb({
   index,
   sceneId,
+  populationId,
+  populationLabel,
+  thicknessMultiplier,
+  level,
   generationSeed,
   sceneRect,
   gridSize,
@@ -158,11 +170,23 @@ function createGroundWeb({
     id:
       createStableWebId({
         sceneId,
+        populationId,
+        levelId:
+          level.id,
         kind:
           WEB_BLUEPRINT_KINDS.GROUND,
         sourceKey
       }),
     sceneId,
+    populationId,
+    populationLabel,
+    thicknessMultiplier,
+    levelProviderMode:
+      level.providerMode,
+    levelId:
+      level.id,
+    elevationBand:
+      level.elevationBand,
     seed:
       generationSeed,
     sourceKey,
@@ -185,5 +209,3 @@ function chooseCoordinate(random, minimum, maximum, margin) {
   if (innerMaximum <= innerMinimum) return (minimum + maximum) / 2;
   return randomBetween(random, innerMinimum, innerMaximum);
 }
-
-

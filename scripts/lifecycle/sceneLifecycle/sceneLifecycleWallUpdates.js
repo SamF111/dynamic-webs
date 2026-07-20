@@ -22,7 +22,12 @@ export function doesWallUpdateAffectWebs(
       "x2",
       "y2",
       "door",
-      "doorType"
+      "doorType",
+      "level",
+      "levelId",
+      "elevation",
+      "flags.levels",
+      "flags.wall-height"
     ];
 
   return objectContainsPathPrefix(

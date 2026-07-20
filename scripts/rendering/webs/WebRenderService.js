@@ -41,6 +41,9 @@ export class WebRenderService {
 
     this.lastThicknessMultiplier =
       1;
+
+    this.lastThicknessMultipliersByPopulation =
+      Object.freeze({});
   }
 
   render(
@@ -100,6 +103,12 @@ export class WebRenderService {
           ? webs
           : []
       ) {
+        const webThicknessMultiplier =
+          resolveThicknessMultiplier(
+            web?.thicknessMultiplier ??
+            thicknessMultiplier
+          );
+
         const graphics =
           new pixi.Graphics();
 
@@ -129,7 +138,7 @@ export class WebRenderService {
                   strand.widthPx +
                   configuration.underWidthAdditionPx
                 ) *
-                thicknessMultiplier,
+                webThicknessMultiplier,
               colour:
                 resolveStrandColour(
                   strand.underColour,
@@ -148,7 +157,7 @@ export class WebRenderService {
             {
               width:
                 strand.widthPx *
-                thicknessMultiplier,
+                webThicknessMultiplier,
               colour:
                 resolveStrandColour(
                   strand.colour,
@@ -175,6 +184,19 @@ export class WebRenderService {
 
       throw error;
     }
+
+    this.lastThicknessMultipliersByPopulation =
+      Object.freeze(
+        Object.fromEntries(
+          (Array.isArray(webs) ? webs : [])
+            .map((web) => [
+              web.populationId ?? "default",
+              resolveThicknessMultiplier(
+                web?.thicknessMultiplier ?? thicknessMultiplier
+              )
+            ])
+        )
+      );
 
     this.renderRevision +=
       1;
@@ -326,6 +348,8 @@ export class WebRenderService {
           : this.lastZIndex,
       thicknessMultiplier:
         this.lastThicknessMultiplier,
+      thicknessMultipliersByPopulation:
+        this.lastThicknessMultipliersByPopulation,
       renderRevision:
         this.renderRevision,
       lastRenderedAt:

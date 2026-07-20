@@ -4,11 +4,8 @@ import {
 } from "../module/moduleConstants.js";
 
 import {
-  doesSceneUpdateAffectWebCategoryDensity,
-  doesSceneUpdateAffectWebColour,
-  doesSceneUpdateAffectWebDensity,
   doesSceneUpdateAffectWebGeometry,
-  doesSceneUpdateAffectWebThickness
+  doesSceneUpdateAffectWebPopulations
 } from "../config/sceneWebFlagPaths.js";
 
 import {
@@ -17,8 +14,14 @@ import {
 
 import {
   synchroniseSceneWebPresentation,
+  synchroniseSceneWebVisibility,
   synchroniseSceneWebs
 } from "./sceneLifecycle/sceneLifecycleWebController.js";
+
+import {
+  doesSceneUpdateAffectViewedWebLevel,
+  doesTokenUpdateAffectViewedWebLevel
+} from "../foundry/webLevelVisibilityCompatibility.js";
 
 /**
  * Own Foundry hooks and debounced Scene web regeneration.
@@ -169,6 +172,69 @@ export class SceneWebLifecycleController {
         )
     );
 
+    for (
+      const event of
+      [
+        "createLevel",
+        "updateLevel",
+        "deleteLevel"
+      ]
+    ) {
+      this.#register(
+        event,
+        (
+          levelDocument
+        ) =>
+          this.handleLevelStructureChanged(
+            levelDocument,
+            event
+          )
+      );
+    }
+
+    for (
+      const event of
+      [
+        "levelsUIChange",
+        "levelsUiChange",
+        "levelsChange"
+      ]
+    ) {
+      this.#register(
+        event,
+        () =>
+          this.synchroniseActiveSceneVisibility(
+            event
+          )
+      );
+    }
+
+    this.#register(
+      "controlToken",
+      () =>
+        this.synchroniseActiveSceneVisibility(
+          "control-token-level-update"
+        )
+    );
+
+    this.#register(
+      "updateToken",
+      (
+        _tokenDocument,
+        changed
+      ) => {
+        if (
+          doesTokenUpdateAffectViewedWebLevel(
+            changed
+          )
+        ) {
+          this.synchroniseActiveSceneVisibility(
+            "token-level-update"
+          );
+        }
+      }
+    );
+
     this.registered =
       true;
 
@@ -255,54 +321,29 @@ export class SceneWebLifecycleController {
       return;
     }
 
-    const legacyDensityChanged =
-      doesSceneUpdateAffectWebDensity(
-        changed
-      );
-
-    const categoryDensityChanged =
-      doesSceneUpdateAffectWebCategoryDensity(
-        changed
-      );
-
     if (
-      legacyDensityChanged ||
-      categoryDensityChanged
+      doesSceneUpdateAffectWebPopulations(
+        changed
+      )
     ) {
       this.clearPendingRebuild();
 
       this.synchroniseActiveScene(
-        categoryDensityChanged
-          ? "scene-web-category-density-update"
-          : "scene-web-density-update"
+        "scene-web-populations-update"
       );
 
       return;
     }
 
-    const colourChanged =
-      doesSceneUpdateAffectWebColour(
-        changed
-      );
-
-    const thicknessChanged =
-      doesSceneUpdateAffectWebThickness(
-        changed
-      );
-
     if (
-      colourChanged ||
-      thicknessChanged
+      doesSceneUpdateAffectViewedWebLevel(
+        changed
+      )
     ) {
       this.clearPendingRebuild();
 
-      this.synchroniseActiveScenePresentation(
-        colourChanged &&
-          thicknessChanged
-          ? "scene-web-presentation-update"
-          : colourChanged
-            ? "scene-web-colour-update"
-            : "scene-web-thickness-update"
+      this.synchroniseActiveSceneVisibility(
+        "scene-viewed-level-update"
       );
 
       return;
@@ -414,6 +455,45 @@ export class SceneWebLifecycleController {
         "delete-wall"
       );
     }
+  }
+
+  /** Regenerate when the active Scene's level structure changes. */
+  handleLevelStructureChanged(
+    levelDocument,
+    event
+  ) {
+    const parentSceneId =
+      levelDocument?.parent?.id ??
+      levelDocument?.scene?.id ??
+      levelDocument?.parentId ??
+      null;
+
+    const activeSceneId =
+      globalThis.canvas?.scene?.id ??
+      null;
+
+    if (
+      !activeSceneId ||
+      (
+        parentSceneId !==
+          null &&
+        String(
+          parentSceneId
+        ) !==
+          String(
+            activeSceneId
+          )
+      )
+    ) {
+      return;
+    }
+
+    this.scheduleRebuild(
+      String(
+        event ??
+        "level-structure-update"
+      )
+    );
   }
 
   /**
@@ -591,6 +671,56 @@ export class SceneWebLifecycleController {
 
     const snapshot =
       synchroniseSceneWebPresentation({
+        runtime:
+          this.runtime,
+        scene,
+        reason:
+          normalisedReason
+      });
+
+    if (snapshot) {
+      this.lastCompletedReason =
+        normalisedReason;
+
+      this.lastCompletedAt =
+        Date.now();
+
+      this.synchronisationCount +=
+        1;
+    }
+
+    return snapshot;
+  }
+
+  /** Redraw the current level subset without regenerating geometry. */
+  synchroniseActiveSceneVisibility(
+    reason
+  ) {
+    const normalisedReason =
+      normaliseReason(
+        reason
+      );
+
+    this.lastRequestedReason =
+      normalisedReason;
+
+    this.lastRequestedAt =
+      Date.now();
+
+    const scene =
+      globalThis.canvas?.scene ??
+      null;
+
+    if (
+      !scene ||
+      globalThis.canvas?.ready !==
+        true
+    ) {
+      return null;
+    }
+
+    const snapshot =
+      synchroniseSceneWebVisibility({
         runtime:
           this.runtime,
         scene,

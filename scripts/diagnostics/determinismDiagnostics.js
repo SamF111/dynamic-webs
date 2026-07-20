@@ -175,6 +175,39 @@ function createCanonicalWebProjection(
         web?.sceneId ??
         ""
       ),
+    populationId:
+      String(
+        web?.populationId ??
+        ""
+      ),
+    populationLabel:
+      String(
+        web?.populationLabel ??
+        ""
+      ),
+    thicknessMultiplier:
+      Number(
+        web?.thicknessMultiplier ??
+        1
+      ),
+    levelProviderMode:
+      String(
+        web?.levelProviderMode ??
+        ""
+      ),
+    levelId:
+      String(
+        web?.levelId ??
+        ""
+      ),
+    elevationBand: {
+      bottom:
+        web?.elevationBand?.bottom ??
+        null,
+      top:
+        web?.elevationBand?.top ??
+        null
+    },
     seed:
       String(
         web?.seed ??
@@ -495,4 +528,3 @@ function deepFreeze(
         value
       );
 }
-

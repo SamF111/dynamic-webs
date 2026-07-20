@@ -6,34 +6,25 @@ import {
 import {
   clearPublicWebs,
   generatePublicWebs,
-  getPublicSceneWebDensity,
-  getPublicWebState,
-  setPublicSceneWebDensity
+  getPublicWebState
 } from "./api/webApi.js";
 
 import {
-  getPublicSceneWebColour,
   getPublicWebColourProfile,
-  getPublicWebColourProfiles,
-  setPublicSceneWebColour
+  getPublicWebColourProfiles
 } from "./api/colourApi.js";
-
-import {
-  getPublicSceneWebThickness,
-  setPublicSceneWebThickness
-} from "./api/thicknessApi.js";
-
-import {
-  getPublicSceneWebCategoryDensities,
-  getPublicSceneWebCategoryDensity,
-  setPublicSceneWebCategoryDensities,
-  setPublicSceneWebCategoryDensity
-} from "./api/categoryDensityApi.js";
 
 import {
   getPublicBaselineDiagnosticReport,
   showPublicBaselineDiagnosticReport
 } from "./api/diagnosticApi.js";
+
+
+import {
+  getPublicSceneWebPopulation,
+  getPublicSceneWebPopulations,
+  setPublicSceneWebPopulations
+} from "./api/populationApi.js";
 
 /** Create the stable public Dynamic Webs API. */
 export function createPublicApi(
@@ -42,12 +33,9 @@ export function createPublicApi(
   const webs =
     Object.freeze({
       generate:
-        (
-          options = {}
-        ) =>
+        () =>
           generatePublicWebs(
-            runtime,
-            options
+            runtime
           ),
 
       clear:
@@ -65,99 +53,17 @@ export function createPublicApi(
 
   const scene =
     Object.freeze({
-      getDensity:
-        (
-          sceneId = null
-        ) =>
-          getPublicSceneWebDensity(
-            sceneId
-          ),
+      getPopulations:
+        (sceneId = null) =>
+          getPublicSceneWebPopulations(sceneId),
 
-      setDensity:
-        (
-          densityId,
-          sceneId = null
-        ) =>
-          setPublicSceneWebDensity(
-            densityId,
-            sceneId
-          ),
+      getPopulation:
+        (populationId, sceneId = null) =>
+          getPublicSceneWebPopulation(populationId, sceneId),
 
-      getColour:
-        (
-          sceneId = null
-        ) =>
-          getPublicSceneWebColour(
-            sceneId
-          ),
-
-      setColour:
-        (
-          profileId,
-          sceneId = null
-        ) =>
-          setPublicSceneWebColour(
-            profileId,
-            sceneId
-          ),
-
-      getThickness:
-        (
-          sceneId = null
-        ) =>
-          getPublicSceneWebThickness(
-            sceneId
-          ),
-
-      setThickness:
-        (
-          thicknessMultiplier,
-          sceneId = null
-        ) =>
-          setPublicSceneWebThickness(
-            thicknessMultiplier,
-            sceneId
-          ),
-
-      getCategoryDensities:
-        (
-          sceneId = null
-        ) =>
-          getPublicSceneWebCategoryDensities(
-            sceneId
-          ),
-
-      getCategoryDensity:
-        (
-          categoryId,
-          sceneId = null
-        ) =>
-          getPublicSceneWebCategoryDensity(
-            categoryId,
-            sceneId
-          ),
-
-      setCategoryDensity:
-        (
-          categoryId,
-          densityId,
-          sceneId = null
-        ) =>
-          setPublicSceneWebCategoryDensity(
-            categoryId,
-            densityId,
-            sceneId
-          ),
-
-      setCategoryDensities:
-        (
-          values,
-          sceneId = null
-        ) =>
-          setPublicSceneWebCategoryDensities(
-            values,
-            sceneId
-          )
+      setPopulations:
+        (populations, sceneId = null) =>
+          setPublicSceneWebPopulations(populations, sceneId)
     });
 
   const colours =
@@ -173,6 +79,29 @@ export function createPublicApi(
           getPublicWebColourProfile(
             profileId
           )
+    });
+
+  const levels =
+    Object.freeze({
+      getState:
+        () => {
+          const state =
+            getPublicWebState(
+              runtime
+            );
+
+          return Object.freeze({
+            provider:
+              state.levelProvider,
+            levels:
+              state.levels,
+            visibility:
+              state.levelVisibility,
+            countsByLevel:
+              state.counts?.byLevel ??
+              null
+          });
+        }
     });
 
   const diagnostics =
@@ -209,7 +138,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.2.2",
+            "0.3.1",
           webs:
             getPublicWebState(
               runtime
@@ -219,6 +148,7 @@ export function createPublicApi(
     webs,
     scene,
     colours,
+    levels,
     diagnostics
   });
 }

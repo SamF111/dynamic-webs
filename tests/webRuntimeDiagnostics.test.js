@@ -2,12 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  WEB_BLUEPRINT_SCHEMA_VERSION
+} from "../scripts/module/moduleConstants.js";
+
+import {
   createWebRuntimeSnapshot,
   createWebRuntimeState
 } from "../scripts/runtime/webs/webRuntimeState.js";
 
 test(
-  "empty runtime diagnostics expose v0.2 telemetry and frozen count groups",
+  "empty runtime diagnostics expose v0.3 telemetry and frozen count groups",
   () => {
     const state =
       createWebRuntimeState({
@@ -34,7 +38,7 @@ test(
 
     assert.equal(
       snapshot.blueprintSchemaVersion,
-      2
+      WEB_BLUEPRINT_SCHEMA_VERSION
     );
 
     assert.equal(

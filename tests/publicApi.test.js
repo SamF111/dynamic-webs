@@ -6,47 +6,32 @@ import {
 } from "../scripts/api.js";
 
 function createEnvironment() {
-  const previousGame =
-    globalThis.game;
-
-  const previousCanvas =
-    globalThis.canvas;
+  const previousGame = globalThis.game;
+  const previousCanvas = globalThis.canvas;
 
   const calls = {
-    generate:
-      [],
-    clear:
-      [],
-    setFlag:
-      []
+    generate: [],
+    clear: [],
+    setFlag: []
   };
 
-  const webSnapshot =
-    Object.freeze({
-      active:
-        true,
-      sceneId:
-        "scene"
-    });
+  const webSnapshot = Object.freeze({
+    active: true,
+    sceneId: "scene",
+    levelProvider: null,
+    levels: Object.freeze([]),
+    levelVisibility: null,
+    counts: Object.freeze({ byLevel: Object.freeze({}) })
+  });
 
   const service = {
-    generateForActiveScene(
-      options
-    ) {
-      calls.generate.push(
-        options
-      );
-
+    generateForActiveScene(options) {
+      calls.generate.push(options);
       return webSnapshot;
     },
 
-    clear(
-      reason
-    ) {
-      calls.clear.push(
-        reason
-      );
-
+    clear(reason) {
+      calls.clear.push(reason);
       return true;
     },
 
@@ -56,62 +41,35 @@ function createEnvironment() {
   };
 
   const runtime = {
-    runtimeOwnerType:
-      "DynamicWebsRuntime",
-    ready:
-      true,
-    getWebRuntimeService:
-      () =>
-        service
+    runtimeOwnerType: "DynamicWebsRuntime",
+    ready: true,
+    getWebRuntimeService: () => service
   };
 
+  const persistedPopulations = [{
+    id: "level-0-blue",
+    enabled: true,
+    levelId: "base",
+    categoryDensities: {
+      "wall-corner": "standard",
+      "wall-span": "disabled",
+      ground: "disabled",
+      "web-carpet": "disabled"
+    },
+    colourProfileId: "arcane-blue",
+    thicknessMultiplier: 1.5
+  }];
+
   const scene = {
-    id:
-      "scene",
-    getFlag(
-      namespace,
-      key
-    ) {
-      assert.equal(
-        namespace,
-        "dynamic-webs"
-      );
+    id: "scene",
 
-      if (
-        key ===
-          "webDensity"
-      ) {
-        return "dense";
-      }
-
-      if (
-        key ===
-          "webColour"
-      ) {
-        return "arcane-blue";
-      }
-
-      if (
-        key ===
-          "webThickness"
-      ) {
-        return 1.5;
-      }
-
-      return undefined;
+    getFlag(namespace, key) {
+      assert.equal(namespace, "dynamic-webs");
+      return key === "webPopulations" ? persistedPopulations : undefined;
     },
 
-    async setFlag(
-      namespace,
-      key,
-      value
-    ) {
-      calls.setFlag.push({
-        namespace,
-        key,
-        value
-      });
-
+    async setFlag(namespace, key, value) {
+      calls.setFlag.push({ namespace, key, value });
       return this;
     }
   };
@@ -121,26 +79,25 @@ function createEnvironment() {
   };
 
   globalThis.game = {
+    release: {
+      generation: 13
+    },
+    version: "13",
     user: {
-      isGM:
-        true
+      isGM: true
+    },
+    settings: {
+      get: () => "base"
     },
     modules: {
-      get:
-        () => ({
-          version:
-            "0.2.2"
-        })
+      get(id) {
+        if (id === "levels") return { active: false };
+        if (id === "dynamic-webs") return { version: "0.3.1" };
+        return null;
+      }
     },
     scenes: {
-      get:
-        (
-          id
-        ) =>
-          id ===
-            "scene"
-            ? scene
-            : null
+      get: (id) => id === "scene" ? scene : null
     }
   };
 
@@ -148,360 +105,151 @@ function createEnvironment() {
     runtime,
     calls,
     scene,
+    persistedPopulations,
     restore() {
-      globalThis.game =
-        previousGame;
-
-      globalThis.canvas =
-        previousCanvas;
+      globalThis.game = previousGame;
+      globalThis.canvas = previousCanvas;
     }
   };
 }
 
-test(
-  "public API and namespaces are frozen",
-  () => {
-    const environment =
-      createEnvironment();
+test("public API and namespaces are frozen and expose only modular Scene configuration", () => {
+  const environment = createEnvironment();
 
-    try {
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
+  try {
+    const api = createPublicApi(environment.runtime);
 
-      assert.equal(
-        api.version,
-        1
-      );
-
-      assert.equal(
-        Object.isFrozen(
-          api
-        ),
-        true
-      );
-
-      assert.equal(
-        Object.isFrozen(
-          api.webs
-        ),
-        true
-      );
-
-      assert.equal(
-        Object.isFrozen(
-          api.scene
-        ),
-        true
-      );
-
-      assert.equal(
-        Object.isFrozen(
-          api.diagnostics
-        ),
-        true
-      );
-
-      assert.equal(
-        Object.isFrozen(
-          api.colours
-        ),
-        true
-      );
-
-      assert.equal(
-        api.getState().webs,
-        environment.runtime
-          .getWebRuntimeService()
-          .createDiagnosticSnapshot()
-      );
-    } finally {
-      environment.restore();
-    }
+    assert.equal(api.version, 1);
+    assert.equal(Object.isFrozen(api), true);
+    assert.equal(Object.isFrozen(api.webs), true);
+    assert.equal(Object.isFrozen(api.scene), true);
+    assert.equal(Object.isFrozen(api.diagnostics), true);
+    assert.equal(Object.isFrozen(api.colours), true);
+    assert.deepEqual(
+      Object.keys(api.scene).sort(),
+      ["getPopulation", "getPopulations", "setPopulations"]
+    );
+    assert.equal(api.getState().webs, environment.runtime
+      .getWebRuntimeService()
+      .createDiagnosticSnapshot());
+  } finally {
+    environment.restore();
   }
-);
+});
 
-test(
-  "public web operations delegate through the runtime service",
-  () => {
-    const environment =
-      createEnvironment();
+test("public web operations generate persisted modular populations and clear runtime state", () => {
+  const environment = createEnvironment();
 
-    try {
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
+  try {
+    const api = createPublicApi(environment.runtime);
+    const generated = api.webs.generate();
 
-      const generated =
-        api.webs.generate({
-          groundWebs: {
-            count:
-              2
-          }
-        });
+    assert.equal(generated.active, true);
+    assert.equal(environment.calls.generate.length, 1);
+    assert.equal(environment.calls.generate[0].reason, "public-api-generate");
+    assert.equal(environment.calls.generate[0].populations.length, 1);
+    assert.equal(environment.calls.generate[0].populations[0].id, "level-0-blue");
+    assert.equal(environment.calls.generate[0].populations[0].colourProfileId, "arcane-blue");
 
-      assert.equal(
-        generated.active,
-        true
-      );
+    const cleared = api.webs.clear();
+    assert.equal(cleared.cleared, true);
+    assert.deepEqual(environment.calls.clear, ["public-api-clear"]);
+  } finally {
+    environment.restore();
+  }
+});
 
-      assert.equal(
-        environment.calls.generate.length,
-        1
-      );
+test("public Scene population operations return frozen snapshots and replace the complete flag", async () => {
+  const environment = createEnvironment();
 
-      assert.equal(
-        environment.calls.generate[0].reason,
-        "public-api-generate"
-      );
+  try {
+    const api = createPublicApi(environment.runtime);
+    const populations = api.scene.getPopulations();
 
-      assert.deepEqual(
-        environment.calls.generate[0].options,
-        {
-          groundWebs: {
-            count:
-              2
-          }
+    assert.equal(populations.length, 1);
+    assert.equal(populations[0].id, "level-0-blue");
+    assert.equal(Object.isFrozen(populations), true);
+    assert.equal(Object.isFrozen(populations[0]), true);
+    assert.equal(Object.isFrozen(populations[0].categoryDensities), true);
+    assert.equal(Object.prototype.hasOwnProperty.call(populations[0], "label"), false);
+    assert.deepEqual(api.scene.getPopulation("level-0-blue"), populations[0]);
+    assert.equal(api.scene.getPopulation("missing"), null);
+
+    await api.scene.setPopulations([{
+      id: "level-10-red",
+      enabled: true,
+      levelId: "base",
+      categoryDensities: {
+        "wall-corner": "dense",
+        "wall-span": "dense",
+        ground: "dense",
+        "web-carpet": "disabled"
+      },
+      colourProfileId: "blood-red",
+      thicknessMultiplier: "2"
+    }]);
+
+    assert.deepEqual(environment.calls.setFlag, [{
+      namespace: "dynamic-webs",
+      key: "webPopulations",
+      value: [{
+        id: "level-10-red",
+        enabled: true,
+        levelId: "base",
+        categoryDensities: {
+          "wall-corner": "dense",
+          "wall-span": "dense",
+          ground: "dense",
+          "web-carpet": "disabled"
+        },
+        colourProfileId: "blood-red",
+        thicknessMultiplier: 2
+      }]
+    }]);
+
+    await assert.rejects(
+      () => api.scene.setPopulations([{
+        id: "invalid",
+        levelId: "base",
+        categoryDensities: {
+          ground: "impossible"
         }
-      );
-
-      assert.equal(
-        environment.calls.generate[0].colourProfileId,
-        "arcane-blue"
-      );
-
-      const cleared =
-        api.webs.clear();
-
-      assert.equal(
-        cleared.cleared,
-        true
-      );
-
-      assert.deepEqual(
-        environment.calls.clear,
-        [
-          "public-api-clear"
-        ]
-      );
-    } finally {
-      environment.restore();
-    }
+      }]),
+      /Unsupported Scene web density/u
+    );
+  } finally {
+    environment.restore();
   }
-);
+});
 
-test(
-  "public Scene operations read and persist only supported densities",
-  async () => {
-    const environment =
-      createEnvironment();
+test("public colour operations expose frozen authored profiles", () => {
+  const environment = createEnvironment();
 
-    try {
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
+  try {
+    const api = createPublicApi(environment.runtime);
+    const profiles = api.colours.getProfiles();
 
-      assert.equal(
-        api.scene.getDensity(),
-        "dense"
-      );
-
-      await api.scene.setDensity(
-        "sparse"
-      );
-
-      assert.deepEqual(
-        environment.calls.setFlag,
-        [
-          {
-            namespace:
-              "dynamic-webs",
-            key:
-              "webDensity",
-            value:
-              "sparse"
-          }
-        ]
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setDensity(
-            "impossible"
-          ),
-        /Unsupported Scene web density/u
-      );
-    } finally {
-      environment.restore();
-    }
+    assert.equal(Object.isFrozen(profiles), true);
+    assert.equal(api.colours.getProfile("blood-red").label, "Blood Red");
+  } finally {
+    environment.restore();
   }
-);
+});
 
-test(
-  "public colour operations expose frozen profiles and persist supported Scene colours",
-  async () => {
-    const environment =
-      createEnvironment();
+test("GM-only modular operations reject non-GM callers", async () => {
+  const environment = createEnvironment();
 
-    try {
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
+  try {
+    globalThis.game.user.isGM = false;
+    const api = createPublicApi(environment.runtime);
 
-      assert.equal(
-        api.scene.getColour(),
-        "arcane-blue"
-      );
-
-      const profiles =
-        api.colours.getProfiles();
-
-      assert.equal(
-        Object.isFrozen(
-          profiles
-        ),
-        true
-      );
-
-      assert.equal(
-        api.colours.getProfile(
-          "blood-red"
-        ).label,
-        "Blood Red"
-      );
-
-      await api.scene.setColour(
-        "toxic-green"
-      );
-
-      assert.deepEqual(
-        environment.calls.setFlag.at(-1),
-        {
-          namespace:
-            "dynamic-webs",
-          key:
-            "webColour",
-          value:
-            "toxic-green"
-        }
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setColour(
-            "impossible"
-          ),
-        /Unsupported Scene web colour/u
-      );
-    } finally {
-      environment.restore();
-    }
+    assert.throws(() => api.webs.generate(), /only be performed by a GM/u);
+    assert.throws(() => api.webs.clear(), /only be performed by a GM/u);
+    await assert.rejects(
+      () => api.scene.setPopulations([]),
+      /only be performed by a GM/u
+    );
+  } finally {
+    environment.restore();
   }
-);
-
-test(
-  "public thickness operations read and persist supported multipliers",
-  async () => {
-    const environment =
-      createEnvironment();
-
-    try {
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
-
-      assert.equal(
-        api.scene.getThickness(),
-        1.5
-      );
-
-      await api.scene.setThickness(
-        2.25
-      );
-
-      assert.deepEqual(
-        environment.calls.setFlag.at(-1),
-        {
-          namespace:
-            "dynamic-webs",
-          key:
-            "webThickness",
-          value:
-            2.25
-        }
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setThickness(
-            6
-          ),
-        /between 0.5 and 4/u
-      );
-    } finally {
-      environment.restore();
-    }
-  }
-);
-
-test(
-  "GM-only operations reject non-GM callers",
-  async () => {
-    const environment =
-      createEnvironment();
-
-    try {
-      globalThis.game.user.isGM =
-        false;
-
-      const api =
-        createPublicApi(
-          environment.runtime
-        );
-
-      assert.throws(
-        () =>
-          api.webs.generate(),
-        /only be performed by a GM/u
-      );
-
-      assert.throws(
-        () =>
-          api.webs.clear(),
-        /only be performed by a GM/u
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setDensity(
-            "dense"
-          ),
-        /only be performed by a GM/u
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setThickness(
-            2
-          ),
-        /only be performed by a GM/u
-      );
-
-      await assert.rejects(
-        () =>
-          api.scene.setCategoryDensity(
-            "ground",
-            "dense"
-          ),
-        /only be performed by a GM/u
-      );
-    } finally {
-      environment.restore();
-    }
-  }
-);
+});

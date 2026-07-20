@@ -1,0 +1,117 @@
+<details
+  class="dynamic-webs-population"
+  data-dynamic-webs-population
+  data-population-id="{{id}}"
+  data-population-index="{{index}}"
+>
+  <summary data-dynamic-webs-population-summary>
+    <strong data-dynamic-webs-population-summary-title>{{summaryTitle}}</strong>
+    <span class="hint" data-dynamic-webs-population-summary-detail>{{summaryDetail}}</span>
+  </summary>
+
+  <div class="dynamic-webs-population-body">
+    <input type="hidden" value="{{id}}" data-dynamic-webs-population-field="id">
+
+    <div class="form-group">
+      <label>Enabled</label>
+      <div class="form-fields">
+        <input type="checkbox" {{#if enabled}}checked{{/if}} data-dynamic-webs-population-field="enabled" data-dynamic-webs-population-control>
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label>Level</label>
+      <div class="form-fields">
+        <select data-dynamic-webs-population-field="levelId" data-dynamic-webs-population-control>
+          {{#each levelOptions}}
+            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{#unless levelAvailable}}<p class="hint warning">The saved level is unavailable. This population will not generate until a valid level is selected.</p>{{/unless}}
+    </div>
+
+    <details
+      class="dynamic-webs-population-section"
+      data-dynamic-webs-web-options-section
+    >
+      <summary>
+        <strong>Web options</strong>
+        <span class="hint">Density by category</span>
+      </summary>
+
+      <div class="dynamic-webs-population-section-body">
+        {{#each densityControls}}
+          <div class="form-group" data-dynamic-webs-density-row>
+            <label title="{{description}}">{{label}}{{#if future}} <span class="units">(future)</span>{{/if}}</label>
+            <div class="form-fields">
+              <input
+                type="range"
+                value="{{sliderValue}}"
+                min="{{minimum}}"
+                max="{{maximum}}"
+                step="{{step}}"
+                data-web-category="{{categoryId}}"
+                data-dynamic-webs-population-density
+                data-dynamic-webs-population-control
+              >
+              <output data-dynamic-webs-density-output>{{densityLabel}}</output>
+            </div>
+            <p class="hint">{{description}}</p>
+          </div>
+        {{/each}}
+      </div>
+    </details>
+
+    <details
+      class="dynamic-webs-population-section"
+      data-dynamic-webs-appearance-section
+    >
+      <summary>
+        <strong>Appearance</strong>
+        <span class="hint">Colour and thickness</span>
+      </summary>
+
+      <div class="dynamic-webs-population-section-body">
+        <div class="form-group">
+          <label>Web colour</label>
+          <div class="form-fields">
+            <select data-dynamic-webs-population-field="colourProfileId" data-dynamic-webs-population-control>
+              {{#each colourOptions}}
+                <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Web thickness</label>
+          <div class="form-fields">
+            <input
+              type="number"
+              value="{{thicknessMultiplier}}"
+              min="{{thicknessMinimum}}"
+              max="{{thicknessMaximum}}"
+              step="{{thicknessStep}}"
+              data-dynamic-webs-population-field="thicknessMultiplier"
+              data-dynamic-webs-population-control
+            >
+            <span class="units">×</span>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="form-group">
+      <div class="form-fields">
+        <button type="button" data-dynamic-webs-duplicate-population data-dynamic-webs-population-control>
+          <i class="fas fa-copy"></i> Duplicate
+        </button>
+        <button type="button" data-dynamic-webs-remove-population data-dynamic-webs-population-control>
+          <i class="fas fa-trash"></i> Remove
+        </button>
+      </div>
+    </div>
+  </div>
+</details>

@@ -25,6 +25,7 @@ function createBlueprint(
   {
     id = null,
     sceneId = "scene-one",
+    levelId = "base",
     sourceKey = "source-one",
     strands = null
   } = {}
@@ -33,6 +34,7 @@ function createBlueprint(
     id ??
     createStableWebId({
       sceneId,
+      levelId,
       kind:
         WEB_BLUEPRINT_KINDS.GROUND,
       sourceKey
@@ -70,6 +72,16 @@ function createBlueprint(
     id:
       webId,
     sceneId,
+    levelProviderMode:
+      "base",
+    levelId,
+    elevationBand:
+      {
+        bottom:
+          null,
+        top:
+          null
+      },
     seed:
       "dynamic-webs:test",
     sourceKey,
@@ -106,12 +118,16 @@ test(
       createStableWebId({
         sceneId:
           "scene:one",
+        populationId:
+          "population:one",
+        levelId:
+          "floor:one",
         kind:
           WEB_BLUEPRINT_KINDS.WALL_CORNER,
         sourceKey:
           "wall-a:wall-b:100:100"
       }),
-      "wall-corner:scene%3Aone:wall-a%3Awall-b%3A100%3A100"
+      "wall-corner:scene%3Aone:population%3Aone:floor%3Aone:wall-a%3Awall-b%3A100%3A100"
     );
   }
 );

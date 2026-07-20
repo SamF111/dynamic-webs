@@ -23,7 +23,9 @@ const expectedKeys =
   [
     "webDensity",
     "webColour",
-    "webThickness"
+    "webThickness",
+    "webPopulationDensity",
+    "webPopulations"
   ];
 
 const actualKeys =
@@ -59,7 +61,7 @@ if (
     0
 ) {
   throw new Error(
-    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity, webColour and webThickness.`
+    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity, webColour, webThickness, webPopulationDensity and webPopulations.`
   );
 }
 
@@ -75,6 +77,15 @@ export const DEFAULT_SCENE_CONFIGURATION =
         rawDefaults.webColour,
         `${DEFAULTS_CONTEXT}.webColour`
       ),
+    webPopulationDensity:
+      assertRequiredString(
+        rawDefaults.webPopulationDensity,
+        `${DEFAULTS_CONTEXT}.webPopulationDensity`
+      ),
+    webPopulations:
+      Array.isArray(rawDefaults.webPopulations)
+        ? rawDefaults.webPopulations
+        : (() => { throw new TypeError(`Dynamic Webs | ${DEFAULTS_CONTEXT}.webPopulations must be an array.`); })(),
     webThickness:
       assertNumberInRange(
         rawDefaults.webThickness,
@@ -96,3 +107,9 @@ export const DEFAULT_SCENE_WEB_COLOUR =
 
 export const DEFAULT_SCENE_WEB_THICKNESS =
   DEFAULT_SCENE_CONFIGURATION.webThickness;
+
+export const DEFAULT_SCENE_WEB_POPULATION_DENSITY =
+  DEFAULT_SCENE_CONFIGURATION.webPopulationDensity;
+
+export const DEFAULT_SCENE_WEB_POPULATIONS =
+  DEFAULT_SCENE_CONFIGURATION.webPopulations;

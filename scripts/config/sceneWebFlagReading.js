@@ -46,6 +46,11 @@ export function readRawSceneWebConfiguration(
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.CARPET_WEB_DENSITY
+        ),
+      [SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
         )
     };
   }

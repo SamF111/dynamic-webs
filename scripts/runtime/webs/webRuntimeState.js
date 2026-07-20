@@ -32,6 +32,18 @@ export function createWebRuntimeState(
       WEB_BLUEPRINT_SCHEMA_VERSION,
     sceneId:
       null,
+    levelProvider:
+      normaliseOptionalObject(
+        values.levelProvider
+      ),
+    levels:
+      normaliseOptionalArray(
+        values.levels
+      ),
+    levelVisibility:
+      normaliseOptionalObject(
+        values.levelVisibility
+      ),
     generationId:
       Number.isInteger(
         values.generationId
@@ -64,6 +76,11 @@ export function createWebRuntimeState(
       null,
     categorySeeds:
       null,
+    populations:
+      normaliseOptionalArray(
+        values.populations
+      ) ??
+      Object.freeze([]),
     densityId:
       null,
     categoryDensities:
@@ -114,6 +131,15 @@ export function createWebRuntimeSnapshot(
     sceneId:
       state?.sceneId ??
       null,
+    levelProvider:
+      state?.levelProvider ??
+      null,
+    levels:
+      state?.levels ??
+      null,
+    levelVisibility:
+      state?.levelVisibility ??
+      null,
     generationId:
       Number.isInteger(
         state?.generationId
@@ -144,6 +170,9 @@ export function createWebRuntimeSnapshot(
     categorySeeds:
       state?.categorySeeds ??
       null,
+    populations:
+      state?.populations ??
+      [],
     densityId:
       state?.densityId ??
       null,
@@ -221,7 +250,9 @@ function createEmptyCounts() {
           0,
         decorative:
           0
-      })
+      }),
+    byPopulation:
+      Object.freeze({})
   });
 }
 
@@ -242,6 +273,22 @@ function normaliseOptionalObject(
   return Object.freeze({
     ...value
   });
+}
+
+function normaliseOptionalArray(
+  value
+) {
+  if (
+    !Array.isArray(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  return Object.freeze([
+    ...value
+  ]);
 }
 
 function normaliseOptionalString(

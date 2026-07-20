@@ -56,13 +56,30 @@ function createEnvironment({
   const web =
     Object.freeze({
       schemaVersion:
-        2,
+        4,
       id:
-        "ground:scene:index-0",
+        "ground:scene:default:base:index-0",
       kind:
         "ground",
       sceneId:
         "scene",
+      populationId:
+        "default",
+      populationLabel:
+        "Default Web Population",
+      thicknessMultiplier:
+        1,
+      levelProviderMode:
+        "base",
+      levelId:
+        "base",
+      elevationBand:
+        Object.freeze({
+          bottom:
+            null,
+          top:
+            null
+        }),
       seed:
         "seed:ground",
       sourceKey:
@@ -95,9 +112,9 @@ function createEnvironment({
         Object.freeze([
           Object.freeze({
             schemaVersion:
-              2,
+              4,
             id:
-              "ground:scene:index-0:structural-0",
+              "ground:scene:default:base:index-0:structural-0",
             localId:
               "structural-0",
             kind:
@@ -140,20 +157,60 @@ function createEnvironment({
   const generated =
     Object.freeze({
       blueprintSchemaVersion:
-        2,
+        4,
       sceneId:
         "scene",
       seed:
         "seed",
       categorySeeds:
         Object.freeze({
-          corner:
-            "seed:corner",
-          span:
-            "seed:span",
-          ground:
-            "seed:ground"
+          base:
+            Object.freeze({
+              corner:
+                "seed:base:corner",
+              span:
+                "seed:base:span",
+              ground:
+                "seed:base:ground"
+            })
         }),
+      levelProvider:
+        Object.freeze({
+          requestedMode:
+            "base",
+          resolvedMode:
+            "base",
+          providerAvailable:
+            true,
+          fallbackUsed:
+            false,
+          fallbackReason:
+            null,
+          activeViewedLevelId:
+            "base",
+          levels:
+            Object.freeze([])
+        }),
+      levels:
+        Object.freeze([
+          Object.freeze({
+            id:
+              "base",
+            label:
+              "Base level",
+            providerMode:
+              "base",
+            elevationBand:
+              Object.freeze({
+                bottom:
+                  null,
+                top:
+                  null
+              }),
+            source:
+              "base"
+          })
+        ]),
       colourProfileId:
         "natural-white",
       colourProfile:

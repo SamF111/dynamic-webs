@@ -285,7 +285,7 @@ test(
 );
 
 test(
-  "Scene Configuration context exposes density and colour selectors",
+  "Scene Configuration context exposes population-owned colour selectors",
   async () => {
     const scene = {
       getFlag(
@@ -294,19 +294,35 @@ test(
       ) {
         if (
           key ===
-            "webColour"
+            "webPopulations"
         ) {
-          return "yellowed";
+          return [{
+            id:
+              "yellow-webs",
+            label:
+              "Yellow Webs",
+            enabled:
+              true,
+            levelId:
+              "base",
+            categoryDensities: {
+              "wall-corner":
+                "dense",
+              "wall-span":
+                "disabled",
+              ground:
+                "disabled",
+              "web-carpet":
+                "disabled"
+            },
+            colourProfileId:
+              "yellowed",
+            thicknessMultiplier:
+              1.75
+          }];
         }
 
-        if (
-          key ===
-            "webThickness"
-        ) {
-          return 1.75;
-        }
-
-        return "dense";
+        return undefined;
       }
     };
 
@@ -319,28 +335,26 @@ test(
         scene
       });
 
-    assert.equal(
-      context.configuration.webDensity,
-      "dense"
-    );
+    const population =
+      context.populationCards[0];
 
     assert.equal(
-      context.configuration.webColour,
+      population.colourProfileId,
       "yellowed"
     );
 
     assert.equal(
-      context.fieldNames.webColour,
-      "flags.dynamic-webs.webColour"
+      context.fieldNames.webPopulations,
+      "flags.dynamic-webs.webPopulations"
     );
 
     assert.equal(
-      context.configuration.webThickness,
+      population.thicknessMultiplier,
       1.75
     );
 
     assert.equal(
-      context.webColourControl.options.find(
+      population.colourOptions.find(
         (
           option
         ) =>

@@ -11,6 +11,7 @@ import {
 
 import {
   SCENE_CONFIG_PART_ID,
+  SCENE_CONFIG_POPULATION_CARD_TEMPLATE_PATH,
   SCENE_CONFIG_TAB_ICON,
   SCENE_CONFIG_TEMPLATE_PATH
 } from "./sceneConfigConstants.js";
@@ -692,7 +693,8 @@ async function loadSceneConfigTemplate() {
       "function"
   ) {
     await handlebarsApi.loadTemplates([
-      SCENE_CONFIG_TEMPLATE_PATH
+      SCENE_CONFIG_TEMPLATE_PATH,
+      SCENE_CONFIG_POPULATION_CARD_TEMPLATE_PATH
     ]);
 
     return;
@@ -703,7 +705,8 @@ async function loadSceneConfigTemplate() {
       "function"
   ) {
     await globalThis.loadTemplates([
-      SCENE_CONFIG_TEMPLATE_PATH
+      SCENE_CONFIG_TEMPLATE_PATH,
+      SCENE_CONFIG_POPULATION_CARD_TEMPLATE_PATH
     ]);
 
     return;
@@ -733,4 +736,3 @@ function assertCallback(
     );
   }
 }
-

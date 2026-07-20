@@ -24,6 +24,10 @@ import {
 export class WallCornerWebGenerator {
   generate({
     sceneId,
+    populationId = "default",
+    populationLabel = "Default Web Population",
+    thicknessMultiplier = 1,
+    level,
     generationSeed,
     wallSegments,
     gridSize,
@@ -62,6 +66,10 @@ export class WallCornerWebGenerator {
             createCornerWeb({
               candidate,
               sceneId,
+              populationId,
+              populationLabel,
+              thicknessMultiplier,
+              level,
               generationSeed,
               gridSize,
               configuration,
@@ -314,6 +322,10 @@ function buildCornerCandidates({
 function createCornerWeb({
   candidate,
   sceneId,
+  populationId,
+  populationLabel,
+  thicknessMultiplier,
+  level,
   generationSeed,
   gridSize,
   configuration,
@@ -579,11 +591,23 @@ function createCornerWeb({
     id:
       createStableWebId({
         sceneId,
+        populationId,
+        levelId:
+          level.id,
         kind:
           WEB_BLUEPRINT_KINDS.WALL_CORNER,
         sourceKey
       }),
     sceneId,
+    populationId,
+    populationLabel,
+    thicknessMultiplier,
+    levelProviderMode:
+      level.providerMode,
+    levelId:
+      level.id,
+    elevationBand:
+      level.elevationBand,
     seed:
       generationSeed,
     sourceKey,
@@ -686,5 +710,3 @@ function createCandidateKey(
     ":"
   );
 }
-
-

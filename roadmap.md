@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.2.2
+## Current baseline — v0.3.1
 
 Completed:
 
@@ -14,8 +14,8 @@ Completed:
 - Independent runtime state, PIXI rendering and lifecycle
 - Debounced wall rebuilding
 - Versioned public API
-- Blueprint schema version `2`
-- Stable Scene-qualified web identifiers
+- Blueprint schema version `4`
+- Stable Scene- and level-qualified web identifiers
 - Stable web-qualified strand identifiers
 - Independent category seed streams
 - Deeply immutable web populations and public snapshots
@@ -30,17 +30,24 @@ Completed:
 - Independent corner, span, ground and reserved carpet density sliders
 - Backwards-compatible category fallback from `webDensity`
 - Category-isolated deterministic regeneration
+- World-scoped level-provider setting with automatic, native-v14, levels-v13 and base modes
+- Foundry v13 theripper93 Levels compatibility
+- Foundry v14 native Scene level compatibility
+- Full per-level density allocation and isolated level/category seeds
+- Immutable level ownership on blueprint schema version `3`
+- All-level runtime storage with level-compatible rendering filters
+- Explicit modular web populations with independent level, density, colour and thickness
+- Stable population-qualified web identifiers and v4 population seed streams
+- Scene Configuration add, duplicate and remove population cards
+- Nested collapsed Web options and Appearance sections inside each population card
+- Hidden opaque random population IDs that remain stable across edits, deletion of neighbouring populations and reordering
+- Presentation-only population numbering with no editable or persisted population name
+- New populations defaulting to the middle `standard` density for every category
 
 Current Scene flags:
 
 ```text
-flags.dynamic-webs.webDensity
-flags.dynamic-webs.cornerWebDensity
-flags.dynamic-webs.spanWebDensity
-flags.dynamic-webs.groundWebDensity
-flags.dynamic-webs.carpetWebDensity
-flags.dynamic-webs.webColour
-flags.dynamic-webs.webThickness
+flags.dynamic-webs.webPopulations
 ```
 
 Current density values:
@@ -297,73 +304,87 @@ Regression coverage confirms:
 
 ---
 
-## Milestone 3 — Level-aware web populations
+## Milestone 3 — Level-aware web populations — complete
 
-**Target:** v0.3.0
+**Delivered:** v0.3.0
 
-This is the most important architectural milestone.
+Dynamic Webs now generates, stores and diagnoses independent web populations for every detected level.
 
-Each detected level should receive its own full density allocation. Counts must not be divided across the Scene.
+### Delivered provider policy
 
-### Example
+The world-scoped **Level Awareness Provider** setting mirrors Ambient Critters' interface and availability rules:
 
-For `dense` on three detected levels, each level independently receives:
+- Foundry v14 and later hide the setting and use native Scene elevation automatically.
+- Foundry v13 with theripper93's Levels active offers `Base Level only` and `theripper93's Levels`.
+- Foundry v13 without Levels shows one disabled, visually muted `Base Level only` selector.
+- Base Level is the default; v13 does not opt into Levels until the GM selects it.
+- Provider-specific hint text explains the detected setup.
+
+The internal compatibility contract retains `auto`, `native-v14`, `levels-v13` and `base` for diagnostics and pre-release programmatic compatibility, but only valid user choices are exposed in Game Settings. Unavailable stored values are normalised safely. Foundry v14 never uses Levels as its active provider.
+
+### Delivered generation contract
+
+- Every detected level receives the complete selected corner, span and ground allocation.
+- Counts are not divided between levels.
+
+For the current `dense` presets, every detected level can independently receive:
 
 - Up to 48 corner webs
 - Up to 10 span webs
 - 10 ground webs
-
-### Implement
-
-- Foundry v13 level detection through a compatibility adapter
-- Foundry v14 native level and elevation detection through a compatibility adapter
-- Stable level identifiers
-- Wall grouping by level
-- Same-level validation for corner supports
-- Same-level validation for opposing span walls
-- Independent ground-web generation per level
-- Density presets applied independently per level
-- Immutable level metadata on every web blueprint
-- Independent deterministic streams per level and category
-- Runtime storage of all level blueprints
-- Level-compatible rendering filters
-- Visible-subset switching without geometry regeneration
-- GM visibility policy
-- Level-change diagnostics
-
-### Suggested metadata
-
-```javascript
-{
-  levelProviderMode: "foundry-v14",
-  levelId: "10-20",
-  elevationBand: {
-    bottom: 10,
-    top: 20
-  }
-}
-```
-
-### Suggested seed format
+- Structural walls are grouped by level before corner or span candidate discovery.
+- Supporting walls for a web must belong to the web's level.
+- Ground populations are generated independently for each level.
+- Editing one level leaves unrelated level projections unchanged.
+- Blueprint schema version `3` adds immutable `levelProviderMode`, `levelId` and `elevationBand`.
+- Web IDs now include the stable level identifier.
+- Seed version `v3` isolates every level/category pair.
 
 ```text
-dynamic-webs:web-generation:v3:<scene-id>:<level-id>:<web-kind>
+dynamic-webs:web-generation:v3:<scene-id>:<encoded-level-id>:<web-kind>
 ```
 
-### Constraints
+### Delivered runtime and visibility
 
-- Supporting walls for one web must belong to the same level.
-- Changing one level should not reshuffle unrelated levels.
-- Switching visible levels should filter rendering, not rebuild geometry.
-- Compatibility differences must remain isolated in Foundry adapter files.
+- The runtime stores all generated level blueprints.
+- GMs and players see only the active viewed level.
+- Viewed-level switching redraws the subset without advancing generation identity.
+- Foundry v14 level-document changes and v13 Levels view changes are lifecycle-aware.
+- Global provider changes regenerate the active Scene once.
 
-### Exit criteria
+### Diagnostics and tests
+
+Diagnostics report requested/resolved provider modes, availability, fallbacks, levels, elevation bands, walls by level, visible level IDs, stored/rendered counts and cross-level support violations.
+
+Regression coverage includes world settings, v13/v14 providers, per-level allocation, same-level support, level-isolated determinism and visibility-only redraws.
+
+### Exit criteria — met
 
 - Every blueprint has immutable level ownership.
-- Multi-level Scenes generate independent populations.
-- Player rendering respects the active level.
-- GM behaviour follows a documented policy.
+- Multi-level Scenes generate independent full populations.
+- GM and player rendering both respect the viewed level.
+- Webs assigned to inactive elevation bands remain hidden without discarding stored geometry.
 - Level switching does not regenerate unchanged geometry.
+
+
+---
+
+## Milestone 3.1 — Modular web populations — complete
+
+**Delivered:** v0.3.1
+
+Dynamic Webs now stores an explicit array of independently configured web populations. Each population owns its target level, four category-density states, colour profile and visible thickness. Empty arrays generate no webs, and the former pre-release Scene-wide flags are not used as a fallback.
+
+Opaque population IDs participate in blueprint IDs and v4 deterministic seeds, allowing multiple populations to occupy the same level without collisions. IDs are generated once, hidden from the UI and preserved across all population edits. Scene Configuration provides presentation-only numbered collapsed cards with add, duplicate and remove operations. Each card contains separately collapsible Web options and Appearance sections, both closed by default. New populations start at the middle `standard` density. Population changes regenerate once, while viewed-level changes remain visibility-only.
+
+### Exit criteria — met
+
+- Level 0 can use a different colour and density from level 10.
+- Multiple populations can coexist on one level.
+- No population card expands automatically.
+- Empty population arrays produce no webs.
+- Unavailable saved levels are reported and skipped safely.
+- Counts and deterministic hashes are available by population.
 
 ---
 
@@ -984,16 +1005,17 @@ Test:
 1. Baseline hardening — complete in v0.1.0
 2. Coloured webs — complete in v0.2.0
 3. Per-category density controls — complete in v0.2.2
-4. Level-aware web populations
-5. Region-aware webs
-6. Spatial index and read-only query API
-7. Web carpets
-8. Mutable web state
-9. Optional web barriers
-10. Tokens destroying webs
-11. Persistence and network state
-12. Generic trapping and occupancy
-13. Ambient Critters adapter and release hardening
+4. Level-aware web populations — complete in v0.3.0
+5. Modular web populations — complete in v0.3.1
+6. Region-aware webs
+7. Spatial index and read-only query API
+8. Web carpets
+9. Mutable web state
+10. Optional web barriers
+11. Tokens destroying webs
+12. Persistence and network state
+13. Generic trapping and occupancy
+14. Ambient Critters adapter and release hardening
 
 ## Critical dependency chain
 
@@ -1003,6 +1025,8 @@ Baseline stability
 Per-category density controls
     ↓
 Level awareness
+    ↓
+Modular web populations
     ↓
 Region awareness
     ↓

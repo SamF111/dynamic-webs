@@ -3,6 +3,15 @@ import {
 } from "../../foundry/webSceneCompatibility.js";
 
 import {
+  resolveWebLevelProvider
+} from "../../foundry/webLevelProvider.js";
+
+import {
+  filterWebsForVisibleLevels,
+  resolveVisibleWebLevelIds
+} from "../../foundry/webLevelVisibilityCompatibility.js";
+
+import {
   WebGenerationService
 } from "../../simulation/webs/WebGenerationService.js";
 
@@ -25,11 +34,15 @@ import {
 } from "../../simulation/webs/webColourProfiles.js";
 
 import {
+  createWebLevelVisibilityState
+} from "./webLevelVisibilityState.js";
+
+import {
   createWebRuntimeSnapshot,
   createWebRuntimeState
 } from "./webRuntimeState.js";
 
-/** Own deterministic web blueprints and their transient local rendering. */
+/** Own deterministic all-level web blueprints and transient visible rendering. */
 export class WebRuntimeService {
   constructor(
     options = {}
@@ -66,11 +79,12 @@ export class WebRuntimeService {
       createWebRuntimeState();
   }
 
-  /** Generate and render webs for the active Scene. */
+  /** Generate all level populations and render the locally visible subset. */
   generateForActiveScene({
     scene =
       globalThis.canvas?.scene,
     options = {},
+    populations = null,
     densityId = null,
     categoryDensities = null,
     categoryDensitySources = null,
@@ -99,31 +113,54 @@ export class WebRuntimeService {
     const generated =
       this.generationService.generate(
         context,
-        {
-          ...options,
-          ...(colourProfileId
-            ? {
+        Array.isArray(populations)
+          ? {
+              populations
+            }
+          : {
+              ...options,
+              ...(
                 colourProfileId
-              }
-            : {})
-        }
+                  ? {
+                      colourProfileId
+                    }
+                  : {}
+              )
+            }
       );
 
     const resolvedThicknessMultiplier =
-      thicknessMultiplier ===
-        null ||
-      thicknessMultiplier ===
-        undefined
-        ? getSceneWebThicknessConfiguration(
-            scene
-          ).thicknessMultiplier
-        : normaliseSceneWebThickness(
-            thicknessMultiplier
-          );
+      Array.isArray(populations)
+        ? 1
+        : thicknessMultiplier ===
+            null ||
+          thicknessMultiplier ===
+            undefined
+          ? getSceneWebThicknessConfiguration(
+              scene
+            ).thicknessMultiplier
+          : normaliseSceneWebThickness(
+              thicknessMultiplier
+            );
+
+    const levelVisibility =
+      resolveRuntimeLevelVisibility({
+        scene,
+        levelProvider:
+          generated.levelProvider,
+        levels:
+          generated.levels
+      });
+
+    const visibleWebs =
+      filterWebsForVisibleLevels(
+        generated.webs,
+        levelVisibility.visibleLevelIds
+      );
 
     try {
       this.renderService.render(
-        generated.webs,
+        visibleWebs,
         createRenderingConfiguration(
           generated.configuration.rendering,
           resolvedThicknessMultiplier
@@ -156,6 +193,11 @@ export class WebRuntimeService {
         generated.blueprintSchemaVersion,
       sceneId:
         generated.sceneId,
+      levelProvider:
+        generated.levelProvider,
+      levels:
+        generated.levels,
+      levelVisibility,
       generationId:
         nextGenerationId,
       presentationRevision:
@@ -173,6 +215,9 @@ export class WebRuntimeService {
         generated.seed,
       categorySeeds:
         generated.categorySeeds,
+      populations:
+        generated.populations ??
+        Object.freeze([]),
       densityId:
         normaliseOptionalIdentifier(
           densityId
@@ -206,9 +251,7 @@ export class WebRuntimeService {
     return this.createDiagnosticSnapshot();
   }
 
-  /**
-   * Re-resolve and redraw web presentation without generating geometry.
-   */
+  /** Re-resolve colour/thickness and redraw only the visible level subset. */
   refreshPresentation({
     profileId =
       this.state.colourProfileId,
@@ -255,63 +298,37 @@ export class WebRuntimeService {
             profile
           );
 
+    const levelVisibility =
+      resolveRuntimeLevelVisibility({
+        scene:
+          globalThis.canvas?.scene,
+        levelProvider:
+          previousState.levelProvider,
+        levels:
+          previousState.levels
+      });
+
+    const visibleWebs =
+      filterWebsForVisibleLevels(
+        webs,
+        levelVisibility.visibleLevelIds
+      );
+
     try {
       this.renderService.render(
-        webs,
+        visibleWebs,
         createRenderingConfiguration(
           previousState.configuration.rendering,
           resolvedThicknessMultiplier
         )
       );
     } catch (error) {
-      try {
-        this.renderService.render(
-          previousState.webs,
-          createRenderingConfiguration(
-            previousState.configuration.rendering,
-            previousState.thicknessMultiplier
-          )
-        );
-
-        this.state = {
-          ...previousState,
-          lastOperationReason:
-            `${operationReason}-failed`,
-          lastOperationAt:
-            operationAt
-        };
-      } catch (rollbackError) {
-        this.state =
-          createWebRuntimeState({
-            generationId:
-              previousState.generationId,
-            presentationRevision:
-              previousState.presentationRevision,
-            generationReason:
-              previousState.generationReason,
-            generatedAt:
-              previousState.generatedAt,
-            lastOperationReason:
-              `${operationReason}-rollback-failed`,
-            lastOperationAt:
-              operationAt
-          });
-
-        try {
-          Object.defineProperty(
-            error,
-            "rollbackError",
-            {
-              value:
-                rollbackError,
-              configurable:
-                true
-            }
-          );
-        } catch (_defineError) {
-          // The original render error remains authoritative.
-        }
-      }
+      this.#restorePreviousRendering({
+        previousState,
+        operationReason,
+        operationAt,
+        error
+      });
 
       throw error;
     }
@@ -331,7 +348,101 @@ export class WebRuntimeService {
         profile,
       thicknessMultiplier:
         resolvedThicknessMultiplier,
+      levelVisibility,
       webs
+    };
+
+    return this.createDiagnosticSnapshot();
+  }
+
+  /** Switch the rendered level subset without regenerating stored geometry. */
+  refreshLevelVisibility({
+    scene =
+      globalThis.canvas?.scene,
+    reason =
+      "web-level-visibility-refresh"
+  } = {}) {
+    if (
+      this.state.active !==
+        true
+    ) {
+      return this.createDiagnosticSnapshot();
+    }
+
+    const previousState =
+      this.state;
+
+    const operationReason =
+      normaliseOptionalIdentifier(
+        reason
+      ) ??
+      "web-level-visibility-refresh";
+
+    const operationAt =
+      Date.now();
+
+    const levelVisibility =
+      resolveRuntimeLevelVisibility({
+        scene,
+        levelProvider:
+          previousState.levelProvider,
+        levels:
+          previousState.levels
+      });
+
+    if (
+      levelVisibilityEquals(
+        previousState.levelVisibility,
+        levelVisibility
+      )
+    ) {
+      this.state = {
+        ...previousState,
+        lastOperationReason:
+          operationReason,
+        lastOperationAt:
+          operationAt,
+        levelVisibility
+      };
+
+      return this.createDiagnosticSnapshot();
+    }
+
+    const visibleWebs =
+      filterWebsForVisibleLevels(
+        previousState.webs,
+        levelVisibility.visibleLevelIds
+      );
+
+    try {
+      this.renderService.render(
+        visibleWebs,
+        createRenderingConfiguration(
+          previousState.configuration.rendering,
+          previousState.thicknessMultiplier
+        )
+      );
+    } catch (error) {
+      this.#restorePreviousRendering({
+        previousState,
+        operationReason,
+        operationAt,
+        error
+      });
+
+      throw error;
+    }
+
+    this.state = {
+      ...previousState,
+      presentationRevision:
+        previousState.presentationRevision +
+        1,
+      lastOperationReason:
+        operationReason,
+      lastOperationAt:
+        operationAt,
+      levelVisibility
     };
 
     return this.createDiagnosticSnapshot();
@@ -402,7 +513,7 @@ export class WebRuntimeService {
       clearedRendering;
   }
 
-  /** Run a non-destructive deterministic-generation comparison. */
+  /** Run a non-destructive all-level deterministic-generation comparison. */
   createDeterminismDiagnostic(
     scene =
       globalThis.canvas?.scene
@@ -427,7 +538,12 @@ export class WebRuntimeService {
     try {
       const context =
         createActiveWebSceneContext(
-          scene
+          scene,
+          {
+            requestedProviderMode:
+              this.state.levelProvider?.requestedMode ??
+              null
+          }
         );
 
       if (
@@ -450,11 +566,18 @@ export class WebRuntimeService {
         generationService:
           this.generationService,
         context,
-        configuration: {
-          ...this.state.configuration,
-          colourProfileId:
-            this.state.colourProfileId
-        },
+        configuration:
+          Array.isArray(this.state.populations) &&
+          this.state.populations.length > 0
+            ? {
+                populations:
+                  this.state.populations
+              }
+            : {
+                ...this.state.configuration,
+                colourProfileId:
+                  this.state.colourProfileId
+              },
         currentWebs:
           this.state.webs
       });
@@ -509,6 +632,75 @@ export class WebRuntimeService {
       }
     );
   }
+
+  #restorePreviousRendering({
+    previousState,
+    operationReason,
+    operationAt,
+    error
+  }) {
+    try {
+      const previousVisibleWebs =
+        filterWebsForVisibleLevels(
+          previousState.webs,
+          previousState.levelVisibility?.visibleLevelIds ??
+          previousState.levels?.map(
+            (
+              level
+            ) =>
+              level.id
+          ) ??
+          []
+        );
+
+      this.renderService.render(
+        previousVisibleWebs,
+        createRenderingConfiguration(
+          previousState.configuration.rendering,
+          previousState.thicknessMultiplier
+        )
+      );
+
+      this.state = {
+        ...previousState,
+        lastOperationReason:
+          `${operationReason}-failed`,
+        lastOperationAt:
+          operationAt
+      };
+    } catch (rollbackError) {
+      this.state =
+        createWebRuntimeState({
+          generationId:
+            previousState.generationId,
+          presentationRevision:
+            previousState.presentationRevision,
+          generationReason:
+            previousState.generationReason,
+          generatedAt:
+            previousState.generatedAt,
+          lastOperationReason:
+            `${operationReason}-rollback-failed`,
+          lastOperationAt:
+            operationAt
+        });
+
+      try {
+        Object.defineProperty(
+          error,
+          "rollbackError",
+          {
+            value:
+              rollbackError,
+            configurable:
+              true
+          }
+        );
+      } catch (_defineError) {
+        // The original render error remains authoritative.
+      }
+    }
+  }
 }
 
 function createRenderingConfiguration(
@@ -527,6 +719,44 @@ function createRenderingConfiguration(
 function createSceneGeometrySummary(
   context
 ) {
+  const wallsByLevel =
+    {};
+
+  const wallLevelById =
+    {};
+
+  let unresolvedWallLevelCount =
+    0;
+
+  for (
+    const segment of
+    context.wallSegments
+  ) {
+    wallLevelById[
+      segment.wallId
+    ] =
+      segment.levelId;
+
+    wallsByLevel[
+      segment.levelId
+    ] =
+      (
+        wallsByLevel[
+          segment.levelId
+        ] ??
+        0
+      ) +
+      1;
+
+    if (
+      segment.levelMetadataResolved !==
+        true
+    ) {
+      unresolvedWallLevelCount +=
+        1;
+    }
+  }
+
   return Object.freeze({
     gridSize:
       Number(
@@ -535,8 +765,96 @@ function createSceneGeometrySummary(
     sceneRect:
       context.sceneRect,
     structuralWallCount:
-      context.wallSegments.length
+      context.wallSegments.length,
+    detectedLevelCount:
+      context.levels.length,
+    wallsByLevel:
+      Object.freeze(
+        wallsByLevel
+      ),
+    wallLevelById:
+      Object.freeze(
+        wallLevelById
+      ),
+    unresolvedWallLevelCount
   });
+}
+
+function resolveRuntimeLevelVisibility({
+  scene,
+  levelProvider,
+  levels
+}) {
+  const currentProvider =
+    resolveWebLevelProvider({
+      requestedMode:
+        levelProvider?.requestedMode ??
+        null,
+      scene
+    });
+
+  const resolution =
+    Object.freeze({
+      ...currentProvider,
+      levels:
+        Array.isArray(
+          levels
+        ) &&
+        levels.length >
+          0
+          ? levels
+          : currentProvider.levels
+    });
+
+  const visibility =
+    resolveVisibleWebLevelIds({
+      scene,
+      providerResolution:
+        resolution
+    });
+
+  return createWebLevelVisibilityState(
+    visibility
+  );
+}
+
+function levelVisibilityEquals(
+  first,
+  second
+) {
+  if (
+    first?.policy !==
+      second?.policy ||
+    first?.activeViewedLevelId !==
+      second?.activeViewedLevelId
+  ) {
+    return false;
+  }
+
+  const firstIds =
+    Array.isArray(
+      first?.visibleLevelIds
+    )
+      ? first.visibleLevelIds
+      : [];
+
+  const secondIds =
+    Array.isArray(
+      second?.visibleLevelIds
+    )
+      ? second.visibleLevelIds
+      : [];
+
+  return firstIds.length ===
+    secondIds.length &&
+    firstIds.every(
+      (
+        value,
+        index
+      ) =>
+        value ===
+        secondIds[index]
+    );
 }
 
 function normaliseCategoryDensityMap(

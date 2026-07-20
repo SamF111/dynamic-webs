@@ -437,201 +437,7 @@ test(
 );
 
 test(
-  "public category-density API reads frozen values and persists single or batch updates",
-  async () => {
-    const previousGame =
-      globalThis.game;
-
-    const previousCanvas =
-      globalThis.canvas;
-
-    const setFlagCalls =
-      [];
-
-    const updateCalls =
-      [];
-
-    const flags = {
-      webDensity:
-        "standard",
-      cornerWebDensity:
-        "dense",
-      spanWebDensity:
-        undefined,
-      groundWebDensity:
-        "sparse",
-      carpetWebDensity:
-        "disabled",
-      webColour:
-        "natural-white",
-      webThickness:
-        1
-    };
-
-    const scene = {
-      id:
-        "scene",
-      getFlag(
-        _namespace,
-        key
-      ) {
-        return flags[
-          key
-        ];
-      },
-      async setFlag(
-        namespace,
-        key,
-        value
-      ) {
-        setFlagCalls.push({
-          namespace,
-          key,
-          value
-        });
-
-        return this;
-      },
-      async update(
-        values
-      ) {
-        updateCalls.push(
-          values
-        );
-
-        return this;
-      }
-    };
-
-    const runtime = {
-      runtimeOwnerType:
-        "DynamicWebsRuntime",
-      ready:
-        true,
-      getWebRuntimeService:
-        () => ({
-          createDiagnosticSnapshot:
-            () =>
-              Object.freeze({
-                active:
-                  false
-              })
-        })
-    };
-
-    globalThis.canvas = {
-      scene
-    };
-
-    globalThis.game = {
-      user: {
-        isGM:
-          true
-      },
-      modules: {
-        get:
-          () => ({
-            version:
-              "0.2.2"
-          })
-      },
-      scenes: {
-        get:
-          () =>
-            scene
-      }
-    };
-
-    try {
-      const api =
-        createPublicApi(
-          runtime
-        );
-
-      const densities =
-        api.scene.getCategoryDensities();
-
-      assert.equal(
-        Object.isFrozen(
-          densities
-        ),
-        true
-      );
-
-      assert.deepEqual(
-        densities,
-        {
-          "wall-corner":
-            "dense",
-          "wall-span":
-            "standard",
-          ground:
-            "sparse",
-          "web-carpet":
-            "disabled"
-        }
-      );
-
-      assert.equal(
-        api.scene.getCategoryDensity(
-          "wall-span"
-        ),
-        "standard"
-      );
-
-      await api.scene.setCategoryDensity(
-        "wall-span",
-        "infested"
-      );
-
-      assert.deepEqual(
-        setFlagCalls,
-        [
-          {
-            namespace:
-              "dynamic-webs",
-            key:
-              "spanWebDensity",
-            value:
-              "infested"
-          }
-        ]
-      );
-
-      await api.scene.setCategoryDensities({
-        "wall-corner":
-          "sparse",
-        ground:
-          "dense",
-        "web-carpet":
-          "infested"
-      });
-
-      assert.deepEqual(
-        updateCalls,
-        [
-          {
-            "flags.dynamic-webs.cornerWebDensity":
-              "sparse",
-            "flags.dynamic-webs.groundWebDensity":
-              "dense",
-            "flags.dynamic-webs.carpetWebDensity":
-              "infested"
-          }
-        ]
-      );
-    } finally {
-      globalThis.game =
-        previousGame;
-
-      globalThis.canvas =
-        previousCanvas;
-    }
-  }
-);
-
-test(
-  "Scene Configuration exposes four labelled discrete sliders",
+  "Scene Configuration exposes four labelled discrete sliders per population",
   async () => {
     const context =
       await createSceneConfigTemplateContext({
@@ -642,26 +448,50 @@ test(
         scene: {
           flags: {
             "dynamic-webs": {
-              webDensity:
-                "standard",
-              spanWebDensity:
-                "dense",
-              webColour:
-                "natural-white",
-              webThickness:
-                1
+              webPopulations: [{
+                id:
+                  "span-webs",
+                label:
+                  "Span Webs",
+                enabled:
+                  true,
+                levelId:
+                  "base",
+                categoryDensities: {
+                  "wall-corner":
+                    "standard",
+                  "wall-span":
+                    "dense",
+                  ground:
+                    "disabled",
+                  "web-carpet":
+                    "infested"
+                },
+                colourProfileId:
+                  "natural-white",
+                thicknessMultiplier:
+                  1
+              }]
             }
           }
         }
       });
 
     assert.equal(
-      context.webCategoryDensityControls.length,
+      context.populationCards.length,
+      1
+    );
+
+    const densityControls =
+      context.populationCards[0].densityControls;
+
+    assert.equal(
+      densityControls.length,
       4
     );
 
     const span =
-      context.webCategoryDensityControls.find(
+      densityControls.find(
         (
           control
         ) =>
@@ -679,13 +509,8 @@ test(
       "Dense"
     );
 
-    assert.equal(
-      span.fieldName,
-      "flags.dynamic-webs.spanWebDensity"
-    );
-
     const carpet =
-      context.webCategoryDensityControls.find(
+      densityControls.find(
         (
           control
         ) =>
