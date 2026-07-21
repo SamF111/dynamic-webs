@@ -863,3 +863,50 @@ test(
     }
   }
 );
+
+test(
+  "runtime builds, queries, preserves, and clears the spatial index with geometry lifecycle",
+  () => {
+    const environment = createEnvironment();
+
+    try {
+      const generated = environment.service.generateForActiveScene({
+        scene: environment.scene,
+        reason: "runtime-spatial-test"
+      });
+
+      assert.equal(generated.spatial.active, true);
+      assert.equal(generated.spatial.counts.webs, 1);
+      assert.equal(generated.spatial.counts.strands, 1);
+      assert.equal(generated.spatial.generationId, generated.generationId);
+      assert.equal(environment.service.getWebs()[0].id, "ground:scene:default:base:index-0");
+      assert.equal(
+        environment.service.queryNearby({ x: 15, y: 15 }, {
+          maximumDistancePx: 10,
+          levelId: "base"
+        })[0].strandId,
+        "ground:scene:default:base:index-0:structural-0"
+      );
+
+      const beforePresentation = environment.service.createSpatialDiagnosticSnapshot();
+
+      environment.service.refreshColourProfile({
+        profileId: "blood-red",
+        reason: "runtime-spatial-colour-test"
+      });
+
+      const afterPresentation = environment.service.createSpatialDiagnosticSnapshot();
+      assert.equal(afterPresentation.revision, beforePresentation.revision);
+      assert.equal(afterPresentation.snapshotRevision, beforePresentation.snapshotRevision + 1);
+      assert.equal(environment.service.getWeb("ground:scene:default:base:index-0").colourProfileId, "blood-red");
+
+      environment.service.clear("runtime-spatial-clear");
+      const cleared = environment.service.createSpatialDiagnosticSnapshot();
+      assert.equal(cleared.active, false);
+      assert.equal(cleared.counts.webs, 0);
+      assert.deepEqual(environment.service.getWebs(), []);
+    } finally {
+      environment.restore();
+    }
+  }
+);

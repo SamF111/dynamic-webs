@@ -8,7 +8,7 @@ The module owns web generation, immutable geometry, rendering, modular Scene con
 
 - **Module ID:** `dynamic-webs`
 - **Runtime namespace:** `dynamicWebs`
-- **Current version:** `0.4.0`
+- **Current version:** `0.5.0`
 - **Public API version:** `1`
 - **Blueprint schema version:** `5`
 - **Diagnostic schema version:** `1`
@@ -217,6 +217,55 @@ Population-array changes perform one deterministic regeneration. Scene geometry,
 
 Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry.
 
+## Spatial index and read-only queries
+
+Version `0.5.0` builds a runtime-only uniform-grid spatial index after each successful deterministic geometry replacement. The index contains all stored web levels, whether or not those levels are currently rendered. Viewed-level changes therefore do not rebuild or discard spatial data, and cumulative downward visibility does not imply cross-level physical compatibility. Consumers should supply an explicit `levelId`, `elevation`, or `elevationBand` whenever level compatibility matters.
+
+Indexed records include:
+
+- Web and functional strand bounds
+- Population, level and elevation ownership
+- Web category and strand role
+- Region identifiers and tags
+- Functional `collisionWidthPx` as `interactionWidthPx`
+- Immutable perch points
+- A provisional `intact: true` field reserved for the later mutable-state milestone
+
+The public read-only API is:
+
+```javascript
+dynamicWebs.api.getWebs();
+dynamicWebs.api.getWeb(webId);
+
+dynamicWebs.api.queryNearby(
+  { x: 1200, y: 800 },
+  { levelId: "level-10", maximumDistancePx: 100 }
+);
+
+dynamicWebs.api.queryStrands(
+  { x: 1000, y: 700, width: 400, height: 300 },
+  { strandRoles: ["capture", "decorative"], limit: 50 }
+);
+
+dynamicWebs.api.findCompatibleWebs({
+  levelId: "level-10",
+  categories: ["wall-corner", "wall-span"],
+  regionTag: "crypt"
+});
+
+dynamicWebs.api.findPerches({
+  levelId: "level-10",
+  maximumDistancePx: 250,
+  point: { x: 1200, y: 800 }
+});
+
+dynamicWebs.api.spatial.getDiagnostics();
+```
+
+Shared filters support level IDs, population IDs, web categories, Region IDs or tags, elevation points or bands, strand roles, minimum functional interaction width, maximum distance and a bounded result limit. Results use stable distance-and-identifier ordering and are deeply frozen plain snapshots. No PIXI objects, internal Maps, Sets or mutable service references are exposed.
+
+`queryNearby()` performs a uniform-grid broad-phase followed by a precise point-to-polyline distance check that includes the strand's functional interaction width. `queryStrands()` returns strands whose functional broad-phase bounds overlap the supplied rectangle. Presentation-only colour or thickness remapping refreshes indexed snapshots without rebuilding cells; visible-level changes leave both geometry and query snapshots unchanged.
+
 ## Public API
 
 The API is available through:
@@ -257,10 +306,18 @@ Population mutations are GM-only and replace the complete Scene population array
 
 ```javascript
 dynamicWebs.api.getState();
+dynamicWebs.api.getWebs();
+dynamicWebs.api.getWeb(webId);
+dynamicWebs.api.queryNearby(point, options);
+dynamicWebs.api.queryStrands(bounds, options);
+dynamicWebs.api.findCompatibleWebs(options);
+dynamicWebs.api.findPerches(options);
+
 dynamicWebs.api.webs.getState();
 dynamicWebs.api.webs.generate();
 dynamicWebs.api.webs.clear();
 dynamicWebs.api.levels.getState();
+dynamicWebs.api.spatial.getDiagnostics();
 ```
 
 `generate()` and `clear()` are GM-only. Normal operation should use Scene Configuration and lifecycle synchronisation.
@@ -293,6 +350,7 @@ The copyable report includes:
 - Web and strand counts by population, level and category
 - Population colours, thickness multipliers, and Region restrictions
 - Rendered versus stored counts
+- Spatial-index revision, cell size, indexed counts and query candidate/result telemetry
 - Identifier uniqueness
 - Same-level wall-support checks
 - Population and Region ownership and immutability checks
@@ -302,7 +360,7 @@ The copyable report includes:
 
 Dynamic Webs remains critter-agnostic. It owns environmental web geometry and generic state only. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
 
-Future spatial queries, web carpets, mutable strand state, barriers, token destruction, persistence, trapping and occupancy must build on stable population-qualified identifiers.
+Web carpets, mutable strand state, barriers, token destruction, persistence, trapping and occupancy must build on stable population-qualified identifiers.
 
 ## Validation
 
@@ -325,5 +383,7 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Region creation, geometry edits, elevation changes, tag changes and deletion
 - Confine/Exclude combinations, wildcard tags, missing tags and same-level filtering
 - Viewed-level switching as both GM and player, confirming that the active level and every lower level are rendered while upper levels remain hidden
+- Spatial queries with explicit level, category, Region, distance, strand-role and result-limit filters
+- Querying a stored but currently unrendered level without changing visibility or generation identity
 - Repeated Scene saves without duplicate rendering
 - Baseline diagnostics and deterministic hashes

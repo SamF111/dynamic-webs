@@ -19,6 +19,15 @@ import {
   showPublicBaselineDiagnosticReport
 } from "./api/diagnosticApi.js";
 
+import {
+  findPublicCompatibleWebs,
+  findPublicWebPerches,
+  getPublicSpatialDiagnostics,
+  getPublicWeb,
+  getPublicWebs,
+  queryPublicNearbyWebGeometry,
+  queryPublicWebStrands
+} from "./api/spatialApi.js";
 
 import {
   getPublicSceneWebPopulation,
@@ -104,6 +113,15 @@ export function createPublicApi(
         }
     });
 
+  const spatial =
+    Object.freeze({
+      getDiagnostics:
+        () =>
+          getPublicSpatialDiagnostics(
+            runtime
+          )
+    });
+
   const diagnostics =
     Object.freeze({
       getBaselineReport:
@@ -138,17 +156,61 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.3.1",
+            "0.5.0",
           webs:
             getPublicWebState(
               runtime
             )
         }),
 
+    getWebs:
+      () =>
+        getPublicWebs(
+          runtime
+        ),
+
+    getWeb:
+      (webId) =>
+        getPublicWeb(
+          runtime,
+          webId
+        ),
+
+    queryNearby:
+      (point, options = {}) =>
+        queryPublicNearbyWebGeometry(
+          runtime,
+          point,
+          options
+        ),
+
+    queryStrands:
+      (bounds, options = {}) =>
+        queryPublicWebStrands(
+          runtime,
+          bounds,
+          options
+        ),
+
+    findCompatibleWebs:
+      (options = {}) =>
+        findPublicCompatibleWebs(
+          runtime,
+          options
+        ),
+
+    findPerches:
+      (options = {}) =>
+        findPublicWebPerches(
+          runtime,
+          options
+        ),
+
     webs,
     scene,
     colours,
     levels,
+    spatial,
     diagnostics
   });
 }

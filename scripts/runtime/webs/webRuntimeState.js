@@ -120,7 +120,8 @@ export function createWebRuntimeSnapshot(
   state,
   renderDiagnostics = null,
   {
-    includeWebs = true
+    includeWebs = true,
+    spatialDiagnostics = null
   } = {}
 ) {
   return deepFreeze({
@@ -225,7 +226,9 @@ export function createWebRuntimeSnapshot(
           []
         : null,
     rendering:
-      renderDiagnostics
+      renderDiagnostics,
+    spatial:
+      spatialDiagnostics
   });
 }
 

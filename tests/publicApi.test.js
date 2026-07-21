@@ -37,6 +37,72 @@ function createEnvironment() {
 
     createDiagnosticSnapshot() {
       return webSnapshot;
+    },
+
+    getWebs() {
+      return Object.freeze([
+        Object.freeze({
+          id: "web-a"
+        })
+      ]);
+    },
+
+    getWeb(webId) {
+      return webId === "web-a"
+        ? this.getWebs()[0]
+        : null;
+    },
+
+    queryNearby(point, options) {
+      return Object.freeze([
+        Object.freeze({
+          webId: "web-a",
+          strandId: "strand-a",
+          point,
+          options
+        })
+      ]);
+    },
+
+    queryStrands(bounds, options) {
+      return Object.freeze([
+        Object.freeze({
+          webId: "web-a",
+          strandId: "strand-a",
+          bounds,
+          options
+        })
+      ]);
+    },
+
+    findCompatibleWebs(options) {
+      return Object.freeze([
+        Object.freeze({
+          id: "web-a",
+          options
+        })
+      ]);
+    },
+
+    findPerches(options) {
+      return Object.freeze([
+        Object.freeze({
+          webId: "web-a",
+          perchId: "hub",
+          options
+        })
+      ]);
+    },
+
+    createSpatialDiagnosticSnapshot() {
+      return Object.freeze({
+        active: true,
+        counts: Object.freeze({
+          webs: 1,
+          strands: 1,
+          perches: 1
+        })
+      });
     }
   };
 
@@ -125,6 +191,7 @@ test("public API and namespaces are frozen and expose only modular Scene configu
     assert.equal(Object.isFrozen(api.scene), true);
     assert.equal(Object.isFrozen(api.diagnostics), true);
     assert.equal(Object.isFrozen(api.colours), true);
+    assert.equal(Object.isFrozen(api.spatial), true);
     assert.deepEqual(
       Object.keys(api.scene).sort(),
       ["getPopulation", "getPopulations", "setPopulations"]
@@ -221,6 +288,32 @@ test("public Scene population operations return frozen snapshots and replace the
       }]),
       /Unsupported Scene web density/u
     );
+  } finally {
+    environment.restore();
+  }
+});
+
+test("public spatial operations expose immutable read-only query results", () => {
+  const environment = createEnvironment();
+
+  try {
+    const api = createPublicApi(environment.runtime);
+
+    assert.deepEqual(api.getWebs().map((web) => web.id), ["web-a"]);
+    assert.equal(api.getWeb("web-a").id, "web-a");
+    assert.equal(api.getWeb("missing"), null);
+    assert.equal(
+      api.queryNearby({ x: 10, y: 20 }, { levelId: "base" })[0].strandId,
+      "strand-a"
+    );
+    assert.equal(
+      api.queryStrands({ x: 0, y: 0, width: 50, height: 50 })[0].webId,
+      "web-a"
+    );
+    assert.equal(api.findCompatibleWebs({ category: "ground" })[0].id, "web-a");
+    assert.equal(api.findPerches({ levelId: "base" })[0].perchId, "hub");
+    assert.equal(api.spatial.getDiagnostics().counts.strands, 1);
+    assert.equal(Object.isFrozen(api.getWebs()), true);
   } finally {
     environment.restore();
   }

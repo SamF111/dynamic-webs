@@ -33,7 +33,19 @@ test(
         Object.freeze({
           hasContainer:
             false
-        })
+        }),
+        {
+          spatialDiagnostics:
+            Object.freeze({
+              active:
+                false,
+              counts:
+                Object.freeze({
+                  webs:
+                    0
+                })
+            })
+        }
       );
 
     assert.equal(
@@ -110,6 +122,18 @@ test(
     assert.equal(
       Object.isFrozen(
         snapshot.rendering
+      ),
+      true
+    );
+
+    assert.equal(
+      snapshot.spatial.counts.webs,
+      0
+    );
+
+    assert.equal(
+      Object.isFrozen(
+        snapshot.spatial
       ),
       true
     );

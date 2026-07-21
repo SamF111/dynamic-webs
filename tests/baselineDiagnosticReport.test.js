@@ -151,6 +151,20 @@ test(
               true,
             childCount:
               1
+          }),
+        spatial:
+          Object.freeze({
+            active:
+              true,
+            counts:
+              Object.freeze({
+                webs:
+                  1,
+                strands:
+                  1,
+                perches:
+                  0
+              })
           })
       });
 
@@ -210,7 +224,7 @@ test(
         get:
           () => ({
             version:
-              "0.2.2"
+              "0.5.0"
           })
       }
     };
@@ -266,6 +280,16 @@ test(
       assert.equal(
         report.scene.thicknessMultiplier,
         1.75
+      );
+
+      assert.equal(
+        report.spatial.counts.strands,
+        1
+      );
+
+      assert.equal(
+        Object.isFrozen(report.spatial),
+        true
       );
 
       assert.equal(

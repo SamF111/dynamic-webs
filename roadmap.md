@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.4.0
+## Current baseline — v0.5.0
 
 Completed:
 
@@ -49,6 +49,12 @@ Completed:
 - Rectangle, ellipse and polygon ownership-point containment
 - Exclude precedence, wildcard matching, missing-tag diagnostics and Region lifecycle rebuilds
 - Immutable `regionIds` and `regionTags` on blueprint schema version `5`
+- Runtime-only uniform-grid indexing of webs, strands and perches
+- Spatial cells built after successful geometry replacement and cleared on teardown
+- Presentation snapshot refreshes without spatial geometry rebuilds
+- Frozen, stable-order public web, strand, nearby, compatibility and perch queries
+- Explicit level, elevation, population, category, Region, strand-role, distance, interaction-width and result-limit filters
+- Spatial build and query telemetry in runtime and baseline diagnostics
 
 Current Scene flags:
 
@@ -459,72 +465,56 @@ Dynamic Webs stores its own Region tags in `flags.dynamic-webs.regionTags` and a
 
 ---
 
-## Milestone 5 — Spatial index and read-only query API
+## Milestone 5 — Spatial index and read-only query API — complete
 
-**Target:** v0.5.0
+**Delivered:** v0.5.0
 
-Implement the spatial foundation before high-volume carpets or token destruction.
+Dynamic Webs now maintains a runtime-only uniform-grid broad-phase over every stored immutable web blueprint. The index is independent of rendering visibility and exposes only deeply frozen plain snapshots.
 
-### Internal spatial index
+### Delivered internal index
 
-Use a spatial hash, uniform grid or equivalent broad-phase structure containing:
+- Web bounds, strand centreline bounds and interaction-width-expanded strand bounds
+- Perch points
+- Level and elevation-band ownership
+- Population and web-category ownership
+- Region IDs and tags
+- Strand roles and functional interaction widths
+- Stable opaque identifiers
+- Provisional intact state for later mutable-state filtering
+- Configurable cell size derived from the active Scene grid
+- Stable distance-and-identifier result ordering
 
-- Web bounds
-- Strand bounds
-- Level ownership
-- Web category
-- Region ownership
-- Strand role
-- Functional interaction width
-- Intact or broken state when mutable state exists
+The index is constructed after deterministic generation and committed only after rendering succeeds. It is cleared on Scene replacement, canvas teardown and module disposal. Colour and thickness remapping refresh immutable web snapshots without rebuilding cells. Viewed-level changes do not touch the index.
 
-Avoid full Scene-wide strand scans for every query.
-
-### Public API
-
-Expose frozen snapshots through:
+### Delivered public API
 
 ```javascript
 dynamicWebs.api.getWebs();
 dynamicWebs.api.getWeb(webId);
-
 dynamicWebs.api.queryNearby(point, options);
 dynamicWebs.api.queryStrands(bounds, options);
 dynamicWebs.api.findCompatibleWebs(options);
 dynamicWebs.api.findPerches(options);
+dynamicWebs.api.spatial.getDiagnostics();
 ```
 
-### Query filters
+Queries support explicit filters for level ID, elevation point or band, population, web category, Region ID or tag, strand role, minimum functional interaction width, maximum distance, intact-only state and result limit. Spatial queries always operate over all stored levels; consumers must request physical level compatibility explicitly rather than infer it from cumulative rendering visibility.
 
-Support filters such as:
+### Delivered diagnostics and regression coverage
 
-- Level identifier
-- Elevation band
-- Web category
-- Region identifier or tag
-- Maximum distance
-- Strand role
-- Intact-only
-- Functional interaction width
-- Result limit
+Diagnostics report index revision, snapshot revision, cell size, build duration, web/strand/perch counts, occupied-cell counts, cell-reference counts, query totals and the last broad-phase candidate/result counts. Synthetic dense-scene tests verify that local rectangle queries inspect only nearby cell candidates rather than scanning every indexed strand.
 
-### Implement
+### Exit criteria — met
 
-- Index construction after generation
-- Index clearing on teardown
-- Index rebuilding after blueprint replacement
-- Immutable query results
-- Stable result ordering
-- Query diagnostics
-- Performance tests for dense and infested Scenes
+- Spatial queries use a cell broad-phase before precise checks.
+- Public results are deeply immutable and contain no internal Maps, Sets or PIXI references.
+- Level and elevation compatibility are explicit and tested.
+- Result ordering is stable.
+- The API is sufficient for later Ambient Critters integration and token-intersection work without internal imports.
 
-### Exit criteria
+### Deferred settings enhancement
 
-- Queries avoid scanning every strand.
-- Results are immutable.
-- Results are level-compatible.
-- Query ordering is stable.
-- The API is sufficient for future Ambient Critters integration without exposing internals.
+Add GM-only world settings for the default quantity or density of each web category. These values should initialise new or otherwise unconfigured Scene populations and must not silently overwrite existing per-Scene population settings.
 
 ---
 
@@ -1015,7 +1005,7 @@ Test:
 4. Level-aware web populations — complete in v0.3.0
 5. Modular web populations — complete in v0.3.1
 6. Region-aware webs
-7. Spatial index and read-only query API
+7. Spatial index and read-only query API — complete in v0.5.0
 8. Web carpets
 9. Mutable web state
 10. Optional web barriers

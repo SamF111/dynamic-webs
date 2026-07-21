@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readJson = async (path) => JSON.parse(await readText(path));
 
-test("README locks the v0.4.0 Region-aware modular-population contract", async () => {
+test("README locks the v0.5.0 Region-aware modular-population and spatial-query contract", async () => {
   const [readme, manifest] = await Promise.all([
     readText("README.md"),
     readJson("module.json")
@@ -23,6 +23,9 @@ test("README locks the v0.4.0 Region-aware modular-population contract", async (
   assert.match(readme, /unassigned gap/u);
   assert.match(readme, /above tiles and drawings but below tokens/u);
   assert.match(readme, /separate sibling containers/u);
+  assert.match(readme, /Spatial index and read-only queries/u);
+  assert.match(readme, /all stored web levels/u);
+  assert.match(readme, /cumulative downward visibility does not imply cross-level physical compatibility/u);
 });
 
 test("README documents population-qualified IDs and v4 seeds", async () => {
@@ -45,7 +48,14 @@ test("README documents the modular public API", async () => {
   for (const method of [
     "dynamicWebs.api.scene.getPopulations()",
     "dynamicWebs.api.scene.getPopulation",
-    "dynamicWebs.api.scene.setPopulations"
+    "dynamicWebs.api.scene.setPopulations",
+    "dynamicWebs.api.getWebs()",
+    "dynamicWebs.api.getWeb(webId)",
+    "dynamicWebs.api.queryNearby",
+    "dynamicWebs.api.queryStrands",
+    "dynamicWebs.api.findCompatibleWebs",
+    "dynamicWebs.api.findPerches",
+    "dynamicWebs.api.spatial.getDiagnostics()"
   ]) {
     assert.ok(readme.includes(method));
   }
@@ -70,11 +80,13 @@ test("README lists all authored density states and colour profiles", async () =>
   for (const id of colours.profiles.map((entry) => entry.id)) assert.ok(readme.includes(id));
 });
 
-test("roadmap records v0.4.0 Region awareness before spatial indexing and retains later milestones", async () => {
+test("roadmap records v0.5.0 spatial indexing after Region awareness and retains later milestones", async () => {
   const roadmap = await readText("roadmap.md");
-  assert.match(roadmap, /Current baseline — v0\.4\.0/u);
+  assert.match(roadmap, /Current baseline — v0\.5\.0/u);
   assert.match(roadmap, /Milestone 4 — Region-aware webs — complete/u);
-  assert.match(roadmap, /\*\*Delivered:\*\* v0\.4\.0/u);
+  assert.match(roadmap, /Milestone 5 — Spatial index and read-only query API — complete/u);
+  assert.match(roadmap, /\*\*Delivered:\*\* v0\.5\.0/u);
+  assert.match(roadmap, /GM-only world settings for the default quantity or density/u);
   assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
   for (const phrase of [
     "Spatial index and read-only query API",

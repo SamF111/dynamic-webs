@@ -42,6 +42,10 @@ import {
   createWebRuntimeState
 } from "./webRuntimeState.js";
 
+import {
+  WebSpatialIndex
+} from "../../spatial/WebSpatialIndex.js";
+
 /** Own deterministic all-level web blueprints and transient visible rendering. */
 export class WebRuntimeService {
   constructor(
@@ -74,6 +78,12 @@ export class WebRuntimeService {
         WebRenderService
         ? options.renderService
         : new WebRenderService();
+
+    this.spatialIndex =
+      options.spatialIndex instanceof
+        WebSpatialIndex
+        ? options.spatialIndex
+        : new WebSpatialIndex();
 
     this.state =
       createWebRuntimeState();
@@ -158,6 +168,24 @@ export class WebRuntimeService {
         levelVisibility.visibleLevelIds
       );
 
+    const nextSpatialIndex =
+      new WebSpatialIndex({
+        cellSizePx:
+          resolveSpatialCellSize(
+            context.gridSize
+          )
+      });
+
+    nextSpatialIndex.rebuild(
+      generated.webs,
+      {
+        sceneId:
+          generated.sceneId,
+        generationId:
+          nextGenerationId
+      }
+    );
+
     try {
       this.renderService.render(
         visibleWebs,
@@ -167,6 +195,8 @@ export class WebRuntimeService {
         )
       );
     } catch (error) {
+      this.spatialIndex.clear();
+
       this.state =
         createWebRuntimeState({
           generationId:
@@ -185,6 +215,9 @@ export class WebRuntimeService {
 
       throw error;
     }
+
+    this.spatialIndex =
+      nextSpatialIndex;
 
     this.state = {
       active:
@@ -335,6 +368,10 @@ export class WebRuntimeService {
 
       throw error;
     }
+
+    this.spatialIndex.refreshSnapshots(
+      webs
+    );
 
     this.state = {
       ...previousState,
@@ -493,6 +530,9 @@ export class WebRuntimeService {
     const clearedRendering =
       this.renderService.clear();
 
+    const clearedSpatialIndex =
+      this.spatialIndex.clear();
+
     this.state =
       createWebRuntimeState({
         generationId:
@@ -513,7 +553,55 @@ export class WebRuntimeService {
       });
 
     return wasActive ||
-      clearedRendering;
+      clearedRendering ||
+      clearedSpatialIndex;
+  }
+
+  /** Return all immutable stored web snapshots in stable ID order. */
+  getWebs() {
+    return this.spatialIndex.getWebs();
+  }
+
+  /** Return one immutable stored web snapshot or null. */
+  getWeb(webId) {
+    return this.spatialIndex.getWeb(
+      webId
+    );
+  }
+
+  /** Query functional strand geometry near one point. */
+  queryNearby(point, options = {}) {
+    return this.spatialIndex.queryNearby(
+      point,
+      options
+    );
+  }
+
+  /** Query strands whose functional bounds overlap one rectangle. */
+  queryStrands(bounds, options = {}) {
+    return this.spatialIndex.queryStrands(
+      bounds,
+      options
+    );
+  }
+
+  /** Find metadata- and spatially-compatible web blueprints. */
+  findCompatibleWebs(options = {}) {
+    return this.spatialIndex.findCompatibleWebs(
+      options
+    );
+  }
+
+  /** Find compatible immutable perch snapshots. */
+  findPerches(options = {}) {
+    return this.spatialIndex.findPerches(
+      options
+    );
+  }
+
+  /** Return frozen spatial build and query telemetry. */
+  createSpatialDiagnosticSnapshot() {
+    return this.spatialIndex.createDiagnosticSnapshot();
   }
 
   /** Run a non-destructive all-level deterministic-generation comparison. */
@@ -620,7 +708,11 @@ export class WebRuntimeService {
   createDiagnosticSnapshot() {
     return createWebRuntimeSnapshot(
       this.state,
-      this.renderService.createDiagnosticSnapshot()
+      this.renderService.createDiagnosticSnapshot(),
+      {
+        spatialDiagnostics:
+          this.spatialIndex.createDiagnosticSnapshot()
+      }
     );
   }
 
@@ -631,7 +723,9 @@ export class WebRuntimeService {
       this.renderService.createDiagnosticSnapshot(),
       {
         includeWebs:
-          false
+          false,
+        spatialDiagnostics:
+          this.spatialIndex.createDiagnosticSnapshot()
       }
     );
   }
@@ -672,6 +766,8 @@ export class WebRuntimeService {
           operationAt
       };
     } catch (rollbackError) {
+      this.spatialIndex.clear();
+
       this.state =
         createWebRuntimeState({
           generationId:
@@ -858,6 +954,34 @@ function levelVisibilityEquals(
         value ===
         secondIds[index]
     );
+}
+
+function resolveSpatialCellSize(
+  gridSize
+) {
+  const size =
+    Number(
+      gridSize
+    );
+
+  if (
+    !Number.isFinite(
+      size
+    ) ||
+    size <=
+      0
+  ) {
+    return 200;
+  }
+
+  return Math.max(
+    64,
+    Math.min(
+      512,
+      size *
+        2
+    )
+  );
 }
 
 function normaliseCategoryDensityMap(
