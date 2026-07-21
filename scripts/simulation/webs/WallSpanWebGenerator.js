@@ -17,6 +17,11 @@ import {
   createStableWebId
 } from "./webBlueprintContract.js";
 
+import {
+  evaluateWebRegionRestrictionAtPoint,
+  evaluateWebRegionRestrictionForStrands
+} from "../../spatial/webRegionRestrictionIndex.js";
+
 /**
  * Generate deterministic wall-to-wall webs across narrow passages.
  *
@@ -37,7 +42,8 @@ export class WallSpanWebGenerator {
     wallSegments,
     gridSize,
     configuration,
-    random
+    random,
+    regionRestriction = null
   }) {
     if (
       configuration?.enabled !== true ||
@@ -58,20 +64,27 @@ export class WallSpanWebGenerator {
         configuration
       });
 
-    const selected =
-      selectSpacedCandidates({
-        candidates,
+    const regionCompatibleCandidates = candidates
+      .map((candidate) => ({
+        ...candidate,
+        regionEvaluation: evaluateWebRegionRestrictionAtPoint(
+          regionRestriction,
+          candidate.midpoint.x,
+          candidate.midpoint.y
+        )
+      }))
+      .filter((candidate) => candidate.regionEvaluation.allowed);
+
+    return Object.freeze(
+      selectSpacedCandidateValues({
+        candidates: regionCompatibleCandidates,
         maximumCount:
           configuration.maximumCount,
         minimumSpacingPx:
           configuration.minimumSpacingGridUnits *
           gridSize,
-        random
-      });
-
-    return Object.freeze(
-      selected.map(
-        (candidate) =>
+        random,
+        createValue: (candidate) =>
           createSpanWeb({
             candidate,
             sceneId,
@@ -82,9 +95,10 @@ export class WallSpanWebGenerator {
             generationSeed,
             gridSize,
             configuration,
-            random
+            random,
+            regionRestriction
           })
-      )
+      })
     );
   }
 }
@@ -628,11 +642,12 @@ function groupCorridorCandidates(
   );
 }
 
-function selectSpacedCandidates({
+function selectSpacedCandidateValues({
   candidates,
   maximumCount,
   minimumSpacingPx,
-  random
+  random,
+  createValue
 }) {
   const scored =
     candidates
@@ -678,7 +693,8 @@ function selectSpacedCandidates({
 
     const tooClose =
       selected.some(
-        (candidate) => {
+        (selectedEntry) => {
+          const candidate = selectedEntry.candidate;
           const centreDistance =
             Math.hypot(
               candidate.midpoint.x -
@@ -702,13 +718,17 @@ function selectSpacedCandidates({
       );
 
     if (!tooClose) {
-      selected.push(
-        entry.candidate
-      );
+      const value = createValue(entry.candidate);
+      if (!value) continue;
+
+      selected.push({
+        candidate: entry.candidate,
+        value
+      });
     }
   }
 
-  return selected;
+  return selected.map((entry) => entry.value);
 }
 
 function createSpanWeb({
@@ -721,7 +741,8 @@ function createSpanWeb({
   generationSeed,
   gridSize,
   configuration,
-  random
+  random,
+  regionRestriction
 }) {
   const minimumLengthPx =
     configuration.minimumLengthGridUnits *
@@ -945,6 +966,13 @@ function createSpanWeb({
       detailScale
     });
 
+  const regionEvaluation = evaluateWebRegionRestrictionForStrands(
+    regionRestriction,
+    geometry.strands
+  );
+
+  if (!regionEvaluation.allowed) return null;
+
   const wallIds =
     [
       candidate.sourceWallId,
@@ -1004,6 +1032,8 @@ function createSpanWeb({
     hub,
     strands:
       geometry.strands,
+    regionIds: regionEvaluation.regionIds,
+    regionTags: regionEvaluation.regionTags,
     perches:
       [
         {

@@ -48,6 +48,11 @@ import {
   createUniqueWebPopulationId
 } from "./sceneWebPopulationIds.js";
 
+import {
+  normaliseRegionRoleTags,
+  validateRegionTagListsAreUnique
+} from "./regionTagConfiguration.js";
+
 export const DEFAULT_WEB_POPULATION_DENSITY =
   normaliseSceneWebCategoryDensity(
     DEFAULT_SCENE_WEB_POPULATION_DENSITY,
@@ -68,6 +73,8 @@ export function createDefaultSceneWebPopulation({
     }),
     enabled: true,
     levelId: String(level.id ?? BASE_WEB_LEVEL_ID),
+    confineRegionTags: Object.freeze([]),
+    excludeRegionTags: Object.freeze([]),
     categoryDensities: createDefaultCategoryDensities(),
     colourProfileId: DEFAULT_SCENE_WEB_COLOUR,
     thicknessMultiplier: DEFAULT_SCENE_WEB_THICKNESS
@@ -174,11 +181,20 @@ export function normaliseSceneWebPopulations(
       );
     }
 
+    const confineRegionTags = normaliseRegionRoleTags(source.confineRegionTags);
+    const excludeRegionTags = normaliseRegionRoleTags(source.excludeRegionTags);
+    validateRegionTagListsAreUnique({
+      confine: confineRegionTags,
+      exclude: excludeRegionTags
+    });
+
     return deepFreeze({
       id,
       populationId: id,
       enabled: normaliseBoolean(source.enabled, true),
       levelId,
+      confineRegionTags,
+      excludeRegionTags,
       categoryDensities,
       colourProfileId: normaliseSceneWebColour(
         source.colourProfileId

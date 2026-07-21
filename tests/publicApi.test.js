@@ -179,6 +179,8 @@ test("public Scene population operations return frozen snapshots and replace the
       id: "level-10-red",
       enabled: true,
       levelId: "base",
+      confineRegionTags: ["Crypt", "crypt-*"],
+      excludeRegionTags: ["altar"],
       categoryDensities: {
         "wall-corner": "dense",
         "wall-span": "dense",
@@ -196,6 +198,8 @@ test("public Scene population operations return frozen snapshots and replace the
         id: "level-10-red",
         enabled: true,
         levelId: "base",
+        confineRegionTags: ["crypt", "crypt-*"],
+        excludeRegionTags: ["altar"],
         categoryDensities: {
           "wall-corner": "dense",
           "wall-span": "dense",

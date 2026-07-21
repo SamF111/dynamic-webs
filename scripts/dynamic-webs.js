@@ -24,6 +24,10 @@ import {
 } from "./ui/sceneConfigApplication.js";
 
 import {
+  registerRegionConfigHooks
+} from "./ui/regionConfigApplication.js";
+
+import {
   reportDiagnostic
 } from "./diagnostics/diagnosticReporter.js";
 
@@ -41,8 +45,6 @@ let initialisationPromise =
 let namespace =
   null;
 
-let optionalGmHooksRegistered =
-  false;
 
 globalThis.Hooks.once(
   "init",
@@ -233,20 +235,29 @@ async function initialiseDynamicWebs() {
 }
 
 function registerOptionalGmHooks() {
-  if (
-    optionalGmHooksRegistered ||
-    globalThis.game?.user?.isGM !==
-      true
-  ) {
-    return false;
+  if (globalThis.game?.user?.isGM !== true) return false;
+
+  let registered = false;
+
+  for (const [label, register] of [
+    ["Scene Configuration", registerSceneConfigHooks],
+    ["Region Configuration", registerRegionConfigHooks]
+  ]) {
+    try {
+      registered = register() || registered;
+    } catch (error) {
+      reportDiagnostic({
+        code: "bootstrap.optional-gm-hook-failed",
+        severity: "warn",
+        message: `${label} integration could not be registered.`,
+        context: { subsystem: label },
+        nextAction: "Other Dynamic Webs systems remain available. Reload Foundry and inspect the original error if this configuration UI is missing.",
+        error
+      });
+    }
   }
 
-  registerSceneConfigHooks();
-
-  optionalGmHooksRegistered =
-    true;
-
-  return true;
+  return registered;
 }
 
 async function requireInitialisedRuntime() {

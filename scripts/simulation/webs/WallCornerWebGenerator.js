@@ -20,6 +20,11 @@ import {
   createStableWebId
 } from "./webBlueprintContract.js";
 
+import {
+  evaluateWebRegionRestrictionAtPoint,
+  evaluateWebRegionRestrictionForStrands
+} from "../../spatial/webRegionRestrictionIndex.js";
+
 /** Generate deterministic organic radial webs at structural wall corners. */
 export class WallCornerWebGenerator {
   generate({
@@ -32,7 +37,8 @@ export class WallCornerWebGenerator {
     wallSegments,
     gridSize,
     configuration,
-    random
+    random,
+    regionRestriction = null
   }) {
     if (
       configuration?.enabled !== true ||
@@ -53,33 +59,40 @@ export class WallCornerWebGenerator {
         random
       });
 
-    const webs =
-      candidates
-        .slice(
-          0,
-          configuration.maximumCount
+    const allowedCandidates = candidates
+      .map((candidate) => ({
+        ...candidate,
+        regionEvaluation: evaluateWebRegionRestrictionAtPoint(
+          regionRestriction,
+          candidate.corner.x,
+          candidate.corner.y
         )
-        .map(
-          (
-            candidate
-          ) =>
-            createCornerWeb({
-              candidate,
-              sceneId,
-              populationId,
-              populationLabel,
-              thicknessMultiplier,
-              level,
-              generationSeed,
-              gridSize,
-              configuration,
-              random
-            })
-        );
+      }))
+      .filter((candidate) => candidate.regionEvaluation.allowed);
 
-    return Object.freeze(
-      webs
-    );
+    const webs = [];
+
+    for (const candidate of allowedCandidates) {
+      if (webs.length >= configuration.maximumCount) break;
+
+      const web = createCornerWeb({
+        candidate,
+        sceneId,
+        populationId,
+        populationLabel,
+        thicknessMultiplier,
+        level,
+        generationSeed,
+        gridSize,
+        configuration,
+        random,
+        regionRestriction
+      });
+
+      if (web) webs.push(web);
+    }
+
+    return Object.freeze(webs);
   }
 }
 
@@ -329,7 +342,8 @@ function createCornerWeb({
   generationSeed,
   gridSize,
   configuration,
-  random
+  random,
+  regionRestriction
 }) {
   const minimumSize =
     configuration.minimumSizeGridUnits *
@@ -576,6 +590,13 @@ function createCornerWeb({
     );
   }
 
+  const regionEvaluation = evaluateWebRegionRestrictionForStrands(
+    regionRestriction,
+    strands
+  );
+
+  if (!regionEvaluation.allowed) return null;
+
   const wallIds =
     [
       candidate.left.wallId,
@@ -615,6 +636,8 @@ function createCornerWeb({
       WEB_BLUEPRINT_KINDS.WALL_CORNER,
     hub,
     strands,
+    regionIds: regionEvaluation.regionIds,
+    regionTags: regionEvaluation.regionTags,
     perches:
       [
         {

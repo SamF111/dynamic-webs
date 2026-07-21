@@ -414,17 +414,18 @@ export function assertWebBlueprintIntegrity(
   }
 
   if (
-    !Array.isArray(
-      blueprint.perches
-    ) ||
-    !Array.isArray(
-      blueprint.supportingWallIds
-    )
+    !Array.isArray(blueprint.perches) ||
+    !Array.isArray(blueprint.supportingWallIds) ||
+    !Array.isArray(blueprint.regionIds) ||
+    !Array.isArray(blueprint.regionTags)
   ) {
     throw new TypeError(
-      `Dynamic Webs | Web "${webId}" must contain perch and supporting-wall arrays.`
+      `Dynamic Webs | Web "${webId}" must contain perch, supporting-wall, Region ID and Region tag arrays.`
     );
   }
+
+  assertUniqueIdentifierArray(blueprint.regionIds, `Region IDs for web "${webId}"`);
+  assertUniqueIdentifierArray(blueprint.regionTags, `Region tags for web "${webId}"`);
 
   for (
     const perch of
@@ -469,9 +470,9 @@ export function assertWebBlueprintIntegrity(
     !Object.isFrozen(
       blueprint.perches
     ) ||
-    !Object.isFrozen(
-      blueprint.supportingWallIds
-    )
+    !Object.isFrozen(blueprint.supportingWallIds) ||
+    !Object.isFrozen(blueprint.regionIds) ||
+    !Object.isFrozen(blueprint.regionTags)
   ) {
     throw new Error(
       `Dynamic Webs | Web blueprint "${webId}" is not deeply immutable.`
@@ -965,4 +966,16 @@ function encodeIdentifierPart(
   return encodeURIComponent(
     value
   );
+}
+
+
+function assertUniqueIdentifierArray(value, label) {
+  const seen = new Set();
+  for (const entry of value) {
+    const identifier = requireIdentifier(entry, label);
+    if (seen.has(identifier)) {
+      throw new Error(`Dynamic Webs | ${label} contains duplicate identifier "${identifier}".`);
+    }
+    seen.add(identifier);
+  }
 }

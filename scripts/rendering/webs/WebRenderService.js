@@ -4,7 +4,8 @@ import {
 } from "../../module/moduleConstants.js";
 
 import {
-  resolveCanvasParentForWebLayer
+  resolveCanvasParentForWebLayer,
+  resolveWebPrimarySortLayer
 } from "../../foundry/displayCompatibility.js";
 
 import {
@@ -15,8 +16,16 @@ import {
 /** Own the transient PIXI representation of generated web blueprints. */
 export class WebRenderService {
   constructor() {
+    /**
+     * Backwards-compatible reference to the highest visible elevation
+     * container. Cumulative level visibility requires several sibling
+     * containers so each level can sort independently against Levels tiles.
+     */
     this.container =
       null;
+
+    this.containers =
+      [];
 
     this.graphicsByWebId =
       new Map();
@@ -38,6 +47,15 @@ export class WebRenderService {
 
     this.lastZIndex =
       null;
+
+    this.lastElevation =
+      0;
+
+    this.lastElevations =
+      Object.freeze([]);
+
+    this.lastContainerCount =
+      0;
 
     this.lastThicknessMultiplier =
       1;
@@ -75,110 +93,75 @@ export class WebRenderService {
       );
     }
 
-    const container =
-      new pixi.Container();
+    const visibleWebs =
+      Array.isArray(
+        webs
+      )
+        ? webs
+        : [];
 
-    configureWebContainer(
-      container,
-      configuration
-    );
+    const renderGroups =
+      createElevationRenderGroups(
+        visibleWebs
+      );
 
-    parent.addChild(
-      container
-    );
-
-    markParentForSorting(
-      parent
-    );
-
-    this.container =
-      container;
+    this.containers =
+      [];
 
     try {
       for (
-        const web of
-        Array.isArray(
-          webs
-        )
-          ? webs
-          : []
+        const [
+          groupIndex,
+          renderGroup
+        ] of renderGroups.entries()
       ) {
-        const webThicknessMultiplier =
-          resolveThicknessMultiplier(
-            web?.thicknessMultiplier ??
-            thicknessMultiplier
-          );
+        const container =
+          new pixi.Container();
 
-        const graphics =
-          new pixi.Graphics();
-
-        configureWebDisplayObject(
-          graphics
+        configureWebContainer(
+          container,
+          configuration,
+          layerMode,
+          renderGroup.elevation,
+          resolveWebContainerName({
+            elevation:
+              renderGroup.elevation,
+            groupIndex,
+            groupCount:
+              renderGroups.length
+          })
         );
 
-        graphics.name =
-          `${MODULE_ID}.web.${web.id}`;
+        parent.addChild(
+          container
+        );
 
-        graphics.zIndex =
-          web.kind ===
-            "ground"
-            ? -20
-            : -10;
+        this.containers.push(
+          container
+        );
+
+        this.container =
+          container;
 
         for (
-          const strand of
-          web.strands
+          const web of
+          renderGroup.webs
         ) {
-          drawWebPolyline(
-            graphics,
-            strand.points,
-            {
-              width:
-                (
-                  strand.widthPx +
-                  configuration.underWidthAdditionPx
-                ) *
-                webThicknessMultiplier,
-              colour:
-                resolveStrandColour(
-                  strand.underColour,
-                  configuration?.underColour,
-                  0x111827
-                ),
-              alpha:
-                strand.alpha *
-                configuration.underAlphaMultiplier
-            }
-          );
-
-          drawWebPolyline(
-            graphics,
-            strand.points,
-            {
-              width:
-                strand.widthPx *
-                webThicknessMultiplier,
-              colour:
-                resolveStrandColour(
-                  strand.colour,
-                  configuration?.silkColour,
-                  0xe8edf2
-                ),
-              alpha:
-                strand.alpha
-            }
-          );
+          renderWebGraphic({
+            pixi,
+            container,
+            web,
+            configuration,
+            thicknessMultiplier,
+            graphicsByWebId:
+              this.graphicsByWebId
+          });
         }
-
-        container.addChild(
-          graphics
-        );
-
-        this.graphicsByWebId.set(
-          web.id,
-          graphics
-        );
       }
+
+      markParentForSorting(
+        parent
+      );
     } catch (error) {
       this.clear();
 
@@ -188,13 +171,18 @@ export class WebRenderService {
     this.lastThicknessMultipliersByPopulation =
       Object.freeze(
         Object.fromEntries(
-          (Array.isArray(webs) ? webs : [])
-            .map((web) => [
-              web.populationId ?? "default",
+          visibleWebs.map(
+            (
+              web
+            ) => [
+              web.populationId ??
+                "default",
               resolveThicknessMultiplier(
-                web?.thicknessMultiplier ?? thicknessMultiplier
+                web?.thicknessMultiplier ??
+                thicknessMultiplier
               )
-            ])
+            ]
+          )
         )
       );
 
@@ -215,23 +203,52 @@ export class WebRenderService {
     this.lastZIndex =
       Number.isFinite(
         Number(
-          container.zIndex
+          this.container?.zIndex
         )
       )
         ? Number(
-            container.zIndex
+            this.container.zIndex
           )
         : null;
+
+    this.lastElevation =
+      resolveFiniteElevation(
+        this.container?.elevation,
+        renderGroups.at(
+          -1
+        )?.elevation ??
+        0
+      );
+
+    this.lastElevations =
+      Object.freeze(
+        renderGroups.map(
+          (
+            renderGroup
+          ) =>
+            renderGroup.elevation
+        )
+      );
+
+    this.lastContainerCount =
+      this.containers.length;
 
     this.lastThicknessMultiplier =
       thicknessMultiplier;
 
-    return container;
+    return this.container;
   }
 
   clear() {
-    const container =
-      this.container;
+    const containers =
+      collectActiveContainers(
+        this.containers,
+        this.container
+      );
+
+    const hadContainers =
+      containers.length >
+      0;
 
     const hadGraphics =
       this.graphicsByWebId.size >
@@ -240,76 +257,128 @@ export class WebRenderService {
     this.container =
       null;
 
+    this.containers =
+      [];
+
     this.graphicsByWebId.clear();
 
-    if (
-      !container ||
-      container.destroyed ===
-        true
+    const parentsToSort =
+      new Set();
+
+    for (
+      const container of
+      containers
     ) {
       if (
-        hadGraphics
+        !container ||
+        container.destroyed ===
+          true
       ) {
-        this.lastClearedAt =
-          Date.now();
+        continue;
       }
 
-      return hadGraphics;
+      if (
+        container.parent &&
+        typeof container.parent.removeChild ===
+          "function"
+      ) {
+        const parent =
+          container.parent;
+
+        parent.removeChild(
+          container
+        );
+
+        parentsToSort.add(
+          parent
+        );
+      }
+
+      if (
+        typeof container.destroy ===
+          "function"
+      ) {
+        try {
+          container.destroy({
+            children:
+              true
+          });
+        } catch (_error) {
+          container.destroy();
+        }
+      }
     }
 
-    if (
-      container.parent &&
-      typeof container.parent.removeChild ===
-        "function"
+    for (
+      const parent of
+      parentsToSort
     ) {
-      const parent =
-        container.parent;
-
-      parent.removeChild(
-        container
-      );
-
       markParentForSorting(
         parent
       );
     }
 
     if (
-      typeof container.destroy ===
-        "function"
+      hadContainers ||
+      hadGraphics
     ) {
-      try {
-        container.destroy({
-          children:
-            true
-        });
-      } catch (_error) {
-        container.destroy();
-      }
+      this.lastClearedAt =
+        Date.now();
     }
 
-    this.lastClearedAt =
-      Date.now();
-
-    return true;
+    return hadContainers ||
+      hadGraphics;
   }
 
   createDiagnosticSnapshot() {
+    const containers =
+      collectActiveContainers(
+        this.containers,
+        this.container
+      ).filter(
+        (
+          container
+        ) =>
+          container.destroyed !==
+            true
+      );
+
     const container =
-      this.container;
+      containers.at(
+        -1
+      ) ??
+      null;
 
     const hasContainer =
-      Boolean(
-        container &&
-        container.destroyed !==
-          true
-      );
+      containers.length >
+      0;
+
+    const elevations =
+      hasContainer
+        ? containers.map(
+            (
+              item
+            ) =>
+              resolveFiniteElevation(
+                item.elevation,
+                0
+              )
+          )
+        : Array.from(
+            this.lastElevations
+          );
 
     return Object.freeze({
       hasContainer,
       containerDestroyed:
-        container?.destroyed ===
+        this.container?.destroyed ===
           true,
+      containerCount:
+        hasContainer
+          ? containers.length
+          : 0,
+      lastContainerCount:
+        this.lastContainerCount,
       renderedWebCount:
         this.graphicsByWebId.size,
       renderedWebIds:
@@ -321,16 +390,36 @@ export class WebRenderService {
       containerName:
         container?.name ??
         null,
+      containerNames:
+        Object.freeze(
+          containers.map(
+            (
+              item
+            ) =>
+              item.name ??
+              null
+          )
+        ),
       childCount:
-        Array.isArray(
-          container?.children
-        )
-          ? container.children.length
-          : 0,
+        containers.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            (
+              Array.isArray(
+                item.children
+              )
+                ? item.children.length
+                : 0
+            ),
+          0
+        ),
       parentName:
         hasContainer
           ? resolveDisplayName(
-              container.parent
+              containers[0].parent
             )
           : this.lastParentName,
       layerMode:
@@ -339,13 +428,24 @@ export class WebRenderService {
         hasContainer &&
         Number.isFinite(
           Number(
-            container.zIndex
+            container?.zIndex
           )
         )
           ? Number(
               container.zIndex
             )
           : this.lastZIndex,
+      elevation:
+        hasContainer
+          ? resolveFiniteElevation(
+              container?.elevation,
+              this.lastElevation
+            )
+          : this.lastElevation,
+      elevations:
+        Object.freeze(
+          elevations
+        ),
       thicknessMultiplier:
         this.lastThicknessMultiplier,
       thicknessMultipliersByPopulation:
@@ -360,16 +460,110 @@ export class WebRenderService {
   }
 }
 
+function renderWebGraphic({
+  pixi,
+  container,
+  web,
+  configuration,
+  thicknessMultiplier,
+  graphicsByWebId
+}) {
+  const webThicknessMultiplier =
+    resolveThicknessMultiplier(
+      web?.thicknessMultiplier ??
+      thicknessMultiplier
+    );
+
+  const graphics =
+    new pixi.Graphics();
+
+  configureWebDisplayObject(
+    graphics
+  );
+
+  graphics.name =
+    `${MODULE_ID}.web.${web.id}`;
+
+  graphics.elevation =
+    resolveWebElevation(
+      web,
+      container.elevation
+    );
+
+  graphics.zIndex =
+    web.kind ===
+      "ground"
+      ? -20
+      : -10;
+
+  for (
+    const strand of
+    web.strands
+  ) {
+    drawWebPolyline(
+      graphics,
+      strand.points,
+      {
+        width:
+          (
+            strand.widthPx +
+            configuration.underWidthAdditionPx
+          ) *
+          webThicknessMultiplier,
+        colour:
+          resolveStrandColour(
+            strand.underColour,
+            configuration?.underColour,
+            0x111827
+          ),
+        alpha:
+          strand.alpha *
+          configuration.underAlphaMultiplier
+      }
+    );
+
+    drawWebPolyline(
+      graphics,
+      strand.points,
+      {
+        width:
+          strand.widthPx *
+          webThicknessMultiplier,
+        colour:
+          resolveStrandColour(
+            strand.colour,
+            configuration?.silkColour,
+            0xe8edf2
+          ),
+        alpha:
+          strand.alpha
+      }
+    );
+  }
+
+  container.addChild(
+    graphics
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    graphics
+  );
+}
+
 function configureWebContainer(
   container,
-  configuration
+  configuration,
+  layerMode,
+  renderElevation,
+  name
 ) {
   configureWebDisplayObject(
     container
   );
 
   container.name =
-    `${MODULE_ID}.webs`;
+    name;
 
   if (
     "label" in
@@ -383,13 +577,18 @@ function configureWebContainer(
     true;
 
   container.elevation =
-    0;
+    resolveFiniteElevation(
+      renderElevation,
+      0
+    );
 
   container.sortLayer =
-    640;
+    resolveWebPrimarySortLayer(
+      layerMode
+    );
 
   container.sort =
-    -100;
+    0;
 
   container.zIndex =
     Number.isFinite(
@@ -400,7 +599,179 @@ function configureWebContainer(
       ? Number(
           configuration.zIndex
         )
-      : -100;
+      : 0;
+}
+
+function createElevationRenderGroups(
+  webs
+) {
+  const groupsByElevation =
+    new Map();
+
+  for (
+    const web of
+    Array.isArray(
+      webs
+    )
+      ? webs
+      : []
+  ) {
+    const elevation =
+      resolveWebElevation(
+        web,
+        0
+      );
+
+    const key =
+      String(
+        elevation
+      );
+
+    let group =
+      groupsByElevation.get(
+        key
+      );
+
+    if (!group) {
+      group = {
+        elevation,
+        webs:
+          []
+      };
+
+      groupsByElevation.set(
+        key,
+        group
+      );
+    }
+
+    group.webs.push(
+      web
+    );
+  }
+
+  if (
+    groupsByElevation.size ===
+      0
+  ) {
+    return Object.freeze([
+      Object.freeze({
+        elevation:
+          0,
+        webs:
+          Object.freeze([])
+      })
+    ]);
+  }
+
+  return Object.freeze(
+    Array.from(
+      groupsByElevation.values()
+    )
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          first.elevation -
+          second.elevation
+      )
+      .map(
+        (
+          group
+        ) =>
+          Object.freeze({
+            elevation:
+              group.elevation,
+            webs:
+              Object.freeze(
+                group.webs
+              )
+          })
+      )
+  );
+}
+
+function resolveWebContainerName({
+  elevation,
+  groupIndex,
+  groupCount
+}) {
+  if (
+    groupCount ===
+      1
+  ) {
+    return `${MODULE_ID}.webs`;
+  }
+
+  return [
+    `${MODULE_ID}.webs`,
+    `level-${groupIndex}`,
+    `elevation-${formatElevationForName(elevation)}`
+  ].join(
+    "."
+  );
+}
+
+function formatElevationForName(
+  elevation
+) {
+  return String(
+    resolveFiniteElevation(
+      elevation,
+      0
+    )
+  )
+    .replace(
+      /^-/u,
+      "negative-"
+    )
+    .replace(
+      /\./gu,
+      "-"
+    );
+}
+
+function collectActiveContainers(
+  containers,
+  fallbackContainer
+) {
+  const uniqueContainers = [];
+  const seen =
+    new Set();
+
+  for (
+    const container of
+    [
+      ...(
+        Array.isArray(
+          containers
+        )
+          ? containers
+          : []
+      ),
+      fallbackContainer
+    ]
+  ) {
+    if (
+      !container ||
+      seen.has(
+        container
+      )
+    ) {
+      continue;
+    }
+
+    seen.add(
+      container
+    );
+
+    uniqueContainers.push(
+      container
+    );
+  }
+
+  return uniqueContainers;
 }
 
 function markParentForSorting(
@@ -463,6 +834,51 @@ function resolveDisplayName(
       );
 }
 
+function resolveWebElevation(
+  web,
+  fallback = 0
+) {
+  return resolveFiniteElevation(
+    web?.elevationBand?.bottom,
+    resolveFiniteElevation(
+      web?.elevation,
+      fallback
+    )
+  );
+}
+
+function resolveFiniteElevation(
+  value,
+  fallback = 0
+) {
+  const numericValue =
+    Number(
+      value
+    );
+
+  if (
+    value !== null &&
+    value !== undefined &&
+    value !== "" &&
+    Number.isFinite(
+      numericValue
+    )
+  ) {
+    return numericValue;
+  }
+
+  const numericFallback =
+    Number(
+      fallback
+    );
+
+  return Number.isFinite(
+    numericFallback
+  )
+    ? numericFallback
+    : 0;
+}
+
 function resolveThicknessMultiplier(
   value
 ) {
@@ -513,7 +929,6 @@ function resolveStrandColour(
 
   return fallback;
 }
-
 
 function requirePixi() {
   const pixi =

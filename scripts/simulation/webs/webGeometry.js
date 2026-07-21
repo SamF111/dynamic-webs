@@ -205,7 +205,9 @@ export function createWebBlueprint({
   hub,
   strands,
   perches = [],
-  supportingWallIds = []
+  supportingWallIds = [],
+  regionIds = [],
+  regionTags = []
 }) {
   const webId =
     requireIdentifier(
@@ -446,6 +448,9 @@ export function createWebBlueprint({
         )
     );
 
+  const safeRegionIds = normaliseIdentifierList(regionIds);
+  const safeRegionTags = normaliseIdentifierList(regionTags);
+
   const blueprint =
     deepFreezeWebValue({
       schemaVersion:
@@ -489,7 +494,11 @@ export function createWebBlueprint({
       perches:
         safePerches,
       supportingWallIds:
-        safeSupportingWallIds
+        safeSupportingWallIds,
+      regionIds:
+        safeRegionIds,
+      regionTags:
+        safeRegionTags
     });
 
   return assertWebBlueprintIntegrity(
@@ -849,4 +858,13 @@ function requireIdentifier(
   }
 
   return identifier;
+}
+
+
+function normaliseIdentifierList(value) {
+  return Array.from(new Set(
+    (Array.isArray(value) ? value : [])
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean)
+  )).sort((first, second) => first.localeCompare(second));
 }

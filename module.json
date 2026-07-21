@@ -1,8 +1,8 @@
 {
   "id": "dynamic-webs",
   "title": "Dynamic Webs",
-  "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic, level-aware modular web populations with independent density, colour and thickness controls.</p>",
-  "version": "0.3.1",
+  "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic, level- and Region-aware, independently configurable spider webs for Foundry Virtual Tabletop Scenes.</p>",
+  "version": "0.4.0",
   "authors": [
     {
       "name": "mintchoc",

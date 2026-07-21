@@ -37,7 +37,7 @@ const LEVELS =
   ]);
 
 test(
-  "GM and player visibility both follow the active viewed level",
+  "GM and player visibility include the active viewed level and every lower level",
   () => {
     const resolution = {
       levels:
@@ -68,17 +68,18 @@ test(
 
     assert.equal(
       gm.policy,
-      "active-viewed-level"
+      "active-viewed-and-lower-levels"
     );
 
     assert.equal(
       player.policy,
-      "active-viewed-level"
+      "active-viewed-and-lower-levels"
     );
 
     assert.deepEqual(
       gm.visibleLevelIds,
       [
+        "lower",
         "upper"
       ]
     );
@@ -112,6 +113,7 @@ test(
           web.id
       ),
       [
+        "a",
         "b"
       ]
     );
@@ -141,6 +143,66 @@ test(
       [
         "lower"
       ]
+    );
+  }
+);
+
+
+test(
+  "cumulative visibility follows elevation order rather than provider array order",
+  () => {
+    const lower =
+      createLevel(
+        "lower",
+        0,
+        9
+      );
+
+    const middle =
+      createLevel(
+        "middle",
+        10,
+        19
+      );
+
+    const upper =
+      createLevel(
+        "upper",
+        20,
+        29
+      );
+
+    const visibility =
+      resolveVisibleWebLevelIds({
+        providerResolution: {
+          levels: [
+            upper,
+            lower,
+            middle
+          ],
+          activeViewedLevelId:
+            "middle"
+        }
+      });
+
+    assert.equal(
+      visibility.activeViewedLevelId,
+      "middle"
+    );
+
+    assert.deepEqual(
+      visibility.visibleLevelIds,
+      [
+        "lower",
+        "middle"
+      ]
+    );
+
+    assert.equal(
+      visibility.visibleLevelIds.includes(
+        "upper"
+      ),
+      false
     );
   }
 );
@@ -319,6 +381,7 @@ test(
       assert.deepEqual(
         renderCalls[1],
         [
+          "ground:scene:lower:index-0",
           "ground:scene:upper:index-0"
         ]
       );
@@ -361,7 +424,7 @@ function createGeneratedPopulation() {
 
   return Object.freeze({
     blueprintSchemaVersion:
-      3,
+      5,
     sceneId:
       "scene",
     seed:
@@ -470,7 +533,7 @@ function createWeb(
 ) {
   return Object.freeze({
     schemaVersion:
-      3,
+      5,
     id:
       `ground:scene:${levelId}:index-0`,
     kind:
@@ -518,6 +581,10 @@ function createWeb(
     perches:
       Object.freeze([]),
     supportingWallIds:
+      Object.freeze([]),
+    regionIds:
+      Object.freeze([]),
+    regionTags:
       Object.freeze([])
   });
 }
@@ -731,6 +798,7 @@ test(
       assert.deepEqual(
         renderCalls[0],
         [
+          "ground:scene:lower:index-0",
           "ground:scene:upper:index-0"
         ]
       );

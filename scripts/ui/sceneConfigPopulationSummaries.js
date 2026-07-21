@@ -28,6 +28,15 @@ export function updateWebPopulationCardPresentation(partElement) {
     if (title) title.textContent = titleLabel;
     if (detail) detail.textContent = `${enabled ? levelLabel : "Disabled"} · ${colourLabel}`;
 
+    const confineTags = normaliseTagInput(
+      card.querySelector('[data-dynamic-webs-population-field="confineRegionTags"]')?.value
+    );
+    const excludeTags = normaliseTagInput(
+      card.querySelector('[data-dynamic-webs-population-field="excludeRegionTags"]')?.value
+    );
+    const regionSummary = card.querySelector("[data-dynamic-webs-region-summary]");
+    if (regionSummary) regionSummary.textContent = createRegionSummary(confineTags, excludeTags);
+
     for (const slider of card.querySelectorAll("[data-dynamic-webs-population-density]")) {
       const densityId = WEB_DENSITY_ORDER[Math.max(0, Math.min(
         WEB_DENSITY_ORDER.length - 1,
@@ -41,4 +50,20 @@ export function updateWebPopulationCardPresentation(partElement) {
 
   const empty = partElement?.querySelector?.("[data-dynamic-webs-population-empty]");
   if (empty) empty.hidden = cards.length > 0;
+}
+
+
+function normaliseTagInput(value) {
+  return String(value ?? "")
+    .split(/[\n,]+/u)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function createRegionSummary(confineTags, excludeTags) {
+  if (confineTags.length === 0 && excludeTags.length === 0) return "Unrestricted";
+  const parts = [];
+  if (confineTags.length > 0) parts.push(`Confine: ${confineTags.length}`);
+  if (excludeTags.length > 0) parts.push(`Exclude: ${excludeTags.length}`);
+  return parts.join(" · ");
 }

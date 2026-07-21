@@ -8,9 +8,9 @@ The module owns web generation, immutable geometry, rendering, modular Scene con
 
 - **Module ID:** `dynamic-webs`
 - **Runtime namespace:** `dynamicWebs`
-- **Current version:** `0.3.1`
+- **Current version:** `0.4.0`
 - **Public API version:** `1`
-- **Blueprint schema version:** `4`
+- **Blueprint schema version:** `5`
 - **Diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
@@ -27,7 +27,7 @@ Dynamic Webs currently generates:
 
 ## Modular Scene web populations
 
-Version `0.3.1` replaces the former Scene-wide density, colour and thickness model with explicit modular populations.
+Version `0.4.0` builds on the former Scene-wide density, colour and thickness model with explicit modular populations.
 
 The authoritative Scene flag is:
 
@@ -44,6 +44,8 @@ Each population independently stores:
   id: "web-r7Kp2mN4xQ8vT3sL",
   enabled: true,
   levelId: "level-10",
+  confineRegionTags: ["crypt", "area-*"],
+  excludeRegionTags: ["altar"],
   categoryDensities: {
     "wall-corner": "dense",
     "wall-span": "dense",
@@ -65,17 +67,39 @@ The Dynamic Webs Scene Configuration tab provides collapsible population cards w
 
 - Enabled state
 - Target level
+- A nested **Regions** section containing Confine and Exclude tag fields
 - A nested **Web options** section containing corner, span, ground and reserved carpet density controls
 - A nested **Appearance** section containing web colour and visible thickness
 - Duplicate and remove actions
 
-No population card is expanded automatically. The nested Web options and Appearance sections also start collapsed and retain their state while the rendered form remains open. Adding or duplicating a card expands only the new outer card and collapses the others. Card headings such as `Web Population 1` are presentation-only and are recalculated from card order.
+No population card is expanded automatically. The nested Regions, Web options and Appearance sections also start collapsed and retain their state while the rendered form remains open. Adding or duplicating a card expands only the new outer card and collapses the others. Card headings such as `Web Population 1` are presentation-only and are recalculated from card order.
 
 Each population receives a hidden opaque ID such as `web-r7Kp2mN4xQ8vT3sL`. The ID is generated once, persisted with the population and never changes when its level, densities, colour, thickness, order or neighbouring populations change. Duplicating a population creates a fresh ID. Removing a population removes only that ID.
 
 New populations start enabled with every density slider at the middle `standard` state. This default is authored as `webPopulationDensity` in `data/scene-configuration-defaults.json`.
 
 Multiple populations may target the same level. This allows combinations such as sparse blue corner webs and dense red ground webs on one floor.
+
+## Region-aware generation
+
+Each population may independently configure:
+
+- **Confine to Region tags** — generate only when every visible strand segment remains inside the union of same-level Regions matching at least one configured tag.
+- **Exclude Region tags** — reject a complete candidate when any visible strand touches or enters a same-level Region matching a configured tag. Exclude takes precedence over Confine.
+
+Tags use the same authoring syntax as Ambient Critters: comma- or line-separated values, lower-case slug normalisation, deduplication, and optional `*` wildcards in population role fields. A tag cannot be reused in both Confine and Exclude for the same population.
+
+Dynamic Webs adds its own Region Configuration tab storing tags at:
+
+```text
+flags.dynamic-webs.regionTags
+```
+
+For a unified authoring experience, Dynamic Webs also recognises existing tags stored by Ambient Critters at `flags.ambient-critters.regionTags`. This is read-only interoperability; neither module imports the other's source code.
+
+Region acceptance is evaluated against complete generated strand polylines. Adjacent or overlapping Confine Regions form one allowed union, but an unassigned gap is not allowed. Candidates are rejected rather than clipped, so accepted strands retain their deterministic organic geometry. Foundry's native Region point test is authoritative when available; serialised rectangle, ellipse and polygon records are compatibility fallbacks.
+
+Web carpets will require their own boundary-aware area generation in their later milestone.
 
 ## Level provider
 
@@ -131,7 +155,7 @@ Changing one population does not reshuffle another population. Changing one cate
 
 ## Blueprint contract
 
-Every web and strand uses blueprint schema version `4`.
+Every web and strand uses blueprint schema version `5`.
 
 Web IDs are Scene-, population- and level-qualified:
 
@@ -149,6 +173,7 @@ Every web blueprint includes:
 - immutable `elevationBand`
 - `colourProfileId`
 - generation seed and source key
+- controlling `regionIds` and matched `regionTags`
 - immutable geometry, strands, perches and supporting wall IDs
 
 Strand IDs remain qualified by their web ID:
@@ -161,15 +186,18 @@ Consumers must treat all complete identifiers as opaque.
 
 ## Rendering and visibility
 
-Dynamic Webs renders into one transient PIXI container:
+Dynamic Webs renders into one transient PIXI container per visible elevation band:
 
 ```text
 dynamic-webs.webs
+dynamic-webs.webs.level-<index>.elevation-<bottom>
 ```
 
-Generated webs are not embedded Foundry documents. Repeated synchronisation destroys and replaces the current container rather than stacking graphics.
+Single-level rendering retains the stable `dynamic-webs.webs` name. When several elevation bands are visible, Dynamic Webs creates separate sibling containers so each floor sorts independently against Foundry and Levels tiles. Generated webs are not embedded Foundry documents. Repeated synchronisation destroys and replaces the complete module-owned container set rather than stacking graphics.
 
-The runtime stores every generated population. Rendering follows the currently viewed level for both GMs and players, so webs assigned to other elevation bands remain hidden. Viewed-level changes replace only the visible subset and do not regenerate geometry.
+The runtime stores every generated population. GMs and players render the active viewed level plus every detected level below it. A token on elevation `10` can therefore see webs on elevations `10` and `0`, while a token on elevation `0` cannot see elevation `10` webs. Viewed-level changes replace only the visible subset and do not regenerate geometry.
+
+Each transient render container is stamped with its own level's point elevation as well as the Primary Canvas sort band, placing same-floor webs above tiles and drawings but below tokens while preserving correct cross-floor ordering in v13 Levels and v14 native elevation.
 
 The renderer resolves thickness per web, so populations with different multipliers can render together safely.
 
@@ -185,7 +213,7 @@ On `canvasReady` Dynamic Webs:
 6. Stores all immutable blueprints.
 7. Renders the level-compatible subset.
 
-Population-array changes perform one deterministic regeneration. Scene geometry, structural wall and level-document changes also regenerate. Viewed-level changes only refresh visibility.
+Population-array changes perform one deterministic regeneration. Scene geometry, structural wall, Region geometry/tag/elevation, and level-document changes also regenerate. Viewed-level changes only refresh visibility.
 
 Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry.
 
@@ -202,13 +230,15 @@ game.modules.get("dynamic-webs")?.api
 
 ```javascript
 dynamicWebs.api.scene.getPopulations();
-dynamicWebs.api.scene.getPopulation("level-10-red-webs");
+dynamicWebs.api.scene.getPopulation("web-r7Kp2mN4xQ8vT3sL");
 
 await dynamicWebs.api.scene.setPopulations([
   {
     id: "web-r7Kp2mN4xQ8vT3sL",
     enabled: true,
     levelId: "level-0",
+    confineRegionTags: ["crypt"],
+    excludeRegionTags: ["altar"],
     categoryDensities: {
       "wall-corner": "standard",
       "wall-span": "standard",
@@ -261,18 +291,18 @@ The copyable report includes:
 - Unavailable population IDs
 - Population seeds and category seeds
 - Web and strand counts by population, level and category
-- Population colours and thickness multipliers
+- Population colours, thickness multipliers, and Region restrictions
 - Rendered versus stored counts
 - Identifier uniqueness
 - Same-level wall-support checks
-- Population ownership and immutability checks
+- Population and Region ownership and immutability checks
 - Non-destructive determinism hashes
 
 ## Architectural boundary
 
 Dynamic Webs remains critter-agnostic. It owns environmental web geometry and generic state only. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
 
-Future region restrictions, spatial queries, web carpets, mutable strand state, barriers, token destruction, persistence, trapping and occupancy must build on stable population-qualified identifiers.
+Future spatial queries, web carpets, mutable strand state, barriers, token destruction, persistence, trapping and occupancy must build on stable population-qualified identifiers.
 
 ## Validation
 
@@ -292,6 +322,8 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Empty population arrays
 - Missing saved levels
 - Wall creation, movement and deletion
-- Viewed-level switching as both GM and player, confirming that only the active level is rendered
+- Region creation, geometry edits, elevation changes, tag changes and deletion
+- Confine/Exclude combinations, wildcard tags, missing tags and same-level filtering
+- Viewed-level switching as both GM and player, confirming that the active level and every lower level are rendered while upper levels remain hidden
 - Repeated Scene saves without duplicate rendering
 - Baseline diagnostics and deterministic hashes

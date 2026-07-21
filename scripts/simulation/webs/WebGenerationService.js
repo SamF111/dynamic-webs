@@ -41,6 +41,11 @@ import {
   createWebLevelGenerationContexts
 } from "./webLevelGenerationContext.js";
 
+import {
+  buildWebRegionRestrictionIndex,
+  createWebRegionRestrictionDiagnostics
+} from "../../spatial/webRegionRestrictionIndex.js";
+
 /** Deterministic, Foundry-independent web-blueprint generation service. */
 export class WebGenerationService {
   constructor(options = {}) {
@@ -80,7 +85,7 @@ export class WebGenerationService {
       if (!requested || requested.enabled !== true) continue;
 
       const populationId = requireIdentifier(requested.id ?? requested.populationId, "web population ID");
-      const populationLabel = requireIdentifier(requested.label ?? populationId, `label for web population "${populationId}"`);
+      const populationLabel = populationId;
       const levelId = requireIdentifier(requested.levelId, `level ID for web population "${populationId}"`);
       const levelContext = levelContextsById.get(levelId);
       if (!levelContext) continue;
@@ -114,6 +119,16 @@ export class WebGenerationService {
       });
       populationSeeds[populationId] = categorySeeds;
 
+      const regionRestriction =
+        buildWebRegionRestrictionIndex({
+          regions:
+            generationContext.regions,
+          population:
+            requested,
+          level:
+            levelContext.level
+        });
+
       const geometry = this.#generateForLevel({
         generationContext,
         levelContext,
@@ -121,7 +136,8 @@ export class WebGenerationService {
         categorySeeds,
         populationId,
         populationLabel,
-        thicknessMultiplier
+        thicknessMultiplier,
+        regionRestriction
       });
 
       webs.push(...applyWebColourProfileToPopulation(geometry, colourProfile));
@@ -130,6 +146,16 @@ export class WebGenerationService {
         label: populationLabel,
         enabled: true,
         levelId,
+        confineRegionTags:
+          requested.confineRegionTags ??
+          Object.freeze([]),
+        excludeRegionTags:
+          requested.excludeRegionTags ??
+          Object.freeze([]),
+        regionRestriction:
+          createWebRegionRestrictionDiagnostics(
+            regionRestriction
+          ),
         categoryDensities: requested.categoryDensities ?? null,
         colourProfileId: colourProfile.id,
         thicknessMultiplier,
@@ -153,6 +179,7 @@ export class WebGenerationService {
       populationSeeds: Object.freeze(populationSeeds),
       levelProvider: generationContext.levelProvider,
       levels: generationContext.levels,
+      regions: generationContext.regions,
       configuration: Object.freeze({
         rendering: rendering ?? normaliseWebGenerationConfiguration({}, generationContext.sceneId).rendering,
         populations: Object.freeze(populationConfigurations)
@@ -206,6 +233,7 @@ export class WebGenerationService {
       categorySeeds: Object.freeze(categorySeedsByLevel),
       levelProvider: generationContext.levelProvider,
       levels: generationContext.levels,
+      regions: generationContext.regions,
       configuration,
       populations: Object.freeze([]),
       colourProfileId: colourProfile.id,
@@ -222,7 +250,8 @@ export class WebGenerationService {
     categorySeeds,
     populationId,
     populationLabel,
-    thicknessMultiplier
+    thicknessMultiplier,
+    regionRestriction = null
   }) {
     const common = {
       sceneId: generationContext.sceneId,
@@ -231,7 +260,8 @@ export class WebGenerationService {
       thicknessMultiplier,
       level: levelContext.level,
       wallSegments: levelContext.wallSegments,
-      gridSize: generationContext.gridSize
+      gridSize: generationContext.gridSize,
+      regionRestriction
     };
 
     return Object.freeze([
@@ -354,10 +384,16 @@ function normaliseGenerationContext(context) {
     elevationBand: segment?.elevationBand ?? fallbackLevel.elevationBand
   })));
 
+  const regions = Object.freeze(
+    (Array.isArray(context.regions) ? context.regions : [])
+      .map((region) => Object.freeze({ ...region }))
+  );
+
   return Object.freeze({
     ...context,
     levels,
     wallSegments,
+    regions,
     levelProvider: context.levelProvider ?? Object.freeze({
       requestedMode: fallbackLevel.providerMode,
       resolvedMode: fallbackLevel.providerMode,

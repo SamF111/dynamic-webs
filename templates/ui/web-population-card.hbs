@@ -34,6 +34,42 @@
 
     <details
       class="dynamic-webs-population-section"
+      data-dynamic-webs-regions-section
+    >
+      <summary>
+        <strong>Regions</strong>
+        <span class="hint" data-dynamic-webs-region-summary>{{regionSummary}}</span>
+      </summary>
+
+      <div class="dynamic-webs-population-section-body">
+        <div class="form-group stacked">
+          <label>Confine to Region tags</label>
+          <textarea
+            rows="2"
+            placeholder="area1, area2"
+            data-dynamic-webs-population-field="confineRegionTags"
+            data-dynamic-webs-population-control
+          >{{confineRegionTagsInput}}</textarea>
+          <p class="hint">Generate only where the web ownership point is inside a same-level Region matching any listed tag. Wildcards such as <code>crypt-*</code> are supported.</p>
+        </div>
+
+        <div class="form-group stacked">
+          <label>Exclude Region tags</label>
+          <textarea
+            rows="2"
+            placeholder="safe-zone, altar"
+            data-dynamic-webs-population-field="excludeRegionTags"
+            data-dynamic-webs-population-control
+          >{{excludeRegionTagsInput}}</textarea>
+          <p class="hint">Do not generate inside same-level Regions matching any listed tag. Exclude takes precedence over Confine.</p>
+        </div>
+
+        <p class="hint warning" data-dynamic-webs-region-role-error hidden></p>
+      </div>
+    </details>
+
+    <details
+      class="dynamic-webs-population-section"
       data-dynamic-webs-web-options-section
     >
       <summary>

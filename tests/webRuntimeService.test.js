@@ -56,7 +56,7 @@ function createEnvironment({
   const web =
     Object.freeze({
       schemaVersion:
-        4,
+        5,
       id:
         "ground:scene:default:base:index-0",
       kind:
@@ -112,7 +112,7 @@ function createEnvironment({
         Object.freeze([
           Object.freeze({
             schemaVersion:
-              4,
+              5,
             id:
               "ground:scene:default:base:index-0:structural-0",
             localId:
@@ -151,13 +151,17 @@ function createEnvironment({
       perches:
         Object.freeze([]),
       supportingWallIds:
+        Object.freeze([]),
+      regionIds:
+        Object.freeze([]),
+      regionTags:
         Object.freeze([])
     });
 
   const generated =
     Object.freeze({
       blueprintSchemaVersion:
-        4,
+        5,
       sceneId:
         "scene",
       seed:

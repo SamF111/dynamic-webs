@@ -61,6 +61,8 @@ test(
       null
     );
 
+    assert.deepEqual(snapshot.regions, []);
+
     assert.equal(
       snapshot.categoryDensitySources,
       null

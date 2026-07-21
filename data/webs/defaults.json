@@ -58,7 +58,7 @@
   },
   "rendering": {
     "layerMode": "under-tokens",
-    "zIndex": -100,
+    "zIndex": 0,
     "underAlphaMultiplier": 0.42,
     "underWidthAdditionPx": 1.1
   }

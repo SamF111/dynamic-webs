@@ -47,6 +47,8 @@ test("population configuration normalises independent level, density, colour and
         id: "blue-walls",
         enabled: true,
         levelId: "base",
+        confineRegionTags: ["Crypt", "crypt-*"],
+        excludeRegionTags: ["Altar"],
         categoryDensities: {
           "wall-corner": "dense",
           "wall-span": "sparse",
@@ -63,6 +65,8 @@ test("population configuration normalises independent level, density, colour and
   const population = configuration.populations[0];
   assert.equal(population.id, "blue-walls");
   assert.equal(population.levelId, "base");
+  assert.deepEqual(population.confineRegionTags, ["crypt", "crypt-*"]);
+  assert.deepEqual(population.excludeRegionTags, ["altar"]);
   assert.equal(population.categoryDensities["wall-corner"], "dense");
   assert.equal(population.categoryDensities["wall-span"], "sparse");
   assert.equal(population.categoryDensities.ground, "disabled");
@@ -162,4 +166,15 @@ test("default population uses hidden random identity and middle density", () => 
     "web-carpet": "standard"
   });
   assert.equal(Object.isFrozen(population.categoryDensities), true);
+});
+
+
+test("population Region roles reject exact tag reuse", () => {
+  assert.throws(() => normaliseSceneWebPopulations([{
+    id: "web-region-conflict",
+    levelId: "base",
+    confineRegionTags: ["crypt"],
+    excludeRegionTags: ["CRYPT"],
+    categoryDensities: {}
+  }], { levels: [{ id: "base" }] }), /cannot be reused/u);
 });

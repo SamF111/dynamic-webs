@@ -81,6 +81,11 @@ export function createWebRuntimeState(
         values.populations
       ) ??
       Object.freeze([]),
+    regions:
+      normaliseOptionalArray(
+        values.regions
+      ) ??
+      Object.freeze([]),
     densityId:
       null,
     categoryDensities:
@@ -172,6 +177,9 @@ export function createWebRuntimeSnapshot(
       null,
     populations:
       state?.populations ??
+      [],
+    regions:
+      state?.regions ??
       [],
     densityId:
       state?.densityId ??

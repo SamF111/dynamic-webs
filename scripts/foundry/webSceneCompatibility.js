@@ -15,6 +15,10 @@ import {
   createWebLevelDescriptor
 } from "../simulation/webs/webLevelContract.js";
 
+import {
+  collectWebRegionRecords
+} from "./webRegionCompatibility.js";
+
 /** Build the plain active-Scene context consumed by web generation. */
 export function createActiveWebSceneContext(
   scene = globalThis.canvas?.scene,
@@ -77,6 +81,13 @@ export function createActiveWebSceneContext(
       levels
     });
 
+  const regions =
+    collectWebRegionRecords({
+      scene,
+      providerResolution:
+        levelProvider
+    });
+
   return Object.freeze({
     sceneId,
     sceneRect,
@@ -86,6 +97,7 @@ export function createActiveWebSceneContext(
       levelProvider.activeViewedLevelId,
     levelProvider:
       levelProviderSnapshot,
+    regions,
     wallSegments:
       Object.freeze(
         wallSegments

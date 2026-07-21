@@ -33,6 +33,8 @@ test("Scene Configuration context exposes collapsed modular population cards", a
           id: "red-webs",
           enabled: true,
           levelId: "base",
+          confineRegionTags: ["crypt"],
+          excludeRegionTags: ["altar"],
           categoryDensities: {
             "wall-corner": "dense",
             "wall-span": "sparse",
@@ -50,6 +52,9 @@ test("Scene Configuration context exposes collapsed modular population cards", a
     assert.equal(context.populationCards[0].summaryTitle, "Web Population 1");
     assert.match(context.populationCards[0].summaryDetail, /Base level/u);
     assert.equal(context.populationCards[0].densityControls.length, 4);
+    assert.equal(context.populationCards[0].confineRegionTagsInput, "crypt");
+    assert.equal(context.populationCards[0].excludeRegionTagsInput, "altar");
+    assert.match(context.populationCards[0].regionSummary, /Confine: 1/u);
     assert.equal(context.fieldNames.webPopulations, "flags.dynamic-webs.webPopulations");
   } finally { restore(); }
 });
@@ -66,6 +71,9 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.match(card, /data-dynamic-webs-population-field="levelId"/u);
   assert.match(card, /data-dynamic-webs-population-field="colourProfileId"/u);
   assert.match(card, /data-dynamic-webs-population-field="thicknessMultiplier"/u);
+  assert.match(card, /data-dynamic-webs-regions-section/u);
+  assert.match(card, /data-dynamic-webs-population-field="confineRegionTags"/u);
+  assert.match(card, /data-dynamic-webs-population-field="excludeRegionTags"/u);
   assert.match(card, /data-dynamic-webs-web-options-section/u);
   assert.match(card, /<strong>Web options<\/strong>/u);
   assert.match(card, /data-dynamic-webs-appearance-section/u);

@@ -5,18 +5,24 @@ import { readFile } from "node:fs/promises";
 const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readJson = async (path) => JSON.parse(await readText(path));
 
-test("README locks the v0.3.1 modular-population contract", async () => {
+test("README locks the v0.4.0 Region-aware modular-population contract", async () => {
   const [readme, manifest] = await Promise.all([
     readText("README.md"),
     readJson("module.json")
   ]);
 
   assert.ok(readme.includes("**Current version:** `" + manifest.version + "`"));
-  assert.match(readme, /Blueprint schema version:\*\* `4`/u);
+  assert.match(readme, /Blueprint schema version:\*\* `5`/u);
   assert.match(readme, /flags\.dynamic-webs\.webPopulations/u);
   assert.match(readme, /An empty population array means that the Scene generates no webs/u);
   assert.match(readme, /There is no implicit population/u);
   assert.match(readme, /No population card is expanded automatically/u);
+  assert.match(readme, /Confine to Region tags/u);
+  assert.match(readme, /Exclude Region tags/u);
+  assert.match(readme, /every visible strand segment/u);
+  assert.match(readme, /unassigned gap/u);
+  assert.match(readme, /above tiles and drawings but below tokens/u);
+  assert.match(readme, /separate sibling containers/u);
 });
 
 test("README documents population-qualified IDs and v4 seeds", async () => {
@@ -28,7 +34,7 @@ test("README documents population-qualified IDs and v4 seeds", async () => {
   assert.match(readme, /middle `standard` state/u);
   assert.match(readme, /nested \*\*Web options\*\* section/u);
   assert.match(readme, /nested \*\*Appearance\*\* section/u);
-  assert.match(readme, /currently viewed level for both GMs and players/u);
+  assert.match(readme, /active viewed level plus every detected level below it/u);
   assert.doesNotMatch(readme, /render all stored levels/u);
   assert.doesNotMatch(readme, /- Population name/u);
   assert.match(readme, /thicknessMultiplier/u);
@@ -64,12 +70,12 @@ test("README lists all authored density states and colour profiles", async () =>
   for (const id of colours.profiles.map((entry) => entry.id)) assert.ok(readme.includes(id));
 });
 
-test("roadmap records v0.3.1 before region awareness and retains later milestones", async () => {
+test("roadmap records v0.4.0 Region awareness before spatial indexing and retains later milestones", async () => {
   const roadmap = await readText("roadmap.md");
-  assert.match(roadmap, /Current baseline — v0\.3\.1/u);
-  assert.match(roadmap, /Milestone 3\.1 — Modular web populations — complete/u);
-  assert.match(roadmap, /\*\*Delivered:\*\* v0\.3\.1/u);
-  assert.ok(roadmap.indexOf("Modular web populations") < roadmap.indexOf("Region-aware webs"));
+  assert.match(roadmap, /Current baseline — v0\.4\.0/u);
+  assert.match(roadmap, /Milestone 4 — Region-aware webs — complete/u);
+  assert.match(roadmap, /\*\*Delivered:\*\* v0\.4\.0/u);
+  assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
   for (const phrase of [
     "Spatial index and read-only query API",
     "Web carpets",

@@ -6,6 +6,10 @@ import {
 } from "../scripts/foundry/canvasCompatibility.js";
 
 import {
+  resolveWebPrimarySortLayer
+} from "../scripts/foundry/displayCompatibility.js";
+
+import {
   collectStructuralWallSegments,
   createActiveWebSceneContext
 } from "../scripts/foundry/webSceneCompatibility.js";
@@ -281,3 +285,27 @@ test(
     }
   }
 );
+
+
+
+test("under-token web ordering resolves above tiles and below tokens", () => {
+  const previousFoundry = globalThis.foundry;
+  try {
+    globalThis.foundry = {
+      canvas: {
+        groups: {
+          PrimaryCanvasGroup: {
+            SORT_LAYERS: { SCENE: 0, TILES: 500, DRAWINGS: 600, TOKENS: 700, WEATHER: 1000 }
+          }
+        }
+      }
+    };
+
+    const sortLayer = resolveWebPrimarySortLayer("under-tokens");
+    assert.equal(sortLayer, 650);
+    assert.ok(sortLayer > 500);
+    assert.ok(sortLayer < 700);
+  } finally {
+    globalThis.foundry = previousFoundry;
+  }
+});

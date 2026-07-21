@@ -47,6 +47,8 @@ function toPublicPopulation(population) {
     id: population.id,
     enabled: population.enabled,
     levelId: population.levelId,
+    confineRegionTags: population.confineRegionTags,
+    excludeRegionTags: population.excludeRegionTags,
     categoryDensities: population.categoryDensities,
     colourProfileId: population.colourProfileId,
     thicknessMultiplier: population.thicknessMultiplier

@@ -85,7 +85,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.3.1",
+        "0.4.0",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -164,7 +164,13 @@ export function createBaselineDiagnosticReport({
         null,
       levelVisibility:
         state.levelVisibility ??
-        null
+        null,
+      regions:
+        state.regions ??
+        Object.freeze([]),
+      regionCount:
+        state.regions?.length ??
+        0
     },
     generation: {
       active:
@@ -202,6 +208,16 @@ export function createBaselineDiagnosticReport({
       levelVisibility:
         state.levelVisibility ??
         null,
+      regions:
+        state.regions ??
+        Object.freeze([]),
+      regionRestrictions:
+        Object.freeze(Object.fromEntries(
+          webPopulations.map((population) => [
+            population.id,
+            population.regionRestriction ?? null
+          ])
+        )),
       counts:
         state.counts,
       lastOperationReason:
@@ -285,6 +301,14 @@ function createPopulationSummary(
           ""
         )
     );
+
+  const webRegionIds = population.flatMap((web) =>
+    Array.isArray(web?.regionIds) ? web.regionIds : []
+  );
+
+  const webRegionTags = population.flatMap((web) =>
+    Array.isArray(web?.regionTags) ? web.regionTags : []
+  );
 
   const supportLevelViolations =
     population

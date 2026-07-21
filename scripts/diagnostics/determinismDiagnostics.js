@@ -218,6 +218,10 @@ function createCanonicalWebProjection(
         web?.sourceKey ??
         ""
       ),
+    regionIds:
+      Array.isArray(web?.regionIds) ? [...web.regionIds] : [],
+    regionTags:
+      Array.isArray(web?.regionTags) ? [...web.regionTags] : [],
     hub:
       projectPoint(
         web?.hub

@@ -27,6 +27,10 @@ import {
   getWebColourOptions
 } from "../simulation/webs/webColourProfiles.js";
 
+import {
+  formatRegionRoleTagsForInput
+} from "../config/regionTagConfiguration.js";
+
 const DENSITY_LABELS = new Map(
   WEB_DENSITY_OPTIONS.map((option) => [option.id, option.label])
 );
@@ -112,6 +116,9 @@ function createPopulationCardContext({
     levelId: population.levelId,
     levelAvailable: population.levelAvailable !== false,
     levelOptions,
+    confineRegionTagsInput: formatRegionRoleTagsForInput(population.confineRegionTags),
+    excludeRegionTagsInput: formatRegionRoleTagsForInput(population.excludeRegionTags),
+    regionSummary: createRegionSummary(population.confineRegionTags, population.excludeRegionTags),
     colourProfileId: population.colourProfileId,
     colourLabel: COLOUR_LABELS.get(population.colourProfileId) ?? population.colourProfileId,
     colourOptions,
@@ -148,6 +155,8 @@ function toPersistedPopulation(population) {
     id: population.id,
     enabled: population.enabled,
     levelId: population.levelId,
+    confineRegionTags: population.confineRegionTags,
+    excludeRegionTags: population.excludeRegionTags,
     categoryDensities: population.categoryDensities,
     colourProfileId: population.colourProfileId,
     thicknessMultiplier: population.thicknessMultiplier
@@ -185,4 +194,15 @@ function createDensityDescription(categoryId) {
     default:
       return "Population-specific web density.";
   }
+}
+
+
+function createRegionSummary(confineTags, excludeTags) {
+  const confineCount = Array.isArray(confineTags) ? confineTags.length : 0;
+  const excludeCount = Array.isArray(excludeTags) ? excludeTags.length : 0;
+  if (confineCount === 0 && excludeCount === 0) return "Unrestricted";
+  const parts = [];
+  if (confineCount > 0) parts.push(`Confine: ${confineCount}`);
+  if (excludeCount > 0) parts.push(`Exclude: ${excludeCount}`);
+  return parts.join(" · ");
 }

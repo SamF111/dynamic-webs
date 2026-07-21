@@ -218,6 +218,9 @@ export class WebRuntimeService {
       populations:
         generated.populations ??
         Object.freeze([]),
+      regions:
+        generated.regions ??
+        Object.freeze([]),
       densityId:
         normaliseOptionalIdentifier(
           densityId

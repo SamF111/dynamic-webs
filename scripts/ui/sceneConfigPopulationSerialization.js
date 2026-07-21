@@ -6,6 +6,11 @@ import {
   normaliseSceneWebThickness
 } from "../config/sceneWebThicknessConfiguration.js";
 
+import {
+  formatRegionRoleTagsForInput,
+  normaliseRegionRoleTags
+} from "../config/regionTagConfiguration.js";
+
 export function readWebPopulationEntriesFromPart(partElement) {
   return Array.from(
     partElement?.querySelectorAll?.("[data-dynamic-webs-population]") ?? []
@@ -31,6 +36,8 @@ export function readWebPopulationEntryFromCard(card) {
     id: String(read("id")?.value ?? card.dataset.populationId ?? "").trim(),
     enabled: read("enabled")?.checked === true,
     levelId: String(read("levelId")?.value ?? "base").trim(),
+    confineRegionTags: normaliseRegionRoleTags(read("confineRegionTags")?.value),
+    excludeRegionTags: normaliseRegionRoleTags(read("excludeRegionTags")?.value),
     categoryDensities,
     colourProfileId: String(read("colourProfileId")?.value ?? "natural-white").trim(),
     thicknessMultiplier: normaliseSceneWebThickness(
@@ -53,6 +60,8 @@ export function writeWebPopulationEntryToCard(card, entry) {
   write("id", entry.id);
   write("enabled", entry.enabled);
   write("levelId", entry.levelId);
+  write("confineRegionTags", formatRegionRoleTagsForInput(entry.confineRegionTags));
+  write("excludeRegionTags", formatRegionRoleTagsForInput(entry.excludeRegionTags));
   write("colourProfileId", entry.colourProfileId);
   write("thicknessMultiplier", entry.thicknessMultiplier);
 

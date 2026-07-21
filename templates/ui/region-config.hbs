@@ -1,0 +1,27 @@
+<section
+  class="tab dynamic-webs-region-config"
+  data-tab="dynamicWebs"
+  data-group="sheet"
+  data-dynamic-webs-region-page
+>
+  <input
+    type="hidden"
+    name="flags.dynamic-webs.regionTags"
+    value='{{regionTagsValue}}'
+    data-dtype="JSON"
+    data-dynamic-webs-region-tags-value
+  >
+
+  <fieldset>
+    <legend>Dynamic Webs</legend>
+    <div class="form-group stacked">
+      <label>Region tags</label>
+      <textarea
+        rows="5"
+        placeholder="area1, crypt, safe-zone"
+        data-dynamic-webs-region-tags-input
+      >{{regionTagsInput}}</textarea>
+      <p class="hint">Enter comma- or line-separated tags. Dynamic Webs also recognises tags authored by Ambient Critters, so the same Region names can be reused across both modules.</p>
+    </div>
+  </fieldset>
+</section>

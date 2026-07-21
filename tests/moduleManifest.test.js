@@ -6,7 +6,7 @@ import {
 } from "node:fs/promises";
 
 test(
-  "module manifest and package versions remain aligned for v0.3.1",
+  "module manifest and package versions remain aligned for v0.4.0",
   async () => {
     const moduleManifest =
       JSON.parse(
@@ -37,7 +37,7 @@ test(
 
     assert.equal(
       moduleManifest.version,
-      "0.3.1"
+      "0.4.0"
     );
 
     assert.equal(
@@ -69,7 +69,7 @@ test(
 
     assert.equal(
       packageManifest.scripts.validate,
-      "npm run check:syntax && npm run test:v03"
+      "npm run check:syntax && npm run test:v04"
     );
   }
 );

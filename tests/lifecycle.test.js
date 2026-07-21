@@ -129,7 +129,7 @@ test("lifecycle registration installs level-aware hooks and dispose removes them
     const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
     assert.equal(controller.registerHooks(), true);
     assert.equal(controller.registerHooks(), false);
-    assert.equal(environment.callbacks.size, 15);
+    assert.equal(environment.callbacks.size, 18);
     controller.dispose();
     assert.equal(environment.callbacks.size, 0);
     assert.deepEqual(environment.clearCalls, ["lifecycle-dispose"]);
@@ -220,5 +220,19 @@ test("deleting the active generated Scene clears runtime state", () => {
     assert.deepEqual(environment.clearCalls, []);
     controller.handleSceneDeleted({ id: "scene" });
     assert.deepEqual(environment.clearCalls, ["scene-deleted"]);
+  } finally { environment.restore(); }
+});
+
+
+test("Region geometry and tag changes schedule deterministic rebuilds", () => {
+  const environment = createEnvironment();
+  try {
+    const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
+    const region = { parent: { id: "scene" } };
+    controller.handleRegionUpdated(region, { name: "Renamed" });
+    assert.equal(environment.timeoutCallbacks.size, 0);
+    controller.handleRegionUpdated(region, { shapes: [{ x: 0, y: 0, width: 10, height: 10 }] });
+    assert.equal(environment.timeoutCallbacks.size, 1);
+    assert.equal(controller.createDiagnosticSnapshot().pendingReason, "update-region");
   } finally { environment.restore(); }
 });

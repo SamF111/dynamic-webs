@@ -23,6 +23,10 @@ import {
   doesTokenUpdateAffectViewedWebLevel
 } from "../foundry/webLevelVisibilityCompatibility.js";
 
+import {
+  doesRegionUpdateAffectWebs
+} from "../config/regionTagConfiguration.js";
+
 /**
  * Own Foundry hooks and debounced Scene web regeneration.
  */
@@ -171,6 +175,22 @@ export class SceneWebLifecycleController {
           wallDocument
         )
     );
+
+    this.#register(
+      "createRegion",
+      (regionDocument) => this.handleRegionCreated(regionDocument)
+    );
+
+    this.#register(
+      "updateRegion",
+      (regionDocument, changed) => this.handleRegionUpdated(regionDocument, changed)
+    );
+
+    this.#register(
+      "deleteRegion",
+      (regionDocument) => this.handleRegionDeleted(regionDocument)
+    );
+
 
     for (
       const event of
@@ -454,6 +474,30 @@ export class SceneWebLifecycleController {
       this.scheduleRebuild(
         "delete-wall"
       );
+    }
+  }
+
+  /** Regenerate when one active-Scene Region is created. */
+  handleRegionCreated(regionDocument) {
+    if (this.#doesDocumentBelongToActiveScene(regionDocument)) {
+      this.scheduleRebuild("create-region");
+    }
+  }
+
+  /** Regenerate when Region geometry, elevation, or recognised tags change. */
+  handleRegionUpdated(regionDocument, changed) {
+    if (
+      this.#doesDocumentBelongToActiveScene(regionDocument) &&
+      doesRegionUpdateAffectWebs(changed)
+    ) {
+      this.scheduleRebuild("update-region");
+    }
+  }
+
+  /** Regenerate when one active-Scene Region is deleted. */
+  handleRegionDeleted(regionDocument) {
+    if (this.#doesDocumentBelongToActiveScene(regionDocument)) {
+      this.scheduleRebuild("delete-region");
     }
   }
 
@@ -808,22 +852,15 @@ export class SceneWebLifecycleController {
     );
   }
 
-  #doesWallBelongToActiveScene(
-    wallDocument
-  ) {
-    const activeSceneId =
-      globalThis.canvas?.scene?.id;
+  #doesWallBelongToActiveScene(wallDocument) {
+    return this.#doesDocumentBelongToActiveScene(wallDocument);
+  }
 
-    if (
-      !activeSceneId
-    ) {
-      return false;
-    }
+  #doesDocumentBelongToActiveScene(documentLike) {
+    const activeSceneId = globalThis.canvas?.scene?.id;
+    if (!activeSceneId) return false;
 
-    const document =
-      wallDocument?.document ??
-      wallDocument;
-
+    const document = documentLike?.document ?? documentLike;
     const parentSceneId =
       document?.parent?.id ??
       document?.parentId ??
@@ -831,17 +868,9 @@ export class SceneWebLifecycleController {
       document?._source?.parentId ??
       null;
 
-    return parentSceneId ===
-      null ||
-      parentSceneId ===
-        undefined
+    return parentSceneId === null || parentSceneId === undefined
       ? true
-      : String(
-          parentSceneId
-        ) ===
-        String(
-          activeSceneId
-        );
+      : String(parentSceneId) === String(activeSceneId);
   }
 }
 

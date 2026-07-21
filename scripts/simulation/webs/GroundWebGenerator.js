@@ -11,6 +11,10 @@ import {
   createStableWebId
 } from "./webBlueprintContract.js";
 
+import {
+  evaluateWebRegionRestrictionForStrands
+} from "../../spatial/webRegionRestrictionIndex.js";
+
 /** Generate deterministic irregular radial ground webs. */
 export class GroundWebGenerator {
   generate({
@@ -23,7 +27,8 @@ export class GroundWebGenerator {
     sceneRect,
     gridSize,
     configuration,
-    random
+    random,
+    regionRestriction = null
   }) {
     if (
       configuration?.enabled !== true ||
@@ -34,9 +39,15 @@ export class GroundWebGenerator {
     }
 
     const webs = [];
-    for (let index = 0; index < configuration.count; index += 1) {
-      webs.push(createGroundWeb({
-        index,
+    const restricted = regionRestriction?.active === true;
+    const maximumAttempts = restricted
+      ? Math.max(configuration.count * 64, 64)
+      : configuration.count;
+
+    for (let attempt = 0; attempt < maximumAttempts && webs.length < configuration.count; attempt += 1) {
+      const web = createGroundWeb({
+        index: restricted ? attempt : webs.length,
+        restricted,
         sceneId,
         populationId,
         populationLabel,
@@ -46,8 +57,10 @@ export class GroundWebGenerator {
         sceneRect,
         gridSize,
         configuration,
-        random
-      }));
+        random,
+        regionRestriction
+      });
+      if (web) webs.push(web);
     }
 
     return Object.freeze(webs);
@@ -56,6 +69,7 @@ export class GroundWebGenerator {
 
 function createGroundWeb({
   index,
+  restricted,
   sceneId,
   populationId,
   populationLabel,
@@ -65,7 +79,8 @@ function createGroundWeb({
   sceneRect,
   gridSize,
   configuration,
-  random
+  random,
+  regionRestriction
 }) {
   const radiusX = randomBetween(
     random,
@@ -163,8 +178,15 @@ function createGroundWeb({
     }));
   }
 
-  const sourceKey =
-    `index-${index}`;
+  const regionEvaluation = evaluateWebRegionRestrictionForStrands(
+    regionRestriction,
+    strands
+  );
+  if (!regionEvaluation.allowed) return null;
+
+  const sourceKey = restricted
+    ? `candidate-${index}`
+    : `index-${index}`;
 
   return createWebBlueprint({
     id:
@@ -194,6 +216,8 @@ function createGroundWeb({
       WEB_BLUEPRINT_KINDS.GROUND,
     hub,
     strands,
+    regionIds: regionEvaluation.regionIds,
+    regionTags: regionEvaluation.regionTags,
     perches: [{
       id: "hub",
       x: hub.x,

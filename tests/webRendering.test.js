@@ -160,12 +160,21 @@ class MockGraphics extends MockDisplayObject {
 }
 
 function createWeb(
-  id = "ground:scene:index-0"
+  id = "ground:scene:index-0",
+  elevationBottom = 0
 ) {
   return Object.freeze({
     id,
     kind:
       "ground",
+    elevationBand:
+      Object.freeze({
+        bottom:
+          elevationBottom,
+        top:
+          elevationBottom +
+          9
+      }),
     strands:
       Object.freeze([
         Object.freeze({
@@ -206,7 +215,7 @@ function createConfiguration(
     layerMode:
       "under-tokens",
     zIndex:
-      -100,
+      0,
     underWidthAdditionPx:
       1,
     underColour:
@@ -300,6 +309,23 @@ test(
         firstContainer.children.length,
         1
       );
+
+      assert.equal(
+        firstContainer.sortLayer,
+        650
+      );
+
+      assert.equal(
+        firstContainer.sort,
+        0
+      );
+
+      assert.equal(
+        firstContainer.zIndex,
+        0
+      );
+
+
 
       const strokeCommands =
         firstContainer.children[0].commands.filter(
@@ -515,6 +541,157 @@ test(
       assert.equal(
         service.createDiagnosticSnapshot().hasContainer,
         false
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+
+
+test(
+  "cumulative visible levels render as separate elevation-sorted sibling containers",
+  () => {
+    const environment =
+      installPixi();
+
+    try {
+      const service =
+        new WebRenderService();
+
+      const returnedContainer =
+        service.render(
+          [
+            createWeb(
+              "ground:scene:lower",
+              0
+            ),
+            createWeb(
+              "ground:scene:upper",
+              10
+            )
+          ],
+          createConfiguration()
+        );
+
+      assert.equal(
+        environment.primary.children.length,
+        2
+      );
+
+      assert.deepEqual(
+        environment.primary.children.map(
+          (
+            container
+          ) =>
+            container.elevation
+        ),
+        [
+          0,
+          10
+        ]
+      );
+
+      assert.equal(
+        environment.primary.children[0].children[0].elevation,
+        0
+      );
+
+      assert.equal(
+        environment.primary.children[1].children[0].elevation,
+        10
+      );
+
+      assert.equal(
+        returnedContainer,
+        environment.primary.children[1]
+      );
+
+      const snapshot =
+        service.createDiagnosticSnapshot();
+
+      assert.equal(
+        snapshot.containerCount,
+        2
+      );
+
+      assert.deepEqual(
+        snapshot.elevations,
+        [
+          0,
+          10
+        ]
+      );
+
+      assert.equal(
+        snapshot.renderedWebCount,
+        2
+      );
+
+      const containers =
+        [...environment.primary.children];
+
+      assert.equal(
+        service.clear(),
+        true
+      );
+
+      assert.deepEqual(
+        environment.primary.children,
+        []
+      );
+
+      assert.equal(
+        containers.every(
+          (
+            container
+          ) =>
+            container.destroyed ===
+              true
+        ),
+        true
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "rendering stamps the visible level elevation onto the web container and graphics",
+  () => {
+    const environment =
+      installPixi();
+
+    try {
+      const service =
+        new WebRenderService();
+
+      const container =
+        service.render(
+          [
+            createWeb(
+              "ground:scene:upper",
+              10
+            )
+          ],
+          createConfiguration()
+        );
+
+      assert.equal(
+        container.elevation,
+        10
+      );
+
+      assert.equal(
+        container.children[0].elevation,
+        10
+      );
+
+      assert.equal(
+        service.createDiagnosticSnapshot().elevation,
+        10
       );
     } finally {
       environment.restore();

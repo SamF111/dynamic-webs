@@ -20,6 +20,10 @@ import {
   updateWebPopulationCardPresentation
 } from "./sceneConfigPopulationSummaries.js";
 
+import {
+  updateSceneConfigRegionTagValidity
+} from "./sceneConfigRegionTagControls.js";
+
 export function activateSceneConfigPopulationControls(application, partElement) {
   if (!partElement?.querySelector) {
     throw new TypeError(`${MODULE_TITLE} | Scene Configuration population part did not render an HTMLElement.`);
@@ -38,6 +42,7 @@ export function activateSceneConfigPopulationControls(application, partElement) 
     const entries = readWebPopulationEntriesFromPart(partElement);
     hidden.value = JSON.stringify(entries);
     updateWebPopulationCardPresentation(partElement);
+    updateSceneConfigRegionTagValidity(partElement);
     updateDisabledStates(partElement, editable);
   };
 
@@ -120,6 +125,8 @@ function appendCard({ partElement, list, template, source }) {
         populationId: id,
         enabled: true,
         levelId: defaultLevel,
+        confineRegionTags: [],
+        excludeRegionTags: [],
         categoryDensities: {
           "wall-corner": DEFAULT_WEB_POPULATION_DENSITY,
           "wall-span": DEFAULT_WEB_POPULATION_DENSITY,

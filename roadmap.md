@@ -2,7 +2,7 @@
 
 This roadmap orders future work according to architectural dependencies rather than visible feature appeal.
 
-## Current baseline — v0.3.1
+## Current baseline — v0.4.0
 
 Completed:
 
@@ -14,7 +14,7 @@ Completed:
 - Independent runtime state, PIXI rendering and lifecycle
 - Debounced wall rebuilding
 - Versioned public API
-- Blueprint schema version `4`
+- Blueprint schema version `5`
 - Stable Scene- and level-qualified web identifiers
 - Stable web-qualified strand identifiers
 - Independent category seed streams
@@ -43,6 +43,12 @@ Completed:
 - Hidden opaque random population IDs that remain stable across edits, deletion of neighbouring populations and reordering
 - Presentation-only population numbering with no editable or persisted population name
 - New populations defaulting to the middle `standard` density for every category
+- Region-aware modular populations with independent Confine and Exclude tag lists
+- Dynamic Webs Region Configuration tags plus read-only Ambient Critters tag interoperability
+- Same-level Region discovery across Foundry v13 and v14
+- Rectangle, ellipse and polygon ownership-point containment
+- Exclude precedence, wildcard matching, missing-tag diagnostics and Region lifecycle rebuilds
+- Immutable `regionIds` and `regionTags` on blueprint schema version `5`
 
 Current Scene flags:
 
@@ -347,7 +353,7 @@ dynamic-webs:web-generation:v3:<scene-id>:<encoded-level-id>:<web-kind>
 ### Delivered runtime and visibility
 
 - The runtime stores all generated level blueprints.
-- GMs and players see only the active viewed level.
+- GMs and players see the active viewed level and every detected level below it; levels above remain hidden.
 - Viewed-level switching redraws the subset without advancing generation identity.
 - Foundry v14 level-document changes and v13 Levels view changes are lifecycle-aware.
 - Global provider changes regenerate the active Scene once.
@@ -388,67 +394,68 @@ Opaque population IDs participate in blueprint IDs and v4 deterministic seeds, a
 
 ---
 
-## Milestone 4 — Region-aware webs
+## Milestone 4 — Region-aware webs — complete
 
-**Target:** v0.4.0
+**Delivered:** v0.4.0
 
-Region awareness must remain environmental and critter-agnostic.
+Dynamic Webs now applies population-owned Region restrictions using the same comma/newline tag-entry experience as Ambient Critters while retaining a standalone configuration and runtime boundary.
 
-### Initial region controls
+### Delivered configuration
 
-Support generic tags or behaviours such as:
+Each web population stores:
 
-- `web-allow`
-- `web-exclude`
-- `web-corner`
-- `web-span`
-- `web-ground`
-- `web-carpet`
-- `web-colour:<profile-id>`
+```javascript
+{
+  confineRegionTags: ["crypt", "area-*"],
+  excludeRegionTags: ["altar"]
+}
+```
 
-### Implement
+- Confine tags use OR semantics.
+- Exclude Regions subtract from the allowed area and always take precedence.
+- Exact tag reuse between Confine and Exclude is rejected.
+- Wildcards are supported in population role tags.
+- Empty lists preserve unrestricted v0.3.1 generation and identifiers.
 
-- Region discovery through Foundry compatibility adapters
-- Region level ownership
-- Normalised and deduplicated region tags
-- Region geometry extraction
-- Point-in-region tests
-- Segment and bounds compatibility tests
-- Allow-only generation
-- Exclusion zones
-- Category-specific region restrictions
-- Region colour overrides
-- Optional local density influence
-- Optional local spacing influence
-- Region identifiers on affected blueprints
-- Independent deterministic streams per relevant region
-- Diagnostics for matched, ignored and incompatible regions
+Dynamic Webs stores its own Region tags in `flags.dynamic-webs.regionTags` and also recognises `flags.ambient-critters.regionTags` without importing Ambient Critters internals.
 
-### Determinism rules
+### Delivered generation contract
 
-Use separate deterministic streams for:
+- Region documents are collected through Foundry v13/v14 compatibility adapters.
+- Region level IDs and elevation bands are matched against the selected population level.
+- Rectangle, ellipse and polygon geometry is normalised into plain immutable records.
+- Complete generated strand polylines must remain inside the union of matching Confine Regions.
+- Any strand contact with an Exclude Region rejects the complete candidate.
+- Foundry native Region containment is authoritative when available, with plain-shape compatibility fallbacks.
+- Candidate filtering occurs before category count selection.
+- Restricted ground generation uses a deterministic bounded candidate stream.
+- Matching Region IDs and tags are recorded on blueprint schema version `5`.
+- Non-matching and unrelated Regions do not affect an unrestricted population.
+- Web strands are rejected rather than clipped at Region boundaries.
 
-- Each level
-- Each web category
-- Each relevant region
+### Delivered UI and lifecycle
 
-A region identifier should contribute to a seed only when that region owns or constrains the generated geometry.
+- Population cards contain a collapsed **Regions** section with Confine and Exclude textareas.
+- Region Configuration contains a Dynamic Webs tag tab.
+- Region creation, deletion, shape changes, elevation changes and recognised tag changes schedule deterministic regeneration.
+- Diagnostics report matched, missing and level-incompatible Regions per population.
 
-Unrelated region changes must not reshuffle unaffected webs.
+### Deferred by design
 
-### Constraints
+- Per-category Region fields
+- Region priority or hierarchy
+- Region-owned colour, density or thickness overrides
+- Strand clipping
+- Boundary-following web carpets
 
-- A web and its controlling region must be level-compatible.
-- Region overlap precedence must be explicit and testable.
-- Region tags must not encode critter behaviour.
-- Colour overrides must not alter geometry identifiers.
+### Exit criteria — met
 
-### Exit criteria
-
-- Allow and exclude regions behave predictably.
-- Category-specific restrictions work independently.
-- Region colour overrides resolve deterministically.
-- Unrelated region edits do not reshuffle unaffected populations.
+- Confine and Exclude Regions behave predictably.
+- Exclude precedence is explicit and tested.
+- Region matching is level-compatible.
+- Ambient Critters and Dynamic Webs can reuse the same authored Region tags.
+- Unrestricted population geometry and identifiers remain stable.
+- Region ownership is immutable and diagnostic.
 
 ---
 
