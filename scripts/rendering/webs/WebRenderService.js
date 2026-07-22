@@ -28,6 +28,27 @@ import {
   getWebColourProfile
 } from "../../simulation/webs/webColourProfiles.js";
 
+const WEB_RENDER_CONTAINER_BANDS =
+  Object.freeze({
+    CARPET:
+      "carpet",
+
+    STRANDS:
+      "strands"
+  });
+
+/**
+ * Ambient Critters' ordinary under-token containers use sortLayer 650. Dynamic
+ * Webs resolves the same regular under-token lane, so carpets need a distinct
+ * sibling container just beneath it rather than relying on child zIndex.
+ *
+ * The one-unit offset keeps carpets above the preceding Foundry sort layer,
+ * while guaranteeing that under-token critter bodies sort after them. Firefly
+ * glows live in the Interface Canvas Group and therefore remain above both.
+ */
+const WEB_CARPET_PRIMARY_SORT_LAYER_OFFSET =
+  -1;
+
 /** Own the transient PIXI representation of generated web blueprints. */
 export class WebRenderService {
   constructor(
@@ -139,7 +160,7 @@ export class WebRenderService {
         : [];
 
     const renderGroups =
-      createElevationRenderGroups(
+      createWebRenderGroups(
         visibleWebs
       );
 
@@ -161,9 +182,12 @@ export class WebRenderService {
           configuration,
           layerMode,
           renderGroup.elevation,
+          renderGroup.band,
           resolveWebContainerName({
             elevation:
               renderGroup.elevation,
+            band:
+              renderGroup.band,
             groupIndex,
             groupCount:
               renderGroups.length
@@ -266,11 +290,13 @@ export class WebRenderService {
 
     this.lastElevations =
       Object.freeze(
-        renderGroups.map(
-          (
-            renderGroup
-          ) =>
-            renderGroup.elevation
+        createSortedUniqueElevations(
+          renderGroups.map(
+            (
+              renderGroup
+            ) =>
+              renderGroup.elevation
+          )
         )
       );
 
@@ -449,14 +475,16 @@ export class WebRenderService {
 
     const elevations =
       hasContainer
-        ? containers.map(
-            (
-              item
-            ) =>
-              resolveFiniteElevation(
-                item.elevation,
-                0
-              )
+        ? createSortedUniqueElevations(
+            containers.map(
+              (
+                item
+              ) =>
+                resolveFiniteElevation(
+                  item.elevation,
+                  0
+                )
+            )
           )
         : Array.from(
             this.lastElevations
@@ -492,6 +520,33 @@ export class WebRenderService {
             ) =>
               item.name ??
               null
+          )
+        ),
+      containerBands:
+        Object.freeze(
+          containers.map(
+            (
+              item
+            ) =>
+              item.dynamicWebsRenderBand ??
+              null
+          )
+        ),
+      containerSortLayers:
+        Object.freeze(
+          containers.map(
+            (
+              item
+            ) =>
+              Number.isFinite(
+                Number(
+                  item.sortLayer
+                )
+              )
+                ? Number(
+                    item.sortLayer
+                  )
+                : null
           )
         ),
       childCount:
@@ -823,6 +878,7 @@ function configureWebContainer(
   configuration,
   layerMode,
   renderElevation,
+  renderBand,
   name
 ) {
   configureWebDisplayObject(
@@ -852,7 +908,16 @@ function configureWebContainer(
   container.sortLayer =
     resolveWebPrimarySortLayer(
       layerMode
+    ) +
+    (
+      renderBand ===
+        WEB_RENDER_CONTAINER_BANDS.CARPET
+        ? WEB_CARPET_PRIMARY_SORT_LAYER_OFFSET
+        : 0
     );
+
+  container.dynamicWebsRenderBand =
+    renderBand;
 
   container.sort =
     0;
@@ -869,10 +934,10 @@ function configureWebContainer(
       : 0;
 }
 
-function createElevationRenderGroups(
+function createWebRenderGroups(
   webs
 ) {
-  const groupsByElevation =
+  const groupsByElevationAndBand =
     new Map();
 
   for (
@@ -889,24 +954,28 @@ function createElevationRenderGroups(
         0
       );
 
-    const key =
-      String(
-        elevation
+    const band =
+      resolveWebRenderContainerBand(
+        web
       );
 
+    const key =
+      `${String(elevation)}:${band}`;
+
     let group =
-      groupsByElevation.get(
+      groupsByElevationAndBand.get(
         key
       );
 
     if (!group) {
       group = {
         elevation,
+        band,
         webs:
           []
       };
 
-      groupsByElevation.set(
+      groupsByElevationAndBand.set(
         key,
         group
       );
@@ -918,13 +987,15 @@ function createElevationRenderGroups(
   }
 
   if (
-    groupsByElevation.size ===
+    groupsByElevationAndBand.size ===
       0
   ) {
     return Object.freeze([
       Object.freeze({
         elevation:
           0,
+        band:
+          WEB_RENDER_CONTAINER_BANDS.STRANDS,
         webs:
           Object.freeze([])
       })
@@ -933,7 +1004,7 @@ function createElevationRenderGroups(
 
   return Object.freeze(
     Array.from(
-      groupsByElevation.values()
+      groupsByElevationAndBand.values()
     )
       .sort(
         (
@@ -941,7 +1012,13 @@ function createElevationRenderGroups(
           second
         ) =>
           first.elevation -
-          second.elevation
+          second.elevation ||
+          resolveWebRenderBandOrder(
+            first.band
+          ) -
+          resolveWebRenderBandOrder(
+            second.band
+          )
       )
       .map(
         (
@@ -950,6 +1027,8 @@ function createElevationRenderGroups(
           Object.freeze({
             elevation:
               group.elevation,
+            band:
+              group.band,
             webs:
               Object.freeze(
                 group.webs
@@ -961,6 +1040,7 @@ function createElevationRenderGroups(
 
 function resolveWebContainerName({
   elevation,
+  band,
   groupIndex,
   groupCount
 }) {
@@ -973,10 +1053,60 @@ function resolveWebContainerName({
 
   return [
     `${MODULE_ID}.webs`,
+    band,
     `level-${groupIndex}`,
     `elevation-${formatElevationForName(elevation)}`
   ].join(
     "."
+  );
+}
+
+function resolveWebRenderContainerBand(
+  web
+) {
+  return web?.kind ===
+    "web-carpet"
+    ? WEB_RENDER_CONTAINER_BANDS.CARPET
+    : WEB_RENDER_CONTAINER_BANDS.STRANDS;
+}
+
+function resolveWebRenderBandOrder(
+  band
+) {
+  return band ===
+    WEB_RENDER_CONTAINER_BANDS.CARPET
+    ? 0
+    : 1;
+}
+
+function createSortedUniqueElevations(
+  elevations
+) {
+  return Array.from(
+    new Set(
+      (
+        Array.isArray(
+          elevations
+        )
+          ? elevations
+          : []
+      ).map(
+        (
+          elevation
+        ) =>
+          resolveFiniteElevation(
+            elevation,
+            0
+          )
+      )
+    )
+  ).sort(
+    (
+      first,
+      second
+    ) =>
+      first -
+      second
   );
 }
 

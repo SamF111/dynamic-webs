@@ -247,6 +247,8 @@ test("renderer composes bundled WebP patches through one cached Region mask", ()
     const patchLayer = patchDisplay.children[0];
 
     assert.equal(carpetDisplay.mask, maskGraphics);
+    assert.equal(levelContainer.sortLayer, 649);
+    assert.equal(levelContainer.dynamicWebsRenderBand, "carpet");
     assert.equal(maskGraphics.parent, levelContainer);
     assert.equal(carpetDisplay.parent, levelContainer);
     assert.ok(maskGraphics instanceof MockGraphics);
@@ -327,4 +329,124 @@ test("renderer composes bundled WebP patches through one cached Region mask", ()
     globalThis.foundry = previous.foundry;
   }
 });
+
+test("renderer isolates carpets below the ordinary under-token web and critter lane", () => {
+  const previous = {
+    PIXI: globalThis.PIXI,
+    canvas: globalThis.canvas,
+    foundry: globalThis.foundry
+  };
+
+  const patchTexture = { id: "patch-texture" };
+  const parent = new MockContainer();
+  parent.name = "PrimaryCanvasGroup";
+
+  globalThis.PIXI = {
+    Container: MockContainer,
+    Graphics: MockGraphics,
+    Sprite: MockSprite,
+    ColorMatrixFilter: MockColorMatrixFilter,
+    Texture: {
+      EMPTY: { id: "empty" },
+      WHITE: { id: "white" },
+    }
+  };
+  globalThis.canvas = {
+    ready: true,
+    scene: { id: "scene" },
+    primary: parent
+  };
+  globalThis.foundry = {
+    canvas: {
+      groups: {
+        PrimaryCanvasGroup: {
+          SORT_LAYERS: {
+            SCENE: 0,
+            TILES: 500,
+            DRAWINGS: 600,
+            TOKENS: 700,
+            WEATHER: 1000
+          }
+        }
+      }
+    }
+  };
+
+  const service = new WebRenderService({
+    carpetTextureService: new WebCarpetPatchTextureService({
+      getTexture: () => patchTexture,
+      loadTexture: async () => patchTexture
+    }),
+    carpetMaskService: new WebCarpetRegionMaskService()
+  });
+
+  try {
+    service.render(
+      [
+        createCarpetWeb(),
+        createStrandWeb()
+      ],
+      {
+        layerMode: "under-tokens",
+        zIndex: 0,
+        underAlphaMultiplier: 0.42,
+        underWidthAdditionPx: 1.1,
+        thicknessMultiplier: 1
+      }
+    );
+
+    assert.equal(parent.children.length, 2);
+
+    const carpetContainer = parent.children.find(
+      container => container.dynamicWebsRenderBand === "carpet"
+    );
+    const strandContainer = parent.children.find(
+      container => container.dynamicWebsRenderBand === "strands"
+    );
+
+    assert.ok(carpetContainer);
+    assert.ok(strandContainer);
+    assert.equal(carpetContainer.elevation, 0);
+    assert.equal(strandContainer.elevation, 0);
+    assert.equal(carpetContainer.sortLayer, 649);
+    assert.equal(strandContainer.sortLayer, 650);
+    assert.ok(carpetContainer.sortLayer < strandContainer.sortLayer);
+    assert.equal(service.container, strandContainer);
+
+    const diagnostics = service.createDiagnosticSnapshot();
+    assert.equal(diagnostics.containerCount, 2);
+    assert.equal(diagnostics.renderedWebCount, 2);
+    assert.deepEqual(diagnostics.elevations, [0]);
+    assert.deepEqual(diagnostics.containerBands, ["carpet", "strands"]);
+    assert.deepEqual(diagnostics.containerSortLayers, [649, 650]);
+  } finally {
+    service.clear();
+    globalThis.PIXI = previous.PIXI;
+    globalThis.canvas = previous.canvas;
+    globalThis.foundry = previous.foundry;
+  }
+});
+
+function createStrandWeb() {
+  return Object.freeze({
+    id: "ground:scene:population:base:index-0",
+    kind: "ground",
+    populationId: "population",
+    colourProfileId: "natural-white",
+    elevationBand: Object.freeze({ bottom: 0, top: 9 }),
+    strands: Object.freeze([
+      Object.freeze({
+        id: "ground-strand-0",
+        points: Object.freeze([
+          Object.freeze({ x: 0, y: 0 }),
+          Object.freeze({ x: 10, y: 10 })
+        ]),
+        widthPx: 1,
+        alpha: 0.8,
+        colour: 0xe8edf2,
+        underColour: 0x111827
+      })
+    ])
+  });
+}
 
