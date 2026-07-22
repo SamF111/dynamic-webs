@@ -2,7 +2,7 @@
   "id": "dynamic-webs",
   "title": "Dynamic Webs",
   "description": "<p><strong>Dynamic Webs</strong> procedurally generates deterministic, level- and Region-aware spider webs with immutable spatial queries for Foundry Virtual Tabletop Scenes.</p>",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "authors": [
     {
       "name": "mintchoc",

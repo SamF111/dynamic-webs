@@ -39,6 +39,20 @@ export function clearPublicWebs(runtime) {
   });
 }
 
+/** Clear only the client-local bundled web-carpet texture request cache. */
+export function clearPublicWebCarpetTextureCache(runtime) {
+  validateRuntime(runtime);
+  requireCurrentUserIsGM();
+
+  return requireWebRuntimeService(runtime)
+    .clearCarpetTextureCache({
+      redraw:
+        true,
+      reason:
+        "public-api-clear-carpet-texture-cache"
+    });
+}
+
 /** Return immutable local generated-web diagnostics. */
 export function getPublicWebState(runtime) {
   validateRuntime(runtime);
@@ -58,6 +72,8 @@ function requireWebRuntimeService(
     typeof service.generateForActiveScene !==
       "function" ||
     typeof service.clear !==
+      "function" ||
+    typeof service.clearCarpetTextureCache !==
       "function" ||
     typeof service.createDiagnosticSnapshot !==
       "function"

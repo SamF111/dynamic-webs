@@ -1,0 +1,1122 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "Dynamic Webs procedural web-patch generator",
+    "version": "1.1.0",
+    "masterSeed": "dynamic-webs:web-carpet-patches:v1",
+    "generatedAt": "2026-07-22T12:04:30.746633+00:00",
+    "deterministicContent": true
+  },
+  "rendering": {
+    "format": "webp",
+    "colourMode": "transparent-white",
+    "sizePx": 512,
+    "supersample": 4
+  },
+  "assets": [
+    {
+      "id": "loose-network-01",
+      "category": "loose-network",
+      "variant": 1,
+      "file": "loose-network-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5d479230aacf435a6052a6dae755d905f3fe7b17ce9a3e486b824b54dd12d792",
+      "weight": 1.0,
+      "recommendedScale": [
+        0.65,
+        1.35
+      ],
+      "recommendedAlpha": [
+        0.48,
+        0.9
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-02",
+      "category": "loose-network",
+      "variant": 2,
+      "file": "loose-network-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1722bab6a313ef6e109fa4345fc9f34bab949e7ca46d9eafab52f969b6c4bcef",
+      "weight": 1.0,
+      "recommendedScale": [
+        0.6,
+        1.4
+      ],
+      "recommendedAlpha": [
+        0.42,
+        0.88
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-03",
+      "category": "loose-network",
+      "variant": 3,
+      "file": "loose-network-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "df62904f5d033050399a5ccaacd83043b3e7e99d6b6c1e059cacc258283091ba",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.7,
+        1.3
+      ],
+      "recommendedAlpha": [
+        0.52,
+        0.94
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-04",
+      "category": "loose-network",
+      "variant": 4,
+      "file": "loose-network-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "adbbcf8cedb39f5b1bbfa19d1c6746d010ddf4f62483e5463010737595d5b0ba",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.58,
+        1.42
+      ],
+      "recommendedAlpha": [
+        0.4,
+        0.86
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-01",
+      "category": "support-arc",
+      "variant": 1,
+      "file": "support-arc-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "8440484b36dd45390868f3aa283bf6131979c5a24994b8fab9ff41622ef953df",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.75,
+        1.55
+      ],
+      "recommendedAlpha": [
+        0.55,
+        0.96
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-02",
+      "category": "support-arc",
+      "variant": 2,
+      "file": "support-arc-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "81226fad2383e1604f7e9719c6540726adfb8f189476194ee1d06d90a27ea531",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.7,
+        1.6
+      ],
+      "recommendedAlpha": [
+        0.5,
+        0.92
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-03",
+      "category": "support-arc",
+      "variant": 3,
+      "file": "support-arc-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "72974a8b7f44ec3132e4e20a28c3be57b91721c64fc4672a737f840ded50b971",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.8,
+        1.45
+      ],
+      "recommendedAlpha": [
+        0.58,
+        0.98
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-04",
+      "category": "support-arc",
+      "variant": 4,
+      "file": "support-arc-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "66d08626aa712fe58e62fe5e44213e12305143746d080320da0efe2dcf2e3dd9",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.7,
+        1.55
+      ],
+      "recommendedAlpha": [
+        0.52,
+        0.94
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-01",
+      "category": "dense-knot",
+      "variant": 1,
+      "file": "dense-knot-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "67824f459b979965cfb91098a9e9f93ba2733408d6d66aeda8f8426514b26ff1",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.55,
+        1.1
+      ],
+      "recommendedAlpha": [
+        0.52,
+        0.92
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-02",
+      "category": "dense-knot",
+      "variant": 2,
+      "file": "dense-knot-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3b0c75e8b3fcfe171bfea0de823e5fb06588b5c27e7661e12331aa0f3a84a073",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.5,
+        1.05
+      ],
+      "recommendedAlpha": [
+        0.48,
+        0.88
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-03",
+      "category": "dense-knot",
+      "variant": 3,
+      "file": "dense-knot-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4d514691b8e77279f3560a9ffe8d6a3cbf29fc541294bee1c5393b36bd9d58c6",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.58,
+        1.15
+      ],
+      "recommendedAlpha": [
+        0.55,
+        0.94
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-01",
+      "category": "fray",
+      "variant": 1,
+      "file": "fray-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3e9b29caad5bb468d7db40eb5193f9ffef8495603b31fc51dd56862910061691",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.55,
+        1.35
+      ],
+      "recommendedAlpha": [
+        0.35,
+        0.78
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-02",
+      "category": "fray",
+      "variant": 2,
+      "file": "fray-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f817e444ce66b512db92a97f681f3adee0df91d9a066457be316c855f3396175",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.5,
+        1.4
+      ],
+      "recommendedAlpha": [
+        0.32,
+        0.75
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-03",
+      "category": "fray",
+      "variant": 3,
+      "file": "fray-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "208885634117f4ec2e3e7e1df973ce145aecb6b5e3084cd317410fcc444e4afe",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.6,
+        1.3
+      ],
+      "recommendedAlpha": [
+        0.38,
+        0.8
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-01",
+      "category": "faint-sheet",
+      "variant": 1,
+      "file": "faint-sheet-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b968e6672c307b9a2e42552dff597c514def3ad76ef0640697ad9d89ce5eef97",
+      "weight": 0.55,
+      "recommendedScale": [
+        0.85,
+        1.65
+      ],
+      "recommendedAlpha": [
+        0.2,
+        0.52
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-02",
+      "category": "faint-sheet",
+      "variant": 2,
+      "file": "faint-sheet-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "54922ca682cd3eb1c842b62a192b0ac1957a1f0bbb6b395041ffd5c0bc92d701",
+      "weight": 0.5,
+      "recommendedScale": [
+        0.8,
+        1.7
+      ],
+      "recommendedAlpha": [
+        0.18,
+        0.48
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-05",
+      "category": "loose-network",
+      "variant": 5,
+      "file": "loose-network-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "6a17391c19062ca823bb73e052c10759e24487deb78b06859da7bb9fcb6cad09",
+      "weight": 1.0,
+      "recommendedScale": [
+        0.62,
+        1.5
+      ],
+      "recommendedAlpha": [
+        0.44,
+        0.92
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-06",
+      "category": "loose-network",
+      "variant": 6,
+      "file": "loose-network-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3129a25d37f62a6573c642cb78a7dc60f4a4870a8808523ed2a7719b17590f2e",
+      "weight": 0.95,
+      "recommendedScale": [
+        0.72,
+        1.45
+      ],
+      "recommendedAlpha": [
+        0.5,
+        0.96
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-07",
+      "category": "loose-network",
+      "variant": 7,
+      "file": "loose-network-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4d2675905216028227b31e71a49f1b2c5b48453f6537ebadb0410c5b548efb0f",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.55,
+        1.55
+      ],
+      "recommendedAlpha": [
+        0.38,
+        0.84
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-08",
+      "category": "loose-network",
+      "variant": 8,
+      "file": "loose-network-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "7938038c39ac63d892ae7e52f4563bc6665bdd6f97cabf484e2b583a6aba5d76",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.68,
+        1.38
+      ],
+      "recommendedAlpha": [
+        0.46,
+        0.9
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-09",
+      "category": "loose-network",
+      "variant": 9,
+      "file": "loose-network-09.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-09.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1f1ba84b7c019af058eb53f8d543d1b9222e120f992371a2c83317c9eebe0c6c",
+      "weight": 0.85,
+      "recommendedScale": [
+        0.6,
+        1.6
+      ],
+      "recommendedAlpha": [
+        0.36,
+        0.82
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-10",
+      "category": "loose-network",
+      "variant": 10,
+      "file": "loose-network-10.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-10.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3308c3e6965f721c19bd2c708ba617169d42f5aba1f372e7f572965e0c847bbc",
+      "weight": 0.85,
+      "recommendedScale": [
+        0.74,
+        1.5
+      ],
+      "recommendedAlpha": [
+        0.52,
+        0.98
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-11",
+      "category": "loose-network",
+      "variant": 11,
+      "file": "loose-network-11.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-11.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b37e09e1203389a59a14e5db6705503d824f8be10ea7dc6f06e1f4d41ebc621b",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.52,
+        1.48
+      ],
+      "recommendedAlpha": [
+        0.4,
+        0.88
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "loose-network-12",
+      "category": "loose-network",
+      "variant": 12,
+      "file": "loose-network-12.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-12.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "198fc1595db688b269751b51a0fad798ef48b76c1dd1ecbb9ba9917164297713",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.66,
+        1.56
+      ],
+      "recommendedAlpha": [
+        0.45,
+        0.93
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-05",
+      "category": "support-arc",
+      "variant": 5,
+      "file": "support-arc-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "98fdb9b83ef6728c9c8241ab93dd260b4f4ea38ec9a453f248e449bb03875c9f",
+      "weight": 0.9,
+      "recommendedScale": [
+        0.72,
+        1.7
+      ],
+      "recommendedAlpha": [
+        0.54,
+        0.97
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-06",
+      "category": "support-arc",
+      "variant": 6,
+      "file": "support-arc-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3ee170433e46c4f4725ef6657aa5d765ecc29a9b06cde60977e22004aba2bb6b",
+      "weight": 0.85,
+      "recommendedScale": [
+        0.68,
+        1.66
+      ],
+      "recommendedAlpha": [
+        0.48,
+        0.91
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-07",
+      "category": "support-arc",
+      "variant": 7,
+      "file": "support-arc-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b2f4212926503f4b93b5529a25c70c9ddaccfdbd969374695394b305c217f767",
+      "weight": 0.85,
+      "recommendedScale": [
+        0.82,
+        1.52
+      ],
+      "recommendedAlpha": [
+        0.6,
+        1.0
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-08",
+      "category": "support-arc",
+      "variant": 8,
+      "file": "support-arc-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "2b434beeed7c44b8056170c28032c2999c5e675db88642069793ab6746bb354f",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.66,
+        1.74
+      ],
+      "recommendedAlpha": [
+        0.46,
+        0.9
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-09",
+      "category": "support-arc",
+      "variant": 9,
+      "file": "support-arc-09.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-09.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "2716387eddc1b9ee3c6937cd9d480304c8801d380cc83e0e8954ffbd36b7db6f",
+      "weight": 0.8,
+      "recommendedScale": [
+        0.76,
+        1.62
+      ],
+      "recommendedAlpha": [
+        0.56,
+        0.98
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "support-arc-10",
+      "category": "support-arc",
+      "variant": 10,
+      "file": "support-arc-10.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-10.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "068f3d4d93ca745f4605c37e513b87b9775094a3fca85100cf9cf437d82f624f",
+      "weight": 0.75,
+      "recommendedScale": [
+        0.7,
+        1.78
+      ],
+      "recommendedAlpha": [
+        0.5,
+        0.94
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-04",
+      "category": "dense-knot",
+      "variant": 4,
+      "file": "dense-knot-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1a153e44ceab099f7dad444d3f66e4cc97ed675780f856fbf17ef8879669517c",
+      "weight": 0.75,
+      "recommendedScale": [
+        0.52,
+        1.18
+      ],
+      "recommendedAlpha": [
+        0.5,
+        0.92
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-05",
+      "category": "dense-knot",
+      "variant": 5,
+      "file": "dense-knot-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "43f9bc1c72fca568349334ae98684b6e3a4af6dfe0c4752d61eee8012bf69851",
+      "weight": 0.75,
+      "recommendedScale": [
+        0.48,
+        1.12
+      ],
+      "recommendedAlpha": [
+        0.46,
+        0.88
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-06",
+      "category": "dense-knot",
+      "variant": 6,
+      "file": "dense-knot-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "dab71b6e07319628f0b47d19e0bae7f3774fe8a8ec80234cba9c519bc2e7eb28",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.6,
+        1.22
+      ],
+      "recommendedAlpha": [
+        0.56,
+        0.96
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-07",
+      "category": "dense-knot",
+      "variant": 7,
+      "file": "dense-knot-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "63c2c739665995dc9e52a7c99dfc3605eb2e839263d20ad05fe134dcee1cbc16",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.46,
+        1.08
+      ],
+      "recommendedAlpha": [
+        0.44,
+        0.86
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-08",
+      "category": "dense-knot",
+      "variant": 8,
+      "file": "dense-knot-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "e6e6365a81d7bcfd16d884dc123b36579ffcae138abd94184b53d43a37a9189f",
+      "weight": 0.65,
+      "recommendedScale": [
+        0.56,
+        1.25
+      ],
+      "recommendedAlpha": [
+        0.54,
+        0.98
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-09",
+      "category": "dense-knot",
+      "variant": 9,
+      "file": "dense-knot-09.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-09.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "29f2f70a72bf6594e7ed05fda7ff2eaaa43a7a657040b581445a9295e1f7329e",
+      "weight": 0.65,
+      "recommendedScale": [
+        0.5,
+        1.16
+      ],
+      "recommendedAlpha": [
+        0.48,
+        0.92
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "dense-knot-10",
+      "category": "dense-knot",
+      "variant": 10,
+      "file": "dense-knot-10.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-10.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "9e46302f7e6389182aa1d77fde9aee90c49af3d1778545ca1b7db2f741c78e11",
+      "weight": 0.6,
+      "recommendedScale": [
+        0.62,
+        1.28
+      ],
+      "recommendedAlpha": [
+        0.58,
+        1.0
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-04",
+      "category": "fray",
+      "variant": 4,
+      "file": "fray-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "537b1edbd22e17df9cfa8a4336cdfc969240abb2cbf85754481b123572a2dc01",
+      "weight": 0.75,
+      "recommendedScale": [
+        0.52,
+        1.46
+      ],
+      "recommendedAlpha": [
+        0.34,
+        0.79
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-05",
+      "category": "fray",
+      "variant": 5,
+      "file": "fray-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1ff7f384d2f378a8e25c28d558554234f862632cae55550300f7a42b21cd7abb",
+      "weight": 0.75,
+      "recommendedScale": [
+        0.58,
+        1.42
+      ],
+      "recommendedAlpha": [
+        0.36,
+        0.82
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-06",
+      "category": "fray",
+      "variant": 6,
+      "file": "fray-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0456d891fdb500b376e12856769f8cd676b4e63b19b06c8408c9d181709cdb43",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.48,
+        1.5
+      ],
+      "recommendedAlpha": [
+        0.3,
+        0.74
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-07",
+      "category": "fray",
+      "variant": 7,
+      "file": "fray-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5722c0daf8b989598ec190a077474e21f9e6b029c6a5a4a5b3756d0e9ad02f3a",
+      "weight": 0.7,
+      "recommendedScale": [
+        0.64,
+        1.36
+      ],
+      "recommendedAlpha": [
+        0.4,
+        0.84
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-08",
+      "category": "fray",
+      "variant": 8,
+      "file": "fray-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0b57bf8c533fd5444e95f62026681c462954f72c56e35e65cf64b77aa20c88ed",
+      "weight": 0.65,
+      "recommendedScale": [
+        0.5,
+        1.54
+      ],
+      "recommendedAlpha": [
+        0.32,
+        0.78
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-09",
+      "category": "fray",
+      "variant": 9,
+      "file": "fray-09.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-09.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "c37c949ffa90929d75510b6f7615f6d9cfaf1755afc18c4624101f024f71e35a",
+      "weight": 0.65,
+      "recommendedScale": [
+        0.6,
+        1.44
+      ],
+      "recommendedAlpha": [
+        0.38,
+        0.86
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "fray-10",
+      "category": "fray",
+      "variant": 10,
+      "file": "fray-10.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-10.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "e05e0c160da2a5b93772af669c3cedf1301c480a862a7d9bc0fc61849cb759a9",
+      "weight": 0.6,
+      "recommendedScale": [
+        0.46,
+        1.58
+      ],
+      "recommendedAlpha": [
+        0.28,
+        0.72
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-03",
+      "category": "faint-sheet",
+      "variant": 3,
+      "file": "faint-sheet-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4252bb544d48402ce72794f323e077dfcb1afa440197c2f6d807ab7e936a4b7d",
+      "weight": 0.5,
+      "recommendedScale": [
+        0.88,
+        1.78
+      ],
+      "recommendedAlpha": [
+        0.2,
+        0.54
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-04",
+      "category": "faint-sheet",
+      "variant": 4,
+      "file": "faint-sheet-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f6271a86e472ca38a3bd735d6683e896829f82d31b6b015fc0d188c9759b4f6f",
+      "weight": 0.48,
+      "recommendedScale": [
+        0.76,
+        1.82
+      ],
+      "recommendedAlpha": [
+        0.16,
+        0.46
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-05",
+      "category": "faint-sheet",
+      "variant": 5,
+      "file": "faint-sheet-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3bf3d03717bcf72dc448c4090ab9e01a5f3a167f79e978b7fdcc41e9ed255945",
+      "weight": 0.46,
+      "recommendedScale": [
+        0.92,
+        1.72
+      ],
+      "recommendedAlpha": [
+        0.22,
+        0.56
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    },
+    {
+      "id": "faint-sheet-06",
+      "category": "faint-sheet",
+      "variant": 6,
+      "file": "faint-sheet-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "01e007cef45ae23c907abf18b7f5e39434651f614697109ba860732e7c0ff878",
+      "weight": 0.44,
+      "recommendedScale": [
+        0.72,
+        1.88
+      ],
+      "recommendedAlpha": [
+        0.14,
+        0.44
+      ],
+      "allowRotation": true,
+      "allowFlipX": true,
+      "allowFlipY": true,
+      "tintable": true
+    }
+  ]
+}

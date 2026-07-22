@@ -12,7 +12,9 @@ export const WEB_BLUEPRINT_KINDS =
     WALL_SPAN:
       "wall-span",
     GROUND:
-      "ground"
+      "ground",
+    WEB_CARPET:
+      "web-carpet"
   });
 
 const SUPPORTED_WEB_KINDS =
@@ -286,6 +288,25 @@ export function assertWebBlueprintIntegrity(
     );
   }
 
+  if (
+    kind ===
+      WEB_BLUEPRINT_KINDS.WEB_CARPET
+  ) {
+    assertWebCarpetPresentation(
+      blueprint.carpet,
+      webId
+    );
+  } else if (
+    blueprint.carpet !==
+      undefined &&
+    blueprint.carpet !==
+      null
+  ) {
+    throw new Error(
+      `Dynamic Webs | Non-carpet web "${webId}" cannot contain carpet presentation data.`
+    );
+  }
+
   const expectedWebId =
     createStableWebId({
       sceneId,
@@ -472,7 +493,13 @@ export function assertWebBlueprintIntegrity(
     ) ||
     !Object.isFrozen(blueprint.supportingWallIds) ||
     !Object.isFrozen(blueprint.regionIds) ||
-    !Object.isFrozen(blueprint.regionTags)
+    !Object.isFrozen(blueprint.regionTags) ||
+    (
+      blueprint.carpet &&
+      !Object.isFrozen(
+        blueprint.carpet
+      )
+    )
   ) {
     throw new Error(
       `Dynamic Webs | Web blueprint "${webId}" is not deeply immutable.`
@@ -755,6 +782,232 @@ function assertStrandIntegrity(
   ) {
     throw new Error(
       `Dynamic Webs | Strand "${strandId}" is not deeply immutable.`
+    );
+  }
+}
+
+function assertWebCarpetPresentation(
+  carpet,
+  webId
+) {
+  if (
+    !carpet ||
+    typeof carpet !==
+      "object" ||
+    Array.isArray(
+      carpet
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Carpet web "${webId}" requires carpet presentation data.`
+    );
+  }
+
+  requireIdentifier(
+    carpet.regionId,
+    `carpet Region ID for web "${webId}"`
+  );
+
+  if (
+    !Array.isArray(
+      carpet.patches
+    ) ||
+    carpet.patches.length ===
+      0
+  ) {
+    throw new Error(
+      `Dynamic Webs | Carpet web "${webId}" requires at least one patch descriptor.`
+    );
+  }
+
+  const patchIds =
+    new Set();
+
+  for (
+    const patch of
+    carpet.patches
+  ) {
+    const patchId =
+      requireIdentifier(
+        patch?.id,
+        `carpet patch ID for web "${webId}"`
+      );
+
+    if (
+      patchIds.has(
+        patchId
+      )
+    ) {
+      throw new Error(
+        `Dynamic Webs | Carpet web "${webId}" contains duplicate patch ID "${patchId}".`
+      );
+    }
+
+    patchIds.add(
+      patchId
+    );
+
+    requireIdentifier(
+      patch?.assetId,
+      `carpet asset ID for patch "${patchId}"`
+    );
+
+    const modulePath =
+      requireIdentifier(
+        patch?.modulePath,
+        `carpet asset path for patch "${patchId}"`
+      );
+
+    if (
+      !modulePath.toLowerCase().endsWith(
+        ".webp"
+      )
+    ) {
+      throw new Error(
+        `Dynamic Webs | Carpet patch "${patchId}" must reference a WebP asset.`
+      );
+    }
+
+    for (
+      const field of
+      [
+        "x",
+        "y",
+        "width",
+        "height",
+        "rotation",
+        "alpha"
+      ]
+    ) {
+      if (
+        !Number.isFinite(
+          Number(
+            patch?.[
+              field
+            ]
+          )
+        )
+      ) {
+        throw new TypeError(
+          `Dynamic Webs | Carpet patch "${patchId}" has invalid ${field}.`
+        );
+      }
+    }
+
+    if (
+      Number(
+        patch.width
+      ) <=
+        0 ||
+      Number(
+        patch.height
+      ) <=
+        0 ||
+      Number(
+        patch.alpha
+      ) <=
+        0 ||
+      Number(
+        patch.alpha
+      ) >
+        1
+    ) {
+      throw new Error(
+        `Dynamic Webs | Carpet patch "${patchId}" has invalid dimensions or alpha.`
+      );
+    }
+
+    if (
+      typeof patch.flipX !==
+        "boolean" ||
+      typeof patch.flipY !==
+        "boolean"
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Carpet patch "${patchId}" requires boolean flip flags.`
+      );
+    }
+  }
+
+  const mask =
+    carpet.mask;
+
+  if (
+    !mask ||
+    typeof mask !==
+      "object" ||
+    Array.isArray(
+      mask
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Carpet web "${webId}" requires mask data.`
+    );
+  }
+
+  requireIdentifier(
+    mask.cacheKey,
+    `carpet mask cache key for web "${webId}"`
+  );
+
+  assertBounds(
+    mask.bounds,
+    `${webId}:mask`
+  );
+
+  if (
+    !Number.isInteger(
+      Number(
+        mask.resolutionPx
+      )
+    ) ||
+    Number(
+      mask.resolutionPx
+    ) <
+      64 ||
+    Number(
+      mask.resolutionPx
+    ) >
+      1024
+  ) {
+    throw new Error(
+      `Dynamic Webs | Carpet web "${webId}" has invalid mask resolution.`
+    );
+  }
+
+  for (
+    const key of
+    [
+      "confineShapes",
+      "excludeShapes"
+    ]
+  ) {
+    if (
+      !Array.isArray(
+        mask[
+          key
+        ]
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Carpet web "${webId}" mask ${key} must be an array.`
+      );
+    }
+  }
+
+  if (
+    !Object.isFrozen(
+      carpet
+    ) ||
+    !Object.isFrozen(
+      carpet.patches
+    ) ||
+    !Object.isFrozen(
+      mask
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Carpet presentation for web "${webId}" is not deeply immutable.`
     );
   }
 }

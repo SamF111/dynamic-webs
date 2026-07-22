@@ -56,7 +56,7 @@ function createEnvironment({
   const web =
     Object.freeze({
       schemaVersion:
-        5,
+        6,
       id:
         "ground:scene:default:base:index-0",
       kind:
@@ -112,7 +112,7 @@ function createEnvironment({
         Object.freeze([
           Object.freeze({
             schemaVersion:
-              5,
+              6,
             id:
               "ground:scene:default:base:index-0:structural-0",
             localId:
@@ -161,7 +161,7 @@ function createEnvironment({
   const generated =
     Object.freeze({
       blueprintSchemaVersion:
-        5,
+        6,
       sceneId:
         "scene",
       seed:
@@ -905,6 +905,49 @@ test(
       assert.equal(cleared.active, false);
       assert.equal(cleared.counts.webs, 0);
       assert.deepEqual(environment.service.getWebs(), []);
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "runtime carpet-cache clearing redraws presentation without replacing geometry or spatial state",
+  () => {
+    const environment = createEnvironment();
+
+    try {
+      environment.service.generateForActiveScene({
+        scene: environment.scene,
+        reason: "runtime-carpet-cache-test"
+      });
+
+      const beforeState = environment.service.getState();
+      const beforeSpatial = environment.service.createSpatialDiagnosticSnapshot();
+      const beforeRenderCount = environment.renderCalls.length;
+      let clearCount = 0;
+
+      environment.service.renderService.clearCarpetTextureCache = () => {
+        clearCount += 1;
+        return true;
+      };
+
+      const result = environment.service.clearCarpetTextureCache({
+        redraw: true,
+        reason: "test-clear-carpet-cache"
+      });
+      const afterState = environment.service.getState();
+      const afterSpatial = environment.service.createSpatialDiagnosticSnapshot();
+
+      assert.equal(result.cleared, true);
+      assert.equal(clearCount, 1);
+      assert.equal(environment.renderCalls.length, beforeRenderCount + 1);
+      assert.equal(afterState.generationId, beforeState.generationId);
+      assert.equal(afterState.webs, beforeState.webs);
+      assert.equal(afterState.presentationRevision, beforeState.presentationRevision + 1);
+      assert.equal(afterState.lastOperationReason, "test-clear-carpet-cache");
+      assert.equal(afterSpatial.revision, beforeSpatial.revision);
+      assert.equal(afterSpatial.snapshotRevision, beforeSpatial.snapshotRevision);
     } finally {
       environment.restore();
     }

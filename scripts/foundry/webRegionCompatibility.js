@@ -112,7 +112,8 @@ export function collectWebRegionRecords({
       },
       levelMetadataResolved: levelMetadata?.resolved === true,
       levelSource: String(levelMetadata?.source ?? "unknown"),
-      shapes: resolveRegionShapeRecords(document)
+      shapes: resolveRegionShapeRecords(document),
+      maskShapes: resolveRegionMaskShapeRecords(document)
     };
 
     /**
@@ -259,6 +260,658 @@ export function resolveRegionShapeRecords(regionDocument) {
   return Object.freeze(records.map(deepFreeze));
 }
 
+/**
+ * Resolve canonical positive-mask geometry for one RegionDocument.
+ *
+ * Foundry exposes edited compound Region geometry through polygonTree. Raw
+ * Region shapes are still used as a fallback, but polygon-tree operations are
+ * preferred so union boundaries and cut holes match Foundry's own Region.
+ */
+export function resolveRegionMaskShapeRecords(regionDocument) {
+  const document =
+    resolveRegionDocumentLike(
+      regionDocument
+    ) ??
+    regionDocument;
+
+  if (
+    !document ||
+    typeof document !==
+      "object"
+  ) {
+    return Object.freeze([]);
+  }
+
+  const polygonTreeShape =
+    createRegionPolygonTreeMaskShape(
+      document
+    );
+
+  if (polygonTreeShape) {
+    return Object.freeze([
+      deepFreeze(
+        polygonTreeShape
+      )
+    ]);
+  }
+
+  return resolveRegionShapeRecords(
+    document
+  );
+}
+
+function createRegionPolygonTreeMaskShape(
+  regionDocument
+) {
+  const polygonTree =
+    resolveRegionPolygonTree(
+      regionDocument
+    );
+
+  if (!polygonTree) {
+    return null;
+  }
+
+  const operations =
+    iterateRegionPolygonTreeNodes(
+      polygonTree
+    )
+      .map(
+        createRegionPolygonTreeMaskOperation
+      )
+      .filter(Boolean);
+
+  if (
+    operations.length ===
+      0 ||
+    !operations.some(
+      (
+        operation
+      ) =>
+        operation.operation ===
+          "fill"
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    type:
+      "polygon-tree",
+    operations
+  };
+}
+
+function createRegionPolygonTreeMaskOperation(
+  node
+) {
+  const points =
+    normalisePolygonPointCollection(
+      node?.points ??
+      node?.path ??
+      node?.polygon?.points ??
+      node?.polygon?.path
+    );
+
+  if (
+    points.length <
+      3
+  ) {
+    return null;
+  }
+
+  return {
+    operation:
+      node?.isHole ===
+        true
+        ? "cut"
+        : "fill",
+    points
+  };
+}
+
+function resolveRegionPolygonTree(
+  regionDocument
+) {
+  for (const candidate of [
+    regionDocument?.polygonTree,
+    regionDocument?.document?.polygonTree,
+    regionDocument?.object?.document?.polygonTree,
+    regionDocument?.region?.document?.polygonTree
+  ]) {
+    if (
+      candidate &&
+      typeof candidate ===
+        "object"
+    ) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function iterateRegionPolygonTreeNodes(
+  polygonTree
+) {
+  if (
+    !polygonTree ||
+    typeof polygonTree !==
+      "object"
+  ) {
+    return [];
+  }
+
+  if (
+    typeof polygonTree[
+      Symbol.iterator
+    ] ===
+      "function"
+  ) {
+    try {
+      return [
+        ...polygonTree
+      ];
+    } catch (_error) {
+      // Fall through to explicit child traversal.
+    }
+  }
+
+  const nodes = [];
+
+  appendRegionPolygonTreeNodes(
+    nodes,
+    polygonTree
+  );
+
+  return nodes;
+}
+
+function appendRegionPolygonTreeNodes(
+  nodes,
+  node
+) {
+  if (
+    !node ||
+    typeof node !==
+      "object"
+  ) {
+    return;
+  }
+
+  nodes.push(
+    node
+  );
+
+  for (const child of Array.isArray(
+    node.children
+  )
+    ? node.children
+    : []) {
+    appendRegionPolygonTreeNodes(
+      nodes,
+      child
+    );
+  }
+}
+
+function normalisePolygonPointCollection(
+  value
+) {
+  if (
+    !Array.isArray(
+      value
+    )
+  ) {
+    return [];
+  }
+
+  if (
+    value.every(
+      (
+        coordinate
+      ) =>
+        Number.isFinite(
+          Number(
+            coordinate
+          )
+        )
+    )
+  ) {
+    const points = [];
+
+    for (
+      let index = 0;
+      index +
+        1 <
+      value.length;
+      index +=
+        2
+    ) {
+      points.push({
+        x:
+          Number(
+            value[index]
+          ),
+        y:
+          Number(
+            value[index + 1]
+          )
+      });
+    }
+
+    return points;
+  }
+
+  return value
+    .map(
+      (
+        point
+      ) => ({
+        x:
+          Number(
+            point?.x
+          ),
+        y:
+          Number(
+            point?.y
+          )
+      })
+    )
+    .filter(
+      (
+        point
+      ) =>
+        Number.isFinite(
+          point.x
+        ) &&
+        Number.isFinite(
+          point.y
+        )
+    );
+}
+
+
+/**
+ * Resolve one Region record's union bounds from serialised rectangle, ellipse
+ * and polygon shapes. These bounds are used only for presentation placement;
+ * native RegionDocument containment remains authoritative for point tests.
+ */
+export function calculateWebRegionRecordBounds(
+  region
+) {
+  const shapes =
+    Array.isArray(
+      region?.shapes
+    )
+      ? region.shapes
+      : [];
+
+  const shapeBounds =
+    shapes
+      .filter(
+        (
+          shape
+        ) =>
+          shape?.isHole !==
+            true
+      )
+      .map(
+        calculateWebRegionShapeBounds
+      )
+      .filter(
+        Boolean
+      );
+
+  if (
+    shapeBounds.length ===
+      0
+  ) {
+    return null;
+  }
+
+  const x =
+    Math.min(
+      ...shapeBounds.map(
+        (
+          bounds
+        ) =>
+          bounds.x
+      )
+    );
+
+  const y =
+    Math.min(
+      ...shapeBounds.map(
+        (
+          bounds
+        ) =>
+          bounds.y
+      )
+    );
+
+  const right =
+    Math.max(
+      ...shapeBounds.map(
+        (
+          bounds
+        ) =>
+          bounds.right
+      )
+    );
+
+  const bottom =
+    Math.max(
+      ...shapeBounds.map(
+        (
+          bounds
+        ) =>
+          bounds.bottom
+      )
+    );
+
+  return deepFreeze({
+    x,
+    y,
+    width:
+      Math.max(
+        0,
+        right -
+          x
+      ),
+    height:
+      Math.max(
+        0,
+        bottom -
+          y
+      ),
+    right,
+    bottom
+  });
+}
+
+/** Resolve world-space bounds for one normalised Region shape record. */
+export function calculateWebRegionShapeBounds(
+  shape
+) {
+  if (
+    shape?.type ===
+      "polygon"
+  ) {
+    const points =
+      Array.isArray(
+        shape.points
+      )
+        ? shape.points
+        : [];
+
+    if (
+      points.length ===
+        0
+    ) {
+      return null;
+    }
+
+    const xs =
+      points.map(
+        (
+          point
+        ) =>
+          Number(
+            point.x
+          )
+      );
+
+    const ys =
+      points.map(
+        (
+          point
+        ) =>
+          Number(
+            point.y
+          )
+      );
+
+    if (
+      xs.some(
+        (
+          value
+        ) =>
+          !Number.isFinite(
+            value
+          )
+      ) ||
+      ys.some(
+        (
+          value
+        ) =>
+          !Number.isFinite(
+            value
+          )
+      )
+    ) {
+      return null;
+    }
+
+    return createBounds(
+      Math.min(
+        ...xs
+      ),
+      Math.min(
+        ...ys
+      ),
+      Math.max(
+        ...xs
+      ),
+      Math.max(
+        ...ys
+      )
+    );
+  }
+
+  if (
+    shape?.type ===
+      "ellipse"
+  ) {
+    const centreX =
+      Number(
+        shape.centreX
+      );
+
+    const centreY =
+      Number(
+        shape.centreY
+      );
+
+    const radiusX =
+      Math.abs(
+        Number(
+          shape.radiusX
+        )
+      );
+
+    const radiusY =
+      Math.abs(
+        Number(
+          shape.radiusY
+        )
+      );
+
+    if (
+      ![
+        centreX,
+        centreY,
+        radiusX,
+        radiusY
+      ].every(
+        Number.isFinite
+      )
+    ) {
+      return null;
+    }
+
+    const rotation =
+      (
+        Number(
+          shape.rotation
+        ) ||
+        0
+      ) *
+      Math.PI /
+      180;
+
+    const horizontalExtent =
+      Math.sqrt(
+        radiusX *
+          radiusX *
+          Math.cos(
+            rotation
+          ) **
+          2 +
+        radiusY *
+          radiusY *
+          Math.sin(
+            rotation
+          ) **
+          2
+      );
+
+    const verticalExtent =
+      Math.sqrt(
+        radiusX *
+          radiusX *
+          Math.sin(
+            rotation
+          ) **
+          2 +
+        radiusY *
+          radiusY *
+          Math.cos(
+            rotation
+          ) **
+          2
+      );
+
+    return createBounds(
+      centreX -
+        horizontalExtent,
+      centreY -
+        verticalExtent,
+      centreX +
+        horizontalExtent,
+      centreY +
+        verticalExtent
+    );
+  }
+
+  if (
+    shape?.type ===
+      "rectangle"
+  ) {
+    const x =
+      Number(
+        shape.x
+      );
+
+    const y =
+      Number(
+        shape.y
+      );
+
+    const width =
+      Math.abs(
+        Number(
+          shape.width
+        )
+      );
+
+    const height =
+      Math.abs(
+        Number(
+          shape.height
+        )
+      );
+
+    if (
+      ![
+        x,
+        y,
+        width,
+        height
+      ].every(
+        Number.isFinite
+      )
+    ) {
+      return null;
+    }
+
+    const centreX =
+      x +
+      width /
+        2;
+
+    const centreY =
+      y +
+      height /
+        2;
+
+    const radians =
+      (
+        Number(
+          shape.rotation
+        ) ||
+        0
+      ) *
+      Math.PI /
+      180;
+
+    const horizontalExtent =
+      Math.abs(
+        Math.cos(
+          radians
+        )
+      ) *
+        width /
+        2 +
+      Math.abs(
+        Math.sin(
+          radians
+        )
+      ) *
+        height /
+        2;
+
+    const verticalExtent =
+      Math.abs(
+        Math.sin(
+          radians
+        )
+      ) *
+        width /
+        2 +
+      Math.abs(
+        Math.cos(
+          radians
+        )
+      ) *
+        height /
+        2;
+
+    return createBounds(
+      centreX -
+        horizontalExtent,
+      centreY -
+        verticalExtent,
+      centreX +
+        horizontalExtent,
+      centreY +
+        verticalExtent
+    );
+  }
+
+  return null;
+}
+
 export function isPointInsideWebRegionRecord(
   region,
   x,
@@ -299,8 +952,43 @@ export function isPointInsideWebRegionRecord(
     return nativeResult;
   }
 
-  return (Array.isArray(region.shapes) ? region.shapes : [])
-    .some((shape) => isPointInsideShape(shape, numericX, numericY));
+  const shapes =
+    Array.isArray(
+      region.shapes
+    )
+      ? region.shapes
+      : [];
+
+  const insidePositiveShape =
+    shapes.some(
+      (
+        shape
+      ) =>
+        shape?.isHole !==
+          true &&
+        isPointInsideShape(
+          shape,
+          numericX,
+          numericY
+        )
+    );
+
+  if (!insidePositiveShape) {
+    return false;
+  }
+
+  return !shapes.some(
+    (
+      shape
+    ) =>
+      shape?.isHole ===
+        true &&
+      isPointInsideShape(
+        shape,
+        numericX,
+        numericY
+      )
+  );
 }
 
 function normaliseShape(rawValue) {
@@ -316,9 +1004,51 @@ function normaliseShape(rawValue) {
     source
   );
 
-  if (type === "polygon") return normalisePolygon(source);
-  if (type === "ellipse") return normaliseEllipse(source);
-  return normaliseRectangle(source);
+  const shape =
+    type ===
+      "polygon"
+      ? normalisePolygon(
+          source
+        )
+      : type ===
+          "ellipse"
+        ? normaliseEllipse(
+            source
+          )
+        : normaliseRectangle(
+            source
+          );
+
+  if (!shape) {
+    return null;
+  }
+
+  return {
+    ...shape,
+    isHole:
+      resolveShapeHoleFlag(
+        source
+      )
+  };
+}
+
+function resolveShapeHoleFlag(
+  source
+) {
+  return Boolean(
+    source?.isHole ===
+      true ||
+    source?.hole ===
+      true ||
+    source?.source?.isHole ===
+      true ||
+    source?.source?.hole ===
+      true ||
+    source?.data?.isHole ===
+      true ||
+    source?.data?.hole ===
+      true
+  );
 }
 
 function normaliseShapeType(value, source) {
@@ -761,33 +1491,68 @@ function resolveContainmentElevation(
 }
 
 function testNativeRegionContainment(
-  document,
+  documentLike,
   x,
   y,
   elevation
 ) {
   if (
-    !document ||
-    typeof document !==
+    !documentLike ||
+    typeof documentLike !==
       "object"
   ) {
     return null;
   }
 
-  const pointCandidates =
-    createNativePointCandidates(
-      x,
-      y,
-      elevation
-    );
+  /**
+   * Foundry v13+ requires RegionDocument#testPoint(ElevatedPoint). Resolve a
+   * placeable to its document first so the deprecated Region#testPoint(point,
+   * elevation) compatibility getter is never touched.
+   */
+  const document =
+    documentLike.document &&
+    typeof documentLike.document ===
+      "object"
+      ? documentLike.document
+      : documentLike;
 
-  let answeredFalse =
-    false;
+  const elevatedPoint =
+    elevation ===
+      null
+      ? {
+          x,
+          y
+        }
+      : {
+          x,
+          y,
+          elevation
+        };
+
+  if (
+    typeof document.testPoint ===
+      "function"
+  ) {
+    try {
+      const result =
+        document.testPoint(
+          elevatedPoint
+        );
+
+      if (
+        typeof result ===
+          "boolean"
+      ) {
+        return result;
+      }
+    } catch (_error) {
+      // Continue through non-deprecated compatibility fallbacks.
+    }
+  }
 
   for (
     const methodName of
     [
-      "testPoint",
       "containsPoint",
       "contains"
     ]
@@ -804,52 +1569,27 @@ function testNativeRegionContainment(
       continue;
     }
 
-    const argumentSets =
-      [];
-
-    for (
-      const point of
-      pointCandidates
-    ) {
-      if (
-        elevation !==
-          null
-      ) {
-        argumentSets.push([
-          point,
-          elevation
-        ]);
-      }
-
-      argumentSets.push([
-        point
-      ]);
-    }
-
-    if (
-      methodName !==
-        "testPoint"
-    ) {
-      argumentSets.push([
-        x,
-        y
-      ]);
-    }
-
-    if (
-      elevation !==
-        null
-    ) {
-      argumentSets.push([
-        x,
-        y,
-        elevation
-      ]);
-    }
-
     for (
       const args of
-      argumentSets
+      [
+        [
+          elevatedPoint
+        ],
+        [
+          x,
+          y
+        ],
+        ...(
+          elevation ===
+            null
+            ? []
+            : [[
+                x,
+                y,
+                elevation
+              ]]
+        )
+      ]
     ) {
       try {
         const result =
@@ -859,83 +1599,18 @@ function testNativeRegionContainment(
           );
 
         if (
-          result ===
-            true
+          typeof result ===
+            "boolean"
         ) {
-          return true;
-        }
-
-        if (
-          result ===
-            false
-        ) {
-          answeredFalse =
-            true;
+          return result;
         }
       } catch (_error) {
-        // Continue through the supported v13/v14 call shapes.
+        // Continue through compatibility call shapes.
       }
     }
   }
 
-  return answeredFalse
-    ? false
-    : null;
-}
-
-function createNativePointCandidates(
-  x,
-  y,
-  elevation
-) {
-  const points =
-    [];
-
-  const Point =
-    globalThis.PIXI?.Point;
-
-  if (
-    typeof Point ===
-      "function"
-  ) {
-    try {
-      const point =
-        new Point(
-          x,
-          y
-        );
-
-      if (
-        elevation !==
-          null
-      ) {
-        point.elevation =
-          elevation;
-      }
-
-      points.push(
-        point
-      );
-    } catch (_error) {
-      // Fall through to the plain point below.
-    }
-  }
-
-  points.push(
-    elevation ===
-      null
-      ? {
-          x,
-          y
-        }
-      : {
-          x,
-          y,
-          elevation
-        }
-  );
-
-  return points;
+  return null;
 }
 
 function isSegmentFullyCoveredByRegionUnion(
@@ -1217,6 +1892,32 @@ function clampUnit(value) {
 
 const GEOMETRY_EPSILON = 0.000001;
 
+function createBounds(
+  x,
+  y,
+  right,
+  bottom
+) {
+  return {
+    x,
+    y,
+    width:
+      Math.max(
+        0,
+        right -
+          x
+      ),
+    height:
+      Math.max(
+        0,
+        bottom -
+          y
+      ),
+    right,
+    bottom
+  };
+}
+
 function iterateValues(collection) {
   if (Array.isArray(collection?.contents)) return collection.contents;
   if (Array.isArray(collection)) return collection;
@@ -1273,3 +1974,4 @@ function deepFreeze(value) {
   for (const child of Object.values(value)) deepFreeze(child);
   return Object.freeze(value);
 }
+

@@ -75,9 +75,8 @@ export function resolveWebPrimarySortLayer(
 function resolvePrimaryCanvasSortLayers() {
   const candidates = [
     globalThis.foundry?.canvas?.groups?.PrimaryCanvasGroup?.SORT_LAYERS,
-    globalThis.PrimaryCanvasGroup?.SORT_LAYERS,
-    globalThis.CONFIG?.Canvas?.groups?.primary?.groupClass?.SORT_LAYERS,
-    globalThis.canvas?.primary?.constructor?.SORT_LAYERS
+    globalThis.canvas?.primary?.constructor?.SORT_LAYERS,
+    globalThis.CONFIG?.Canvas?.groups?.primary?.groupClass?.SORT_LAYERS
   ];
 
   for (const candidate of candidates) {

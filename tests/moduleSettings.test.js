@@ -149,7 +149,7 @@ test(
 
       assert.equal(
         registrations.length,
-        1
+        2
       );
 
       const registration =
@@ -566,6 +566,147 @@ test(
       assert.match(
         createWebLevelProviderHint(),
         /theripper93's Levels module/
+      );
+    } finally {
+      restoreGlobals(
+        previous
+      );
+    }
+  }
+);
+
+
+test(
+  "world cache-clear setting broadcasts local carpet-cache clearing and resets itself",
+  async () => {
+    const previous =
+      preserveGlobals();
+
+    const registrations =
+      [];
+
+    const setCalls =
+      [];
+
+    const emittedHooks =
+      [];
+
+    let clearCalls =
+      0;
+
+    globalThis.game = {
+      release: {
+        generation:
+          13
+      },
+      user: {
+        isGM:
+          true
+      },
+      modules: {
+        get() {
+          return null;
+        }
+      },
+      settings: {
+        register(
+          moduleId,
+          key,
+          configuration
+        ) {
+          registrations.push({
+            moduleId,
+            key,
+            configuration
+          });
+        },
+        get() {
+          return WEB_LEVEL_PROVIDER_MODES.BASE;
+        },
+        async set(
+          moduleId,
+          key,
+          value
+        ) {
+          setCalls.push({
+            moduleId,
+            key,
+            value
+          });
+        }
+      }
+    };
+
+    globalThis.canvas =
+      {};
+
+    globalThis.Hooks = {
+      on() {},
+      callAll(
+        event
+      ) {
+        emittedHooks.push(
+          event
+        );
+      }
+    };
+
+    resetModuleSettingsRegistrationForTests();
+
+    try {
+      registerModuleSettings({
+        onCarpetTextureCacheClearRequested:
+          async () => {
+            clearCalls +=
+              1;
+          }
+      });
+
+      const registration =
+        registrations.find(
+          (
+            entry
+          ) =>
+            entry.key ===
+              MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE
+        );
+
+      assert.ok(
+        registration
+      );
+
+      assert.equal(
+        registration.configuration.type,
+        Boolean
+      );
+
+      await registration.configuration.onChange(
+        true
+      );
+
+      assert.equal(
+        clearCalls,
+        1
+      );
+
+      assert.deepEqual(
+        setCalls,
+        [
+          {
+            moduleId:
+              "dynamic-webs",
+            key:
+              MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
+            value:
+              false
+          }
+        ]
+      );
+
+      assert.ok(
+        emittedHooks.includes(
+          "dynamic-webs.carpetTextureCacheClearRequested"
+        )
       );
     } finally {
       restoreGlobals(

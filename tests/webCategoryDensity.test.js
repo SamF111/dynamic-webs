@@ -196,7 +196,7 @@ test(
 );
 
 test(
-  "category overrides independently resolve generation options and dormant carpet state",
+  "category overrides independently resolve reusable WebP carpet generation options",
   () => {
     const configuration =
       getSceneWebCategoryDensityConfiguration({
@@ -251,12 +251,12 @@ test(
 
     assert.equal(
       configuration.categories["web-carpet"].implemented,
-      false
+      true
     );
 
     assert.equal(
       configuration.categories["web-carpet"].generationActive,
-      false
+      true
     );
 
     assert.equal(
@@ -264,13 +264,60 @@ test(
         configuration.generationOptions,
         "carpetWebs"
       ),
-      false
+      true
+    );
+
+    assert.equal(
+      configuration.generationOptions.carpetWebs.maximumPatchCountPerRegion,
+      180
+    );
+
+    assert.equal(
+      configuration.generationOptions.carpetWebs.minimumPatchCountPerRegion,
+      18
+    );
+
+    assert.equal(
+      configuration.generationOptions.carpetWebs.patchesPerGridSquare,
+      1.75
+    );
+
+    const infestedConfiguration =
+      getSceneWebCategoryDensityConfiguration({
+        flags: {
+          "dynamic-webs": {
+            webDensity:
+              "standard",
+            carpetWebDensity:
+              "infested"
+          }
+        }
+      });
+
+    assert.equal(
+      infestedConfiguration.generationOptions.carpetWebs.patchesPerGridSquare,
+      8
+    );
+
+    assert.equal(
+      infestedConfiguration.generationOptions.carpetWebs.minimumPatchCountPerRegion,
+      96
+    );
+
+    assert.equal(
+      infestedConfiguration.generationOptions.carpetWebs.maximumPatchCountPerRegion,
+      1000
+    );
+
+    assert.equal(
+      infestedConfiguration.generationOptions.carpetWebs.minimumPatchSeparationGridUnits,
+      0
     );
   }
 );
 
 test(
-  "all implemented categories may be disabled while carpet remains reserved",
+  "a configured carpet keeps the population active when line-web categories are disabled",
   () => {
     const configuration =
       getSceneWebCategoryDensityConfiguration({
@@ -286,7 +333,7 @@ test(
 
     assert.equal(
       configuration.implementedEnabled,
-      false
+      true
     );
 
     assert.equal(
@@ -520,12 +567,12 @@ test(
 
     assert.equal(
       carpet.future,
-      true
+      false
     );
 
     assert.match(
       carpet.description,
-      /no generation effect/u
+      /reusable WebP patch abundance/u
     );
   }
 );
@@ -661,3 +708,4 @@ function selectKinds(
       )
   );
 }
+

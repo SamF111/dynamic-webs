@@ -190,7 +190,7 @@ function createDensityDescription(categoryId) {
     case "ground":
       return "Freely placed ground-web abundance on this population's level.";
     case "web-carpet":
-      return "Reserved density for future region-bound web carpets; it currently has no generation effect.";
+      return "Deterministic reusable WebP patch abundance inside matching Confine Regions. Carpet generation requires at least one matching Confine Region tag.";
     default:
       return "Population-specific web density.";
   }

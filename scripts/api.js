@@ -5,6 +5,7 @@ import {
 
 import {
   clearPublicWebs,
+  clearPublicWebCarpetTextureCache,
   generatePublicWebs,
   getPublicWebState
 } from "./api/webApi.js";
@@ -50,6 +51,12 @@ export function createPublicApi(
       clear:
         () =>
           clearPublicWebs(
+            runtime
+          ),
+
+      clearCarpetTextureCache:
+        () =>
+          clearPublicWebCarpetTextureCache(
             runtime
           ),
 
@@ -156,7 +163,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.5.0",
+            "0.6.0",
           webs:
             getPublicWebState(
               runtime

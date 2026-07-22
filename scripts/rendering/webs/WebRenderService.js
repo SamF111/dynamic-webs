@@ -13,9 +13,26 @@ import {
   drawWebPolyline
 } from "./webDrawingCompatibility.js";
 
+import {
+  WebCarpetPatchTextureService,
+  configureWebCarpetColourFilter
+} from "./WebCarpetPatchTextureService.js";
+
+import {
+  WebCarpetRegionMaskService,
+  applyWebCarpetRegionMask,
+  destroyWebCarpetRegionMaskResource
+} from "./webCarpetRegionMask.js";
+
+import {
+  getWebColourProfile
+} from "../../simulation/webs/webColourProfiles.js";
+
 /** Own the transient PIXI representation of generated web blueprints. */
 export class WebRenderService {
-  constructor() {
+  constructor(
+    options = {}
+  ) {
     /**
      * Backwards-compatible reference to the highest visible elevation
      * container. Cumulative level visibility requires several sibling
@@ -29,6 +46,27 @@ export class WebRenderService {
 
     this.graphicsByWebId =
       new Map();
+
+    this.carpetTextureService =
+      options.carpetTextureService instanceof
+        WebCarpetPatchTextureService
+        ? options.carpetTextureService
+        : new WebCarpetPatchTextureService();
+
+    this.carpetMaskResources =
+      new Map();
+
+    this.carpetMaskService =
+      options.carpetMaskService instanceof
+        WebCarpetRegionMaskService
+        ? options.carpetMaskService
+        : new WebCarpetRegionMaskService();
+
+    this.lastRenderedCarpetCount =
+      0;
+
+    this.lastRenderedCarpetPatchCount =
+      0;
 
     this.renderRevision =
       0;
@@ -154,7 +192,13 @@ export class WebRenderService {
             configuration,
             thicknessMultiplier,
             graphicsByWebId:
-              this.graphicsByWebId
+              this.graphicsByWebId,
+            carpetTextureService:
+              this.carpetTextureService,
+            carpetMaskResources:
+              this.carpetMaskResources,
+            carpetMaskService:
+              this.carpetMaskService
           });
         }
       }
@@ -236,10 +280,49 @@ export class WebRenderService {
     this.lastThicknessMultiplier =
       thicknessMultiplier;
 
+    this.lastRenderedCarpetCount =
+      visibleWebs.filter(
+        (
+          web
+        ) =>
+          web?.kind ===
+            "web-carpet"
+      ).length;
+
+    this.lastRenderedCarpetPatchCount =
+      visibleWebs.reduce(
+        (
+          total,
+          web
+        ) =>
+          total +
+          (
+            web?.kind ===
+              "web-carpet" &&
+            Array.isArray(
+              web?.carpet?.patches
+            )
+              ? web.carpet.patches.length
+              : 0
+          ),
+        0
+      );
+
     return this.container;
   }
 
   clear() {
+    for (
+      const resource of
+      this.carpetMaskResources.values()
+    ) {
+      destroyWebCarpetRegionMaskResource(
+        resource
+      );
+    }
+
+    this.carpetMaskResources.clear();
+
     const containers =
       collectActiveContainers(
         this.containers,
@@ -328,6 +411,17 @@ export class WebRenderService {
 
     return hadContainers ||
       hadGraphics;
+  }
+
+  clearCarpetTextureCache() {
+    const clearedTextures =
+      this.carpetTextureService.clear();
+
+    const clearedMasks =
+      this.carpetMaskService.clear();
+
+    return clearedTextures ||
+      clearedMasks;
   }
 
   createDiagnosticSnapshot() {
@@ -450,6 +544,16 @@ export class WebRenderService {
         this.lastThicknessMultiplier,
       thicknessMultipliersByPopulation:
         this.lastThicknessMultipliersByPopulation,
+      renderedCarpetCount:
+        this.lastRenderedCarpetCount,
+      renderedCarpetPatchCount:
+        this.lastRenderedCarpetPatchCount,
+      carpetMaskCount:
+        this.carpetMaskResources.size,
+      carpetTextures:
+        this.carpetTextureService.createDiagnosticSnapshot(),
+      carpetMasks:
+        this.carpetMaskService.createDiagnosticSnapshot(),
       renderRevision:
         this.renderRevision,
       lastRenderedAt:
@@ -466,8 +570,33 @@ function renderWebGraphic({
   web,
   configuration,
   thicknessMultiplier,
-  graphicsByWebId
+  graphicsByWebId,
+  carpetTextureService,
+  carpetMaskResources,
+  carpetMaskService
 }) {
+  if (
+    web?.kind ===
+      "web-carpet"
+  ) {
+    renderWebCarpetPatchGraphic({
+      pixi,
+      container,
+      web,
+      carpetTextureService,
+      carpetMaskResources,
+      carpetMaskService,
+      graphicsByWebId,
+      thicknessMultiplier:
+        resolveThicknessMultiplier(
+          web?.thicknessMultiplier ??
+          thicknessMultiplier
+        )
+    });
+
+    return;
+  }
+
   const webThicknessMultiplier =
     resolveThicknessMultiplier(
       web?.thicknessMultiplier ??
@@ -548,6 +677,144 @@ function renderWebGraphic({
   graphicsByWebId.set(
     web.id,
     graphics
+  );
+}
+
+function renderWebCarpetPatchGraphic({
+  pixi,
+  container,
+  web,
+  carpetTextureService,
+  carpetMaskResources,
+  carpetMaskService,
+  graphicsByWebId,
+  thicknessMultiplier
+}) {
+  const carpet =
+    web?.carpet;
+
+  if (
+    !carpet ||
+    !Array.isArray(
+      carpet.patches
+    ) ||
+    carpet.patches.length ===
+      0
+  ) {
+    return;
+  }
+
+  const profile =
+    getWebColourProfile(
+      web.colourProfileId
+    );
+
+  const display =
+    new pixi.Container();
+
+  configureWebDisplayObject(
+    display
+  );
+
+  display.name =
+    `${MODULE_ID}.web-carpet.${web.id}`;
+
+  display.elevation =
+    resolveWebElevation(
+      web,
+      container.elevation
+    );
+
+  display.zIndex =
+    -25;
+
+  const patchContainer =
+    new pixi.Container();
+
+  configureWebDisplayObject(
+    patchContainer
+  );
+
+  patchContainer.name =
+    `${display.name}.patches`;
+
+  const decorativeColour =
+    profile.configuration.decorativeColour;
+
+  const colourFilterApplied =
+    configureWebCarpetColourFilter({
+      pixi,
+      displayObject:
+        patchContainer,
+      tint:
+        decorativeColour
+    });
+
+  const maskResource =
+    carpetMaskService.createMaskSprite({
+      pixi,
+      carpet
+    });
+
+  configureWebDisplayObject(
+    maskResource.sprite
+  );
+
+  maskResource.sprite.name =
+    `${display.name}.mask`;
+
+  maskResource.sprite.elevation =
+    display.elevation;
+
+  maskResource.sprite.zIndex =
+    display.zIndex;
+
+  display.addChild(
+    patchContainer
+  );
+
+  container.addChild(
+    maskResource.sprite
+  );
+
+  container.addChild(
+    display
+  );
+
+  applyWebCarpetRegionMask({
+    target:
+      display,
+    resource:
+      maskResource
+  });
+
+  for (
+    const descriptor of
+    carpet.patches
+  ) {
+    patchContainer.addChild(
+      carpetTextureService.createPatchSprite({
+        pixi,
+        descriptor,
+        tint:
+          colourFilterApplied
+            ? 0xffffff
+            : decorativeColour,
+        alphaMultiplier:
+          profile.configuration.alphaMultiplier,
+        thicknessMultiplier
+      })
+    );
+  }
+
+  carpetMaskResources.set(
+    web.id,
+    maskResource
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    display
   );
 }
 
@@ -948,3 +1215,4 @@ function requirePixi() {
 
   return pixi;
 }
+

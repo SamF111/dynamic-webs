@@ -207,7 +207,9 @@ export function createWebBlueprint({
   perches = [],
   supportingWallIds = [],
   regionIds = [],
-  regionTags = []
+  regionTags = [],
+  bounds = null,
+  carpet = null
 }) {
   const webId =
     requireIdentifier(
@@ -480,15 +482,18 @@ export function createWebBlueprint({
       hub:
         safeHub,
       bounds:
-        calculatePointBounds([
-          safeHub,
-          ...safeStrands.flatMap(
-            (
-              strand
-            ) =>
-              strand.points
-          )
-        ]),
+        normaliseBlueprintBounds(
+          bounds,
+          calculatePointBounds([
+            safeHub,
+            ...safeStrands.flatMap(
+              (
+                strand
+              ) =>
+                strand.points
+            )
+          ])
+        ),
       strands:
         safeStrands,
       perches:
@@ -498,7 +503,14 @@ export function createWebBlueprint({
       regionIds:
         safeRegionIds,
       regionTags:
-        safeRegionTags
+        safeRegionTags,
+      ...(
+        carpet
+          ? {
+              carpet
+            }
+          : {}
+      )
     });
 
   return assertWebBlueprintIntegrity(
@@ -785,6 +797,94 @@ export function calculatePointBounds(
     height:
       bottom -
       y,
+    right,
+    bottom
+  };
+}
+
+function normaliseBlueprintBounds(
+  candidate,
+  fallback
+) {
+  if (
+    !candidate ||
+    typeof candidate !==
+      "object" ||
+    Array.isArray(
+      candidate
+    )
+  ) {
+    return fallback;
+  }
+
+  const x =
+    Number(
+      candidate.x
+    );
+
+  const y =
+    Number(
+      candidate.y
+    );
+
+  const width =
+    Number(
+      candidate.width
+    );
+
+  const height =
+    Number(
+      candidate.height
+    );
+
+  const right =
+    Number.isFinite(
+      Number(
+        candidate.right
+      )
+    )
+      ? Number(
+          candidate.right
+        )
+      : x +
+        width;
+
+  const bottom =
+    Number.isFinite(
+      Number(
+        candidate.bottom
+      )
+    )
+      ? Number(
+          candidate.bottom
+        )
+      : y +
+        height;
+
+  if (
+    ![
+      x,
+      y,
+      width,
+      height,
+      right,
+      bottom
+    ].every(
+      Number.isFinite
+    ) ||
+    width <
+      0 ||
+    height <
+      0
+  ) {
+    return fallback;
+  }
+
+  return {
+    x,
+    y,
+    width,
+    height,
     right,
     bottom
   };

@@ -242,6 +242,8 @@ function createEmptyCounts() {
       0,
     ground:
       0,
+    carpet:
+      0,
     strands:
       0,
     byWebKind:
@@ -251,6 +253,8 @@ function createEmptyCounts() {
         "wall-span":
           0,
         ground:
+          0,
+        "web-carpet":
           0
       }),
     byStrandKind:

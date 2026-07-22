@@ -12,6 +12,7 @@ function createEnvironment() {
   const calls = {
     generate: [],
     clear: [],
+    clearCarpetTextureCache: [],
     setFlag: []
   };
 
@@ -33,6 +34,16 @@ function createEnvironment() {
     clear(reason) {
       calls.clear.push(reason);
       return true;
+    },
+
+    clearCarpetTextureCache(options) {
+      calls.clearCarpetTextureCache.push(options);
+      return Object.freeze({
+        cleared:
+          true,
+        state:
+          webSnapshot
+      });
     },
 
     createDiagnosticSnapshot() {
@@ -221,6 +232,13 @@ test("public web operations generate persisted modular populations and clear run
     const cleared = api.webs.clear();
     assert.equal(cleared.cleared, true);
     assert.deepEqual(environment.calls.clear, ["public-api-clear"]);
+
+    const carpetCleared = api.webs.clearCarpetTextureCache();
+    assert.equal(carpetCleared.cleared, true);
+    assert.deepEqual(environment.calls.clearCarpetTextureCache, [{
+      redraw: true,
+      reason: "public-api-clear-carpet-texture-cache"
+    }]);
   } finally {
     environment.restore();
   }

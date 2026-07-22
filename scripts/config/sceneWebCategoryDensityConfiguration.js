@@ -32,7 +32,8 @@ export const IMPLEMENTED_WEB_CATEGORY_IDS =
   Object.freeze([
     "wall-corner",
     "wall-span",
-    "ground"
+    "ground",
+    "web-carpet"
   ]);
 
 export const WEB_CATEGORY_DENSITY_DEFINITIONS =
@@ -79,11 +80,11 @@ export const WEB_CATEGORY_DENSITY_DEFINITIONS =
       flagKey:
         SCENE_WEB_FLAG_KEYS.CARPET_WEB_DENSITY,
       generationKey:
-        null,
+        "carpetWebs",
       label:
         "Carpet-web density",
       implemented:
-        false
+        true
     })
   ]);
 

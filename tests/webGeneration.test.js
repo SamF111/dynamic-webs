@@ -211,7 +211,9 @@ test(
           span:
             `${first.seed}:base:wall-span`,
           ground:
-            `${first.seed}:base:ground`
+            `${first.seed}:base:ground`,
+          carpet:
+            `${first.seed}:base:web-carpet`
         }
       }
     );

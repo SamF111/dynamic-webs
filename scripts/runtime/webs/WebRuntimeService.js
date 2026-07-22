@@ -516,6 +516,76 @@ export class WebRuntimeService {
     });
   }
 
+  /**
+   * Clear only Dynamic Webs' client-local bundled carpet texture request cache
+   * and redraw the current visible subset. Geometry and Scene flags are kept.
+   */
+  clearCarpetTextureCache({
+    redraw =
+      true,
+    reason =
+      "clear-carpet-texture-cache"
+  } = {}) {
+    const cleared =
+      this.renderService.clearCarpetTextureCache();
+
+    const operationReason =
+      normaliseOptionalIdentifier(
+        reason
+      ) ??
+      "clear-carpet-texture-cache";
+
+    const operationAt =
+      Date.now();
+
+    if (
+      redraw ===
+        true &&
+      this.state.active ===
+        true
+    ) {
+      const visibleWebs =
+        filterWebsForVisibleLevels(
+          this.state.webs,
+          this.state.levelVisibility?.visibleLevelIds ??
+          []
+        );
+
+      this.renderService.render(
+        visibleWebs,
+        createRenderingConfiguration(
+          this.state.configuration.rendering,
+          this.state.thicknessMultiplier
+        )
+      );
+
+      this.state = {
+        ...this.state,
+        presentationRevision:
+          this.state.presentationRevision +
+          1,
+        lastOperationReason:
+          operationReason,
+        lastOperationAt:
+          operationAt
+      };
+    } else {
+      this.state = {
+        ...this.state,
+        lastOperationReason:
+          operationReason,
+        lastOperationAt:
+          operationAt
+      };
+    }
+
+    return Object.freeze({
+      cleared,
+      state:
+        this.createDiagnosticSnapshot()
+    });
+  }
+
   /** Clear all local generated geometry and rendering. */
   clear(
     reason = null

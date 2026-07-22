@@ -10,7 +10,7 @@ import {
 const VALID_DEFAULTS =
   Object.freeze({
     schemaVersion:
-      1,
+      2,
     cornerWebs: {
       enabled:
         true,
@@ -116,6 +116,24 @@ const VALID_DEFAULTS =
         0.75,
       edgeMarginGridUnits:
         0.9
+    },
+    carpetWebs: {
+      enabled:
+        true,
+      patchesPerGridSquare:
+        0.14,
+      minimumPatchCountPerRegion:
+        2,
+      maximumPatchCountPerRegion:
+        20,
+      basePatchSizeGridUnits:
+        2.6,
+      placementAttemptsPerPatch:
+        160,
+      minimumPatchSeparationGridUnits:
+        0.45,
+      maskResolutionPx:
+        1024
     },
     rendering: {
       layerMode:
@@ -232,6 +250,16 @@ test(
         groundWebs: {
           count:
             2
+        },
+        carpetWebs: {
+          patchesPerGridSquare:
+            0.75,
+          minimumPatchCountPerRegion:
+            8,
+          maximumPatchCountPerRegion:
+            80,
+          minimumPatchSeparationGridUnits:
+            0.18
         }
       }
     };
@@ -240,7 +268,7 @@ test(
       () =>
         validateWebDensityPresets({
           schemaVersion:
-            1,
+            3,
           presets: [
             clone(
               basePreset
@@ -265,12 +293,32 @@ test(
       () =>
         validateWebDensityPresets({
           schemaVersion:
-            1,
+            3,
           presets: [
             reserved
           ]
         }),
       /reserved/u
+    );
+
+    const reversedCarpetCounts =
+      clone(
+        basePreset
+      );
+
+    reversedCarpetCounts.configuration.carpetWebs.minimumPatchCountPerRegion =
+      81;
+
+    assert.throws(
+      () =>
+        validateWebDensityPresets({
+          schemaVersion:
+            3,
+          presets: [
+            reversedCarpetCounts
+          ]
+        }),
+      /must be greater than or equal/u
     );
   }
 );
@@ -378,3 +426,4 @@ test(
     );
   }
 );
+

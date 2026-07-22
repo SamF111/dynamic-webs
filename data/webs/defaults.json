@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "cornerWebs": {
     "enabled": true,
     "maximumCount": 12,
@@ -55,6 +55,16 @@
     "minimumRadiusGridUnits": 0.35,
     "maximumRadiusGridUnits": 0.75,
     "edgeMarginGridUnits": 0.9
+  },
+  "carpetWebs": {
+    "enabled": true,
+    "patchesPerGridSquare": 0.75,
+    "minimumPatchCountPerRegion": 8,
+    "maximumPatchCountPerRegion": 80,
+    "basePatchSizeGridUnits": 2.6,
+    "placementAttemptsPerPatch": 160,
+    "minimumPatchSeparationGridUnits": 0.18,
+    "maskResolutionPx": 1024
   },
   "rendering": {
     "layerMode": "under-tokens",

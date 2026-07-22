@@ -309,3 +309,48 @@ test("under-token web ordering resolves above tiles and below tokens", () => {
     globalThis.foundry = previousFoundry;
   }
 });
+
+test("sort-layer compatibility never touches the deprecated PrimaryCanvasGroup global", () => {
+  const previous = {
+    foundry: globalThis.foundry,
+    canvas: globalThis.canvas,
+    descriptor: Object.getOwnPropertyDescriptor(globalThis, "PrimaryCanvasGroup")
+  };
+
+  let legacyAccessCount = 0;
+  try {
+    Object.defineProperty(globalThis, "PrimaryCanvasGroup", {
+      configurable: true,
+      get() {
+        legacyAccessCount += 1;
+        throw new Error("deprecated global accessed");
+      }
+    });
+
+    globalThis.foundry = { canvas: { groups: {} } };
+    globalThis.canvas = {
+      primary: {
+        constructor: {
+          SORT_LAYERS: {
+            SCENE: 0,
+            TILES: 500,
+            DRAWINGS: 600,
+            TOKENS: 700,
+            WEATHER: 1000
+          }
+        }
+      }
+    };
+
+    assert.equal(resolveWebPrimarySortLayer("under-tokens"), 650);
+    assert.equal(legacyAccessCount, 0);
+  } finally {
+    if (previous.descriptor) {
+      Object.defineProperty(globalThis, "PrimaryCanvasGroup", previous.descriptor);
+    } else {
+      delete globalThis.PrimaryCanvasGroup;
+    }
+    globalThis.foundry = previous.foundry;
+    globalThis.canvas = previous.canvas;
+  }
+});

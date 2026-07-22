@@ -19,7 +19,7 @@ const WEB_GENERATION_DEFAULTS_CONTEXT =
   "web generation defaults";
 
 export const WEB_GENERATION_DEFAULTS_SCHEMA_VERSION =
-  1;
+  2;
 
 const BOOLEAN =
   (value, contextLabel) =>
@@ -234,6 +234,26 @@ const GROUND_WEB_SCHEMA =
       NON_NEGATIVE_NUMBER
   });
 
+const CARPET_WEB_SCHEMA =
+  Object.freeze({
+    enabled:
+      BOOLEAN,
+    patchesPerGridSquare:
+      NON_NEGATIVE_NUMBER,
+    minimumPatchCountPerRegion:
+      NON_NEGATIVE_INTEGER,
+    maximumPatchCountPerRegion:
+      NON_NEGATIVE_INTEGER,
+    basePatchSizeGridUnits:
+      POSITIVE_NUMBER,
+    placementAttemptsPerPatch:
+      POSITIVE_NUMBER,
+    minimumPatchSeparationGridUnits:
+      NON_NEGATIVE_NUMBER,
+    maskResolutionPx:
+      POSITIVE_NUMBER
+  });
+
 const RENDERING_SCHEMA =
   Object.freeze({
     layerMode:
@@ -273,6 +293,7 @@ export function validateWebGenerationDefaults(
       "cornerWebs",
       "spanWebs",
       "groundWebs",
+      "carpetWebs",
       "rendering"
     ],
     WEB_GENERATION_DEFAULTS_CONTEXT
@@ -391,12 +412,27 @@ export function validateWebGenerationDefaults(
     `${WEB_GENERATION_DEFAULTS_CONTEXT}.groundWebs`
   );
 
+  const carpetWebs =
+    validateFields(
+      root.carpetWebs,
+      `${WEB_GENERATION_DEFAULTS_CONTEXT}.carpetWebs`,
+      CARPET_WEB_SCHEMA
+    );
+
+  assertOrderedFields(
+    carpetWebs,
+    "minimumPatchCountPerRegion",
+    "maximumPatchCountPerRegion",
+    `${WEB_GENERATION_DEFAULTS_CONTEXT}.carpetWebs`
+  );
+
   return deepFreezeJsonData({
     seed:
       null,
     cornerWebs,
     spanWebs,
     groundWebs,
+    carpetWebs,
     rendering:
       validateFields(
         root.rendering,
@@ -591,7 +627,7 @@ const WEB_DENSITY_PRESETS_CONTEXT =
   "web density presets";
 
 export const WEB_DENSITY_PRESETS_SCHEMA_VERSION =
-  1;
+  3;
 
 const WEB_DENSITY_CORNER_CONFIGURATION_SCHEMA =
   Object.freeze({
@@ -612,6 +648,40 @@ const WEB_DENSITY_GROUND_CONFIGURATION_SCHEMA =
     count:
       NON_NEGATIVE_INTEGER
   });
+
+const WEB_DENSITY_CARPET_CONFIGURATION_SCHEMA =
+  Object.freeze({
+    patchesPerGridSquare:
+      NON_NEGATIVE_NUMBER,
+    minimumPatchCountPerRegion:
+      NON_NEGATIVE_INTEGER,
+    maximumPatchCountPerRegion:
+      NON_NEGATIVE_INTEGER,
+    minimumPatchSeparationGridUnits:
+      NON_NEGATIVE_NUMBER
+  });
+
+
+function validateCarpetDensityConfiguration(
+  value,
+  contextLabel
+) {
+  const configuration =
+    validateFields(
+      value,
+      contextLabel,
+      WEB_DENSITY_CARPET_CONFIGURATION_SCHEMA
+    );
+
+  assertOrderedFields(
+    configuration,
+    "minimumPatchCountPerRegion",
+    "maximumPatchCountPerRegion",
+    contextLabel
+  );
+
+  return configuration;
+}
 
 /**
  * Validate JSON-backed Scene web-density presets.
@@ -735,7 +805,8 @@ export function validateWebDensityPresets(
           [
             "cornerWebs",
             "spanWebs",
-            "groundWebs"
+            "groundWebs",
+            "carpetWebs"
           ],
           `${contextLabel}.configuration`
         );
@@ -765,6 +836,11 @@ export function validateWebDensityPresets(
                 configuration.groundWebs,
                 `${contextLabel}.configuration.groundWebs`,
                 WEB_DENSITY_GROUND_CONFIGURATION_SCHEMA
+              ),
+            carpetWebs:
+              validateCarpetDensityConfiguration(
+                configuration.carpetWebs,
+                `${contextLabel}.configuration.carpetWebs`
               )
           }
         };

@@ -147,7 +147,19 @@ async function initialiseDynamicWebs() {
           getSceneWebLifecycleController()
             ?.synchroniseActiveScene(
               "world-level-provider-update"
-            )
+            ),
+      onCarpetTextureCacheClearRequested:
+        () =>
+          globalThis[
+            RUNTIME_KEY
+          ]
+            ?.getWebRuntimeService?.()
+            ?.clearCarpetTextureCache?.({
+              redraw:
+                true,
+              reason:
+                "world-settings-clear-carpet-texture-cache"
+            })
     });
 
     const runtime =

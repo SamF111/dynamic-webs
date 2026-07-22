@@ -8,9 +8,9 @@ The module owns web generation, immutable geometry, rendering, modular Scene con
 
 - **Module ID:** `dynamic-webs`
 - **Runtime namespace:** `dynamicWebs`
-- **Current version:** `0.5.0`
+- **Current version:** `0.6.0`
 - **Public API version:** `1`
-- **Blueprint schema version:** `5`
+- **Blueprint schema version:** `6`
 - **Diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
@@ -23,7 +23,7 @@ Dynamic Webs currently generates:
 - **Wall-corner webs** from compatible same-level structural wall corners.
 - **Wall-span webs** across suitable narrow same-level passages.
 - **Ground webs** at deterministic positions inside the Scene rectangle.
-- **Web carpets** are reserved as a future category and do not yet generate geometry.
+- **Web carpets** place deterministic reusable transparent WebP patches inside matching same-level Confine Regions, with Exclude Regions cut from a cached native-canvas mask.
 
 ## Modular Scene web populations
 
@@ -50,7 +50,7 @@ Each population independently stores:
     "wall-corner": "dense",
     "wall-span": "dense",
     ground: "dense",
-    "web-carpet": "disabled"
+    "web-carpet": "standard"
   },
   colourProfileId: "blood-red",
   thicknessMultiplier: 1.5
@@ -68,7 +68,7 @@ The Dynamic Webs Scene Configuration tab provides collapsible population cards w
 - Enabled state
 - Target level
 - A nested **Regions** section containing Confine and Exclude tag fields
-- A nested **Web options** section containing corner, span, ground and reserved carpet density controls
+- A nested **Web options** section containing corner, span, ground and carpet density controls
 - A nested **Appearance** section containing web colour and visible thickness
 - Duplicate and remove actions
 
@@ -99,7 +99,7 @@ For a unified authoring experience, Dynamic Webs also recognises existing tags s
 
 Region acceptance is evaluated against complete generated strand polylines. Adjacent or overlapping Confine Regions form one allowed union, but an unassigned gap is not allowed. Candidates are rejected rather than clipped, so accepted strands retain their deterministic organic geometry. Foundry's native Region point test is authoritative when available; serialised rectangle, ellipse and polygon records are compatibility fallbacks.
 
-Web carpets will require their own boundary-aware area generation in their later milestone.
+Web carpets use the matching Confine Region itself as their ownership boundary. Each eligible Region receives an immutable deterministic patch recipe. Patch centres are accepted through native `RegionDocument#testPoint({x, y, elevation})` when available, while the displayed patch container is clipped by a lightweight vector-derived alpha mask. Matching Exclude Regions are subtracted from that mask.
 
 ## Level provider
 
@@ -111,7 +111,7 @@ The world-scoped **Level Awareness Provider** setting matches Ambient Critters' 
 
 Every population targets exactly one detected level. If its saved level is unavailable, the population remains configured but does not generate until the GM selects a valid level.
 
-Wall-corner and wall-span webs use only walls assigned to the population's selected level. Ground webs are also generated only on that level.
+Wall-corner and wall-span webs use only walls assigned to the population's selected level. Ground webs and Region-owned web carpets are also generated only on that level.
 
 ## Colour profiles
 
@@ -125,7 +125,7 @@ Authored profiles are stored in `data/webs/colours.json`:
 - `arcane-blue`
 - `toxic-green`
 
-Colour is owned by each population. Profiles resolve structural, capture and decorative strand colours, under-stroke colour and alpha multiplier onto immutable strand blueprints.
+Colour is owned by each population. Profiles resolve structural, capture and decorative strand colours, under-stroke colour and alpha multiplier onto immutable strand blueprints. Carpet WebPs are transparent white assets and use the profile's decorative colour as a client-side PIXI tint, so changing colour never regenerates the asset library.
 
 ## Visible thickness
 
@@ -209,13 +209,45 @@ On `canvasReady` Dynamic Webs:
 2. Reads and validates `flags.dynamic-webs.webPopulations`.
 3. Resolves the selected level and category presets for each enabled population.
 4. Skips populations with unavailable levels or no implemented active category.
-5. Generates each population from isolated deterministic streams.
+5. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
 6. Stores all immutable blueprints.
-7. Renders the level-compatible subset.
+7. Loads bundled WebP patch textures as needed and renders the level-compatible subset.
 
 Population-array changes perform one deterministic regeneration. Scene geometry, structural wall, Region geometry/tag/elevation, and level-document changes also regenerate. Viewed-level changes only refresh visibility.
 
-Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry.
+Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry. Bundled patch textures remain under Foundry's normal texture loader; Dynamic Webs separately caches in-flight patch requests and native-canvas Region masks for fast level switches.
+
+## Web carpets and bundled WebP patches
+
+Version `0.6.0` implements the `web-carpet` category without per-Scene texture baking or persistent server storage.
+
+The development-only Python tools in `tools/asset_generation/` create the authored atlas at:
+
+```text
+assets/web-carpet/generated/
+```
+
+`manifest.json` describes 48 transparent lossless WebP assets covering loose networks, support arcs, dense knots, edge frays and faint sheet fragments. Runtime generation does not stretch one complete carpet image across a Region. It deterministically chooses local patch assets and stores, for each patch:
+
+- Stable patch ID
+- Asset ID and module path
+- World-space centre
+- Width and height
+- Rotation
+- Horizontal and vertical flips
+- Alpha
+
+Each carpet blueprint belongs to one matching Confine Region. The visual patch container is clipped to the Region's rectangle, ellipse or polygon shapes, with matching Exclude shapes removed using `destination-out` on a compact native Canvas 2D mask. The mask long edge defaults to `512 px`, is independent of the source WebP resolution, and is cached by an immutable geometry key. This avoids millions of JavaScript point-containment calls while keeping the 512-pixel WebP fibres sharp.
+
+Carpet blueprints have no automatically fabricated dense interaction mesh. The web itself remains discoverable through the spatial web index using its Region bounds, while strand queries continue to return only real generated corner, span and ground strands. A later interaction milestone may add deliberately authored carpet support strands.
+
+The GM-only world setting **Clear Web Carpet Texture Cache** clears Dynamic Webs' local patch-request and Region-mask caches on connected clients, redraws the active visible subset, and then resets itself. It does not alter Scene populations, Regions, immutable geometry, corner webs, span webs or ground webs.
+
+The same operation is available through:
+
+```javascript
+dynamicWebs.api.webs.clearCarpetTextureCache();
+```
 
 ## Spatial index and read-only queries
 
@@ -316,11 +348,12 @@ dynamicWebs.api.findPerches(options);
 dynamicWebs.api.webs.getState();
 dynamicWebs.api.webs.generate();
 dynamicWebs.api.webs.clear();
+dynamicWebs.api.webs.clearCarpetTextureCache();
 dynamicWebs.api.levels.getState();
 dynamicWebs.api.spatial.getDiagnostics();
 ```
 
-`generate()` and `clear()` are GM-only. Normal operation should use Scene Configuration and lifecycle synchronisation.
+`generate()`, `clear()` and `clearCarpetTextureCache()` are GM-only. Normal operation should use Scene Configuration and lifecycle synchronisation.
 
 ### Colour profile lookup
 

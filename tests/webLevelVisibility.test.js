@@ -424,7 +424,7 @@ function createGeneratedPopulation() {
 
   return Object.freeze({
     blueprintSchemaVersion:
-      5,
+      6,
     sceneId:
       "scene",
     seed:

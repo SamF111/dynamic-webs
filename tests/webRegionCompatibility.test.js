@@ -6,6 +6,7 @@ import {
   doesPolylineIntersectWebRegionRecords,
   isPointInsideWebRegionRecord,
   isPolylineFullyInsideWebRegionRecords,
+  resolveRegionMaskShapeRecords,
   resolveRegionShapeRecords
 } from "../scripts/foundry/webRegionCompatibility.js";
 
@@ -60,6 +61,63 @@ test("polygon and ellipse Region shapes support ownership-point containment", ()
 });
 
 
+test("Region mask geometry prefers Foundry polygonTree fill and cut operations", () => {
+  const document = {
+    documentName: "Region",
+    id: "compound-region",
+    shapes: [
+      { type: "rectangle", x: 0, y: 0, width: 100, height: 100 },
+      { type: "rectangle", x: 25, y: 25, width: 50, height: 50, isHole: true }
+    ],
+    polygonTree: {
+      isHole: true,
+      points: null,
+      children: [
+        {
+          isHole: false,
+          points: [0, 0, 100, 0, 100, 100, 0, 100],
+          children: [
+            {
+              isHole: true,
+              points: [25, 25, 75, 25, 75, 75, 25, 75],
+              children: []
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  const maskShapes = resolveRegionMaskShapeRecords(document);
+
+  assert.equal(maskShapes.length, 1);
+  assert.equal(maskShapes[0].type, "polygon-tree");
+  assert.deepEqual(
+    maskShapes[0].operations.map((operation) => operation.operation),
+    ["fill", "cut"]
+  );
+  assert.equal(Object.isFrozen(maskShapes[0].operations), true);
+});
+
+test("raw Region hole shapes remain holes in fallback containment", () => {
+  const document = {
+    documentName: "Region",
+    shapes: [
+      { type: "rectangle", x: 0, y: 0, width: 100, height: 100 },
+      { type: "rectangle", x: 25, y: 25, width: 50, height: 50, isHole: true }
+    ]
+  };
+
+  const record = {
+    shapes: resolveRegionShapeRecords(document)
+  };
+
+  assert.equal(isPointInsideWebRegionRecord(record, 10, 10), true);
+  assert.equal(isPointInsideWebRegionRecord(record, 50, 50), false);
+  assert.equal(record.shapes[1].isHole, true);
+});
+
+
 test("polyline containment uses the union of Confine Regions and detects gaps", () => {
   const left = {
     id: "left",
@@ -89,81 +147,37 @@ test("polyline containment uses the union of Confine Regions and detects gaps", 
   );
 });
 
-
-test("native RegionDocument containment overrides incompatible serialised shape fallbacks", () => {
+test("native Region containment uses the v13+ RegionDocument ElevatedPoint signature", () => {
   const calls = [];
-  const region = {
+  const document = {
     documentName: "Region",
-    id: "native-region",
-    name: "Native Region",
+    id: "native-signature",
+    name: "Native signature",
     elevation: { bottom: 10, top: 19 },
-    shapes: [{
-      type: "rectangle",
-      x: 0,
-      y: 0,
-      width: 1000,
-      height: 1000
-    }],
-    flags: {
-      "dynamic-webs": {
-        regionTags: ["area1"]
-      }
-    },
-    testPoint(point, elevation) {
-      calls.push({ point, elevation });
-      return Boolean(
-        point &&
-        typeof point === "object" &&
-        Number(point.x) >= 0 &&
-        Number(point.x) <= 300 &&
-        Number(point.y) >= 0 &&
-        Number(point.y) <= 1000 &&
-        Number(elevation ?? point.elevation) === 10
-      );
+    shapes: [{ type: "rectangle", x: 0, y: 0, width: 100, height: 100 }],
+    testPoint(...args) {
+      calls.push(args);
+      return args.length === 1 && args[0]?.x === 25 && args[0]?.y === 30 && args[0]?.elevation === 10;
     }
   };
 
   const records = collectWebRegionRecords({
-    scene: {
-      regions: [region]
-    },
+    scene: { regions: [document] },
     providerResolution: {
-      levels: LEVELS,
-      resolveWallLevelMetadata: () => ({
-        levelId: "upper",
-        elevationBand: LEVELS[1].elevationBand,
-        resolved: true,
-        source: "test"
-      })
+      levels: [{
+        id: "level-10",
+        label: "Level 10",
+        providerMode: "native-v14",
+        elevationBand: { bottom: 10, top: 19 }
+      }]
     }
   });
 
   assert.equal(
-    isPointInsideWebRegionRecord(
-      records[0],
-      200,
-      500,
-      {
-        elevation: 10
-      }
-    ),
+    isPointInsideWebRegionRecord(records[0], 25, 30, { elevation: 10 }),
     true
   );
-
-  assert.equal(
-    isPointInsideWebRegionRecord(
-      records[0],
-      500,
-      500,
-      {
-        elevation: 10
-      }
-    ),
-    false
-  );
-
-  assert.ok(
-    calls.length >
-      0
-  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].length, 1);
+  assert.deepEqual(calls[0][0], { x: 25, y: 30, elevation: 10 });
 });

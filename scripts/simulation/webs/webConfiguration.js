@@ -45,6 +45,11 @@ export function normaliseWebGenerationConfiguration(
       ? candidate.groundWebs
       : {};
 
+  const carpetCandidate =
+    isObject(candidate.carpetWebs)
+      ? candidate.carpetWebs
+      : {};
+
   const renderingCandidate =
     isObject(candidate.rendering)
       ? candidate.rendering
@@ -221,6 +226,21 @@ export function normaliseWebGenerationConfiguration(
       normalisePositiveNumber(
         cornerCandidate.maximumHubDistanceGridUnits,
         defaults.cornerWebs.maximumHubDistanceGridUnits
+      )
+    );
+
+  const carpetMinimumPatchCountPerRegion =
+    normaliseNonNegativeInteger(
+      carpetCandidate.minimumPatchCountPerRegion,
+      defaults.carpetWebs.minimumPatchCountPerRegion
+    );
+
+  const carpetMaximumPatchCountPerRegion =
+    Math.max(
+      carpetMinimumPatchCountPerRegion,
+      normaliseNonNegativeInteger(
+        carpetCandidate.maximumPatchCountPerRegion,
+        defaults.carpetWebs.maximumPatchCountPerRegion
       )
     );
 
@@ -445,6 +465,52 @@ export function normaliseWebGenerationConfiguration(
         normaliseNonNegativeNumber(
           groundCandidate.edgeMarginGridUnits,
           defaults.groundWebs.edgeMarginGridUnits
+        )
+    },
+
+    carpetWebs: {
+      enabled:
+        normaliseBoolean(
+          carpetCandidate.enabled,
+          defaults.carpetWebs.enabled
+        ),
+      patchesPerGridSquare:
+        normaliseNonNegativeNumber(
+          carpetCandidate.patchesPerGridSquare,
+          defaults.carpetWebs.patchesPerGridSquare
+        ),
+      minimumPatchCountPerRegion:
+        carpetMinimumPatchCountPerRegion,
+      maximumPatchCountPerRegion:
+        carpetMaximumPatchCountPerRegion,
+      basePatchSizeGridUnits:
+        normalisePositiveNumber(
+          carpetCandidate.basePatchSizeGridUnits,
+          defaults.carpetWebs.basePatchSizeGridUnits
+        ),
+      placementAttemptsPerPatch:
+        Math.max(
+          1,
+          normalisePositiveInteger(
+            carpetCandidate.placementAttemptsPerPatch,
+            defaults.carpetWebs.placementAttemptsPerPatch
+          )
+        ),
+      minimumPatchSeparationGridUnits:
+        normaliseNonNegativeNumber(
+          carpetCandidate.minimumPatchSeparationGridUnits,
+          defaults.carpetWebs.minimumPatchSeparationGridUnits
+        ),
+      maskResolutionPx:
+        Math.max(
+          64,
+          Math.min(
+            1024,
+            normalisePositiveInteger(
+              carpetCandidate.maskResolutionPx,
+              defaults.carpetWebs.maskResolutionPx
+            )
+          )
         )
     },
 

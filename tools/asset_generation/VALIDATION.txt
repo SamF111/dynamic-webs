@@ -1,0 +1,19 @@
+Dynamic Webs procedural WebP atlas validation
+==============================================
+
+Python syntax: passed
+Asset generation: passed
+Generator version: 1.1.0
+Runtime asset format: lossless WebP with alpha
+Runtime assets generated and validated: 48
+Asset families:
+- loose-network: 12
+- support-arc: 10
+- dense-knot: 10
+- fray: 10
+- faint-sheet: 6
+Deterministic repeat generation: 48/48 runtime asset SHA-256 hashes matched
+Preview repeat generation: exact SHA-256 match
+Preview format: lossless WebP
+JavaScript syntax: 122/122 passed
+Regression tests: 165/165 passed

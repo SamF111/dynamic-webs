@@ -20,7 +20,9 @@ import {
 export const MODULE_SETTING_KEYS =
   Object.freeze({
     LEVEL_PROVIDER_MODE:
-      "levelProviderMode"
+      "levelProviderMode",
+    CLEAR_CARPET_TEXTURE_CACHE:
+      "clearCarpetTextureCache"
   });
 
 /**
@@ -32,6 +34,9 @@ export const DEFAULT_WEB_LEVEL_PROVIDER_MODE =
 
 export const LEVEL_PROVIDER_MODE_CHANGED_HOOK =
   `${MODULE_ID}.levelProviderModeChanged`;
+
+export const CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK =
+  `${MODULE_ID}.carpetTextureCacheClearRequested`;
 
 export const WEB_LEVEL_PROVIDER_SETTING_LABELS =
   Object.freeze({
@@ -65,7 +70,8 @@ let cachedWebLevelProviderMode =
  * @returns {boolean} True when registration occurred.
  */
 export function registerModuleSettings({
-  onLevelProviderChanged = null
+  onLevelProviderChanged = null,
+  onCarpetTextureCacheClearRequested = null
 } = {}) {
   if (
     settingsRegistered
@@ -132,6 +138,65 @@ export function registerModuleSettings({
           }
 
           return undefined;
+        }
+    }
+  );
+
+  settings.register(
+    MODULE_ID,
+    MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
+    {
+      name:
+        "Clear Web Carpet Texture Cache",
+      hint:
+        "Check and save to clear Dynamic Webs' client-local bundled carpet texture request cache on every connected client. Scene populations, Regions, generated geometry, corner webs, span webs and ground webs are not changed.",
+      scope:
+        "world",
+      config:
+        true,
+      type:
+        Boolean,
+      default:
+        false,
+      onChange:
+        async (
+          value
+        ) => {
+          if (
+            value !==
+              true
+          ) {
+            return;
+          }
+
+          globalThis.Hooks?.callAll?.(
+            CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK
+          );
+
+          if (
+            typeof onCarpetTextureCacheClearRequested ===
+              "function"
+          ) {
+            await onCarpetTextureCacheClearRequested();
+          }
+
+          /**
+           * A world setting change is broadcast to connected clients, so each
+           * client clears its own local module cache. Only the GM resets the
+           * transient checkbox after the action.
+           */
+          if (
+            globalThis.game?.user?.isGM ===
+              true &&
+            typeof settings.set ===
+              "function"
+          ) {
+            await settings.set(
+              MODULE_ID,
+              MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
+              false
+            );
+          }
         }
     }
   );

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "presets": [
     {
       "id": "sparse",
@@ -14,6 +14,12 @@
         },
         "groundWebs": {
           "count": 2
+        },
+        "carpetWebs": {
+          "patchesPerGridSquare": 0.25,
+          "minimumPatchCountPerRegion": 3,
+          "maximumPatchCountPerRegion": 24,
+          "minimumPatchSeparationGridUnits": 0.5
         }
       }
     },
@@ -30,6 +36,12 @@
         },
         "groundWebs": {
           "count": 6
+        },
+        "carpetWebs": {
+          "patchesPerGridSquare": 0.75,
+          "minimumPatchCountPerRegion": 8,
+          "maximumPatchCountPerRegion": 80,
+          "minimumPatchSeparationGridUnits": 0.18
         }
       }
     },
@@ -46,6 +58,12 @@
         },
         "groundWebs": {
           "count": 10
+        },
+        "carpetWebs": {
+          "patchesPerGridSquare": 1.75,
+          "minimumPatchCountPerRegion": 18,
+          "maximumPatchCountPerRegion": 180,
+          "minimumPatchSeparationGridUnits": 0.05
         }
       }
     },
@@ -62,6 +80,12 @@
         },
         "groundWebs": {
           "count": 54
+        },
+        "carpetWebs": {
+          "patchesPerGridSquare": 8,
+          "minimumPatchCountPerRegion": 96,
+          "maximumPatchCountPerRegion": 1000,
+          "minimumPatchSeparationGridUnits": 0
         }
       }
     }

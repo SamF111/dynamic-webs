@@ -23,6 +23,10 @@ import {
 } from "./WallSpanWebGenerator.js";
 
 import {
+  WebCarpetPatchGenerator
+} from "./WebCarpetPatchGenerator.js";
+
+import {
   assertWebPopulationIntegrity
 } from "./webBlueprintContract.js";
 
@@ -58,6 +62,9 @@ export class WebGenerationService {
     this.groundGenerator = options.groundGenerator instanceof GroundWebGenerator
       ? options.groundGenerator
       : new GroundWebGenerator();
+    this.carpetGenerator = options.carpetGenerator instanceof WebCarpetPatchGenerator
+      ? options.carpetGenerator
+      : new WebCarpetPatchGenerator();
   }
 
   generate(context, options = {}) {
@@ -115,7 +122,8 @@ export class WebGenerationService {
       const categorySeeds = Object.freeze({
         corner: `${populationSeed}:${encodedLevelId}:wall-corner`,
         span: `${populationSeed}:${encodedLevelId}:wall-span`,
-        ground: `${populationSeed}:${encodedLevelId}:ground`
+        ground: `${populationSeed}:${encodedLevelId}:ground`,
+        carpet: `${populationSeed}:${encodedLevelId}:web-carpet`
       });
       populationSeeds[populationId] = categorySeeds;
 
@@ -209,7 +217,8 @@ export class WebGenerationService {
       const categorySeeds = Object.freeze({
         corner: `${configuration.seed}:${encodedLevelId}:wall-corner`,
         span: `${configuration.seed}:${encodedLevelId}:wall-span`,
-        ground: `${configuration.seed}:${encodedLevelId}:ground`
+        ground: `${configuration.seed}:${encodedLevelId}:ground`,
+        carpet: `${configuration.seed}:${encodedLevelId}:web-carpet`
       });
       categorySeedsByLevel[levelId] = categorySeeds;
       geometryWebs.push(...this.#generateForLevel({
@@ -283,6 +292,12 @@ export class WebGenerationService {
         sceneRect: generationContext.sceneRect,
         configuration: configuration.groundWebs,
         random: createSeededRandom(categorySeeds.ground)
+      }),
+      ...this.carpetGenerator.generate({
+        ...common,
+        generationSeed: categorySeeds.carpet,
+        configuration: configuration.carpetWebs,
+        random: createSeededRandom(categorySeeds.carpet)
       })
     ]);
   }
@@ -290,7 +305,7 @@ export class WebGenerationService {
 
 function createGenerationCounts(webs, levels) {
   const byStrandKind = { structural: 0, capture: 0, decorative: 0 };
-  const byWebKind = { "wall-corner": 0, "wall-span": 0, ground: 0 };
+  const byWebKind = { "wall-corner": 0, "wall-span": 0, ground: 0, "web-carpet": 0 };
   const byLevel = {};
   const byPopulation = {};
 
@@ -314,7 +329,7 @@ function createGenerationCounts(webs, levels) {
       thicknessMultiplier: web.thicknessMultiplier,
       total: 0,
       strands: 0,
-      byWebKind: { "wall-corner": 0, "wall-span": 0, ground: 0 },
+      byWebKind: { "wall-corner": 0, "wall-span": 0, ground: 0, "web-carpet": 0 },
       byStrandKind: { structural: 0, capture: 0, decorative: 0 }
     });
 
@@ -348,6 +363,7 @@ function createGenerationCounts(webs, levels) {
     corner: byWebKind["wall-corner"],
     span: byWebKind["wall-span"],
     ground: byWebKind.ground,
+    carpet: byWebKind["web-carpet"],
     strands: Object.values(byStrandKind).reduce((total, count) => total + count, 0),
     byWebKind: Object.freeze(byWebKind),
     byStrandKind: Object.freeze(byStrandKind),
@@ -366,7 +382,7 @@ function createMutableLevelCounts(level) {
     },
     total: 0,
     strands: 0,
-    byWebKind: { "wall-corner": 0, "wall-span": 0, ground: 0 },
+    byWebKind: { "wall-corner": 0, "wall-span": 0, ground: 0, "web-carpet": 0 },
     byStrandKind: { structural: 0, capture: 0, decorative: 0 }
   };
 }
