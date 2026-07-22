@@ -15,7 +15,8 @@ import {
 import {
   MAXIMUM_SCENE_WEB_THICKNESS,
   MINIMUM_SCENE_WEB_THICKNESS,
-  SCENE_WEB_THICKNESS_STEP
+  SCENE_WEB_THICKNESS_STEP,
+  SCENE_WEB_THICKNESS_VALUES
 } from "../config/sceneWebThicknessConfiguration.js";
 
 import {
@@ -126,6 +127,11 @@ function createPopulationCardContext({
     thicknessMinimum: MINIMUM_SCENE_WEB_THICKNESS,
     thicknessMaximum: MAXIMUM_SCENE_WEB_THICKNESS,
     thicknessStep: SCENE_WEB_THICKNESS_STEP,
+    thicknessOptions: SCENE_WEB_THICKNESS_VALUES.map((value) => ({
+      value,
+      label: `${value}×`,
+      selected: value === population.thicknessMultiplier
+    })),
     densityControls: WEB_CATEGORY_DENSITY_DEFINITIONS.map((definition) => {
       const densityId = population.categoryDensities[definition.categoryId];
 
@@ -206,3 +212,4 @@ function createRegionSummary(confineTags, excludeTags) {
   if (excludeCount > 0) parts.push(`Exclude: ${excludeCount}`);
   return parts.join(" · ");
 }
+

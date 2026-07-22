@@ -539,3 +539,128 @@ test(
     }
   }
 );
+
+
+test(
+  "dedicated five-degree assets support generated acute wall corners",
+  () => {
+    const angleDeg =
+      5;
+
+    const radians =
+      angleDeg *
+      Math.PI /
+      180;
+
+    const context = {
+      ...BASE_CONTEXT,
+      wallSegments:
+        Object.freeze([
+          Object.freeze({
+            wallId:
+              "acute-a",
+            a:
+              Object.freeze({
+                x:
+                  100,
+                y:
+                  100
+              }),
+            b:
+              Object.freeze({
+                x:
+                  900,
+                y:
+                  100
+              })
+          }),
+          Object.freeze({
+            wallId:
+              "acute-b",
+            a:
+              Object.freeze({
+                x:
+                  100,
+                y:
+                  100
+              }),
+            b:
+              Object.freeze({
+                x:
+                  100 +
+                  Math.cos(
+                    radians
+                  ) *
+                  800,
+                y:
+                  100 +
+                  Math.sin(
+                    radians
+                  ) *
+                  800
+              })
+          })
+        ])
+    };
+
+    const options =
+      createOptions();
+
+    const generated =
+      generate(
+        context,
+        {
+          ...options,
+          cornerWebs: {
+            ...options.cornerWebs,
+            minimumCornerAngleDeg:
+              3,
+            maximumCornerAngleDeg:
+              145,
+            maximumCount:
+              1
+          },
+          spanWebs: {
+            ...options.spanWebs,
+            enabled:
+              false
+          },
+          groundWebs: {
+            ...options.groundWebs,
+            enabled:
+              false
+          },
+          carpetWebs: {
+            ...options.carpetWebs,
+            enabled:
+              false
+          }
+        }
+      );
+
+    const corners =
+      generated.webs.filter(
+        web =>
+          web.kind ===
+          "wall-corner"
+      );
+
+    assert.equal(
+      corners.length,
+      1
+    );
+
+    assert.equal(
+      corners[0].cornerAsset.canonicalAngleDeg,
+      5
+    );
+
+    assert.ok(
+      Math.abs(
+        corners[0].cornerAsset.targetAngleDeg -
+        angleDeg
+      ) <
+      0.000001
+    );
+  }
+);

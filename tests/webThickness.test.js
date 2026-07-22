@@ -5,6 +5,7 @@ import {
   MAXIMUM_SCENE_WEB_THICKNESS,
   MINIMUM_SCENE_WEB_THICKNESS,
   SCENE_WEB_THICKNESS_STEP,
+  SCENE_WEB_THICKNESS_VALUES,
   getSceneWebThicknessConfiguration,
   normaliseSceneWebThickness
 } from "../scripts/config/sceneWebThicknessConfiguration.js";
@@ -31,19 +32,54 @@ test(
       normaliseSceneWebThickness(
         "2.25"
       ),
-      2.25
+      2
     );
 
     assert.equal(
       normaliseSceneWebThickness(
         MINIMUM_SCENE_WEB_THICKNESS
       ),
-      0.5
+      1
     );
 
     assert.equal(
       normaliseSceneWebThickness(
         MAXIMUM_SCENE_WEB_THICKNESS
+      ),
+      4
+    );
+
+    assert.equal(
+      normaliseSceneWebThickness(
+        0.5
+      ),
+      1
+    );
+
+    assert.equal(
+      normaliseSceneWebThickness(
+        1.49
+      ),
+      1
+    );
+
+    assert.equal(
+      normaliseSceneWebThickness(
+        1.5
+      ),
+      2
+    );
+
+    assert.equal(
+      normaliseSceneWebThickness(
+        2.5
+      ),
+      3
+    );
+
+    assert.equal(
+      normaliseSceneWebThickness(
+        3.5
       ),
       4
     );
@@ -54,6 +90,24 @@ test(
           0.25
         ),
       /between 0.5 and 4/u
+    );
+
+    assert.throws(
+      () =>
+        normaliseSceneWebThickness(
+          4.01
+        ),
+      /between 0.5 and 4/u
+    );
+
+    assert.deepEqual(
+      SCENE_WEB_THICKNESS_VALUES,
+      [
+        1,
+        2,
+        3,
+        4
+      ]
     );
 
     assert.throws(
@@ -114,7 +168,7 @@ test(
 
     assert.equal(
       population.thicknessMultiplier,
-      2.5
+      3
     );
 
     assert.equal(
@@ -130,6 +184,16 @@ test(
     assert.equal(
       population.thicknessStep,
       SCENE_WEB_THICKNESS_STEP
+    );
+
+    assert.deepEqual(
+      population.thicknessOptions,
+      [
+        { value: 1, label: "1×", selected: false },
+        { value: 2, label: "2×", selected: false },
+        { value: 3, label: "3×", selected: true },
+        { value: 4, label: "4×", selected: false }
+      ]
     );
   }
 );
@@ -170,3 +234,4 @@ test(
     );
   }
 );
+

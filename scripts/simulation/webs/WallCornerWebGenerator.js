@@ -25,6 +25,10 @@ import {
   evaluateWebRegionRestrictionForStrands
 } from "../../spatial/webRegionRestrictionIndex.js";
 
+import {
+  createWebCornerAssetPresentation
+} from "../../data/webCornerAssetCatalog.js";
+
 /** Generate deterministic organic radial webs at structural wall corners. */
 export class WallCornerWebGenerator {
   generate({
@@ -383,6 +387,20 @@ function createCornerWeb({
   const corner =
     candidate.corner;
 
+  const leftTargetAnchor =
+    addScaled(
+      corner,
+      candidate.left.direction,
+      lengthLeft
+    );
+
+  const rightTargetAnchor =
+    addScaled(
+      corner,
+      candidate.right.direction,
+      lengthRight
+    );
+
   const bisector =
     normaliseVector({
       x:
@@ -608,6 +626,19 @@ function createCornerWeb({
       candidate
     );
 
+  const cornerAsset =
+    createWebCornerAssetPresentation({
+      targetAngleDeg:
+        candidate.angleDeg,
+      selectionKey:
+        `${generationSeed}:${sourceKey}`,
+      corner,
+      firstAnchor:
+        leftTargetAnchor,
+      secondAnchor:
+        rightTargetAnchor
+    });
+
   return createWebBlueprint({
     id:
       createStableWebId({
@@ -638,6 +669,7 @@ function createCornerWeb({
     strands,
     regionIds: regionEvaluation.regionIds,
     regionTags: regionEvaluation.regionTags,
+    cornerAsset,
     perches:
       [
         {

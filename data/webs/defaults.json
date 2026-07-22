@@ -4,7 +4,7 @@
     "enabled": true,
     "maximumCount": 12,
     "endpointTolerancePx": 4,
-    "minimumCornerAngleDeg": 35,
+    "minimumCornerAngleDeg": 3,
     "maximumCornerAngleDeg": 145,
     "minimumWallLengthGridUnits": 0.45,
     "minimumSizeGridUnits": 0.35,

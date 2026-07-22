@@ -209,7 +209,8 @@ export function createWebBlueprint({
   regionIds = [],
   regionTags = [],
   bounds = null,
-  carpet = null
+  carpet = null,
+  cornerAsset = null
 }) {
   const webId =
     requireIdentifier(
@@ -508,6 +509,13 @@ export function createWebBlueprint({
         carpet
           ? {
               carpet
+            }
+          : {}
+      ),
+      ...(
+        cornerAsset
+          ? {
+              cornerAsset
             }
           : {}
       )

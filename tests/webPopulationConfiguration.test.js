@@ -73,7 +73,7 @@ test("population configuration normalises independent level, density, colour and
   assert.equal(population.categoryDensities["web-carpet"], "infested");
   assert.equal(Object.prototype.hasOwnProperty.call(population, "label"), false);
   assert.equal(population.colourProfileId, "arcane-blue");
-  assert.equal(population.thicknessMultiplier, 1.75);
+  assert.equal(population.thicknessMultiplier, 2);
   assert.equal(population.generationActive, true);
   assert.equal(population.generationOptions.cornerWebs.maximumCount, 48);
   assert.equal(population.generationOptions.groundWebs.enabled, false);
@@ -178,3 +178,4 @@ test("population Region roles reject exact tag reuse", () => {
     categoryDensities: {}
   }], { levels: [{ id: "base" }] }), /cannot be reused/u);
 });
+

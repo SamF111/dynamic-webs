@@ -16,13 +16,24 @@ import {
 } from "./sceneWebFlagPaths.js";
 
 export const MINIMUM_SCENE_WEB_THICKNESS =
-  0.5;
+  1;
 
 export const MAXIMUM_SCENE_WEB_THICKNESS =
   4;
 
 export const SCENE_WEB_THICKNESS_STEP =
-  0.25;
+  1;
+
+export const SCENE_WEB_THICKNESS_VALUES =
+  Object.freeze([
+    1,
+    2,
+    3,
+    4
+  ]);
+
+const MINIMUM_LEGACY_SCENE_WEB_THICKNESS =
+  0.5;
 
 const THICKNESS_TOLERANCE =
   0.000001;
@@ -44,7 +55,13 @@ if (
   );
 }
 
-/** Normalise one persisted Scene web-thickness multiplier. */
+/**
+ * Normalise one persisted Scene web-thickness multiplier.
+ *
+ * Existing pre-dropdown values in the historical 0.5-4 range are accepted and
+ * rounded to the nearest discrete 1-4 level. Newly persisted values are always
+ * integers.
+ */
 export function normaliseSceneWebThickness(
   value
 ) {
@@ -77,18 +94,26 @@ export function normaliseSceneWebThickness(
 
   if (
     thickness <
-      MINIMUM_SCENE_WEB_THICKNESS -
+      MINIMUM_LEGACY_SCENE_WEB_THICKNESS -
         THICKNESS_TOLERANCE ||
     thickness >
       MAXIMUM_SCENE_WEB_THICKNESS +
         THICKNESS_TOLERANCE
   ) {
     throw new Error(
-      `${MODULE_TITLE} | Scene web thickness must be between ${MINIMUM_SCENE_WEB_THICKNESS} and ${MAXIMUM_SCENE_WEB_THICKNESS}.`
+      `${MODULE_TITLE} | Scene web thickness must be between ${MINIMUM_LEGACY_SCENE_WEB_THICKNESS} and ${MAXIMUM_SCENE_WEB_THICKNESS} before discrete 1-4 normalisation.`
     );
   }
 
-  return thickness;
+  return Math.max(
+    MINIMUM_SCENE_WEB_THICKNESS,
+    Math.min(
+      MAXIMUM_SCENE_WEB_THICKNESS,
+      Math.round(
+        thickness
+      )
+    )
+  );
 }
 
 /** Resolve one Scene's immutable web-thickness configuration. */
@@ -122,3 +147,4 @@ export function getSceneWebThicknessConfiguration(
       )
   });
 }
+

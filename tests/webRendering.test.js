@@ -420,12 +420,12 @@ test(
 
       assert.equal(
         strokeCommands[0][1].width,
-        5
+        6
       );
 
       assert.equal(
         strokeCommands[1][1].width,
-        2.5
+        3
       );
 
       assert.equal(
@@ -435,7 +435,7 @@ test(
 
       assert.equal(
         service.createDiagnosticSnapshot().thicknessMultiplier,
-        2.5
+        3
       );
     } finally {
       environment.restore();
@@ -698,3 +698,4 @@ test(
     }
   }
 );
+

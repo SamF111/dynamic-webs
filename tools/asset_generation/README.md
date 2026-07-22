@@ -182,3 +182,57 @@ A later Foundry renderer should treat the manifest as an authored atlas:
 The Scene seed should select deterministic patch descriptors. Region geometry
 should clip the final patch container. It should not stretch one complete
 rectangular texture to fit an arbitrary Region.
+
+## Corner-web angle-family assets
+
+Corner webs use a separate deterministic asset library because their two wall
+anchors need controlled affine fitting rather than unrestricted patch rotation.
+The authored catalog contains twelve canonical angles:
+
+```text
+5, 10, 15, 25, 35, 45, 60, 75, 90, 110, 135 and 150 degrees
+```
+
+Each family contains six variants. Dynamic Webs chooses the nearest compatible
+family without consuming the procedural geometry random stream, then maps the
+asset's pivot and two authored anchors onto the generated corner and wall
+anchors. For example, a 17-degree corner selects a 15-degree asset and applies
+a small affine correction while independently fitting both wall lengths.
+
+Generator 1.3 uses a **distributed sheet** topology. It does not create a hub,
+radial spokes, capture rings, or a mandatory knot. Instead it builds each web
+from wall supports, mismatched cross-corner scaffolds, a sparse local mesh,
+staggered corner tethers, and a few loose threads. Intersections are therefore
+distributed throughout the sheet rather than converging at one repeated point
+away from the corner.
+
+Generate the assets locally from the repository root:
+
+```powershell
+python tools/asset_generation/generate_corner_web_assets.py --clean --preview
+python tools/asset_generation/validate_corner_web_assets.py
+```
+
+Outputs are written to:
+
+```text
+assets/web-corner/generated/
+```
+
+Corner fibres are intentionally authored thicker than their final Scene width.
+A 512 px source anchor is commonly fitted to only 50-115 px in Foundry, so
+hairline source strokes become nearly invisible after affine reduction. Width
+multipliers and validation thresholds live in `web_corner_asset_config.py`;
+change those central values rather than adding blur or duplicate runtime sprites.
+
+Visibility validation uses the full authored thresholds for corner families at
+20 degrees and above. Below 20 degrees it applies a modest angle-aware factor
+because an acute wedge naturally occupies less of the square 512 px canvas.
+This prevents valid 5-degree sheets from failing solely because of transparent
+space while retaining an explicit minimum for mean alpha and strong-pixel
+coverage. Fibre opacity itself is not reduced or excused by the adjustment.
+
+The JavaScript renderer deliberately retains the procedural corner geometry as
+a fallback. Until the local WebP loads successfully, the old line rendering
+remains visible. Generated WebPs and preview sheets are local build outputs and
+are not included in assistant-provided replacement archives.

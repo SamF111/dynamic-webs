@@ -307,6 +307,32 @@ export function assertWebBlueprintIntegrity(
     );
   }
 
+  if (
+    kind ===
+      WEB_BLUEPRINT_KINDS.WALL_CORNER
+  ) {
+    if (
+      blueprint.cornerAsset !==
+        undefined &&
+      blueprint.cornerAsset !==
+        null
+    ) {
+      assertWebCornerAssetPresentation(
+        blueprint.cornerAsset,
+        webId
+      );
+    }
+  } else if (
+    blueprint.cornerAsset !==
+      undefined &&
+    blueprint.cornerAsset !==
+      null
+  ) {
+    throw new Error(
+      `Dynamic Webs | Non-corner web "${webId}" cannot contain corner asset presentation data.`
+    );
+  }
+
   const expectedWebId =
     createStableWebId({
       sceneId,
@@ -498,6 +524,12 @@ export function assertWebBlueprintIntegrity(
       blueprint.carpet &&
       !Object.isFrozen(
         blueprint.carpet
+      )
+    ) ||
+    (
+      blueprint.cornerAsset &&
+      !Object.isFrozen(
+        blueprint.cornerAsset
       )
     )
   ) {
@@ -782,6 +814,253 @@ function assertStrandIntegrity(
   ) {
     throw new Error(
       `Dynamic Webs | Strand "${strandId}" is not deeply immutable.`
+    );
+  }
+}
+
+function assertWebCornerAssetPresentation(
+  presentation,
+  webId
+) {
+  if (
+    !presentation ||
+    typeof presentation !==
+      "object" ||
+    Array.isArray(
+      presentation
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Corner web "${webId}" requires a valid corner asset presentation object.`
+    );
+  }
+
+  if (
+    presentation.schemaVersion !==
+      1
+  ) {
+    throw new Error(
+      `Dynamic Webs | Corner asset presentation for web "${webId}" has an unsupported schema version.`
+    );
+  }
+
+  requireIdentifier(
+    presentation.assetId,
+    `corner asset ID for web "${webId}"`
+  );
+
+  const modulePath =
+    requireIdentifier(
+      presentation.modulePath,
+      `corner asset path for web "${webId}"`
+    );
+
+  if (
+    !modulePath.toLowerCase().endsWith(
+      ".webp"
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Corner asset for web "${webId}" must reference a WebP file.`
+    );
+  }
+
+  for (
+    const field of
+    [
+      "canonicalAngleDeg",
+      "targetAngleDeg",
+      "variant",
+      "alpha"
+    ]
+  ) {
+    if (
+      !Number.isFinite(
+        Number(
+          presentation[field]
+        )
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Corner asset for web "${webId}" has invalid ${field}.`
+      );
+    }
+  }
+
+  if (
+    presentation.canonicalAngleDeg <=
+      0 ||
+    presentation.canonicalAngleDeg >=
+      180 ||
+    presentation.targetAngleDeg <=
+      0 ||
+    presentation.targetAngleDeg >=
+      180 ||
+    !Number.isInteger(
+      Number(
+        presentation.variant
+      )
+    ) ||
+    Number(
+      presentation.variant
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) >
+      1
+  ) {
+    throw new Error(
+      `Dynamic Webs | Corner asset for web "${webId}" has invalid angle, variant or alpha values.`
+    );
+  }
+
+  if (
+    !Array.isArray(
+      presentation.supportedAngleRangeDeg
+    ) ||
+    presentation.supportedAngleRangeDeg.length !==
+      2 ||
+    !presentation.supportedAngleRangeDeg.every(
+      (
+        value
+      ) =>
+        Number.isFinite(
+          Number(
+            value
+          )
+        )
+    ) ||
+    Number(
+      presentation.supportedAngleRangeDeg[1]
+    ) <
+      Number(
+        presentation.supportedAngleRangeDeg[0]
+      )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Corner asset for web "${webId}" requires an ordered supported angle range.`
+    );
+  }
+
+  for (
+    const [
+      basisName,
+      basis
+    ] of
+    [
+      [
+        "source",
+        presentation.source
+      ],
+      [
+        "target",
+        presentation.target
+      ]
+    ]
+  ) {
+    if (
+      !basis ||
+      typeof basis !==
+        "object" ||
+      Array.isArray(
+        basis
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Corner asset ${basisName} basis for web "${webId}" must be an object.`
+      );
+    }
+
+    for (
+      const pointName of
+      [
+        "pivot",
+        "firstAnchor",
+        "secondAnchor"
+      ]
+    ) {
+      assertFinitePoint(
+        basis[pointName],
+        `${basisName} ${pointName} for corner asset on web "${webId}"`
+      );
+    }
+
+    const firstVector = {
+      x:
+        Number(
+          basis.firstAnchor.x
+        ) -
+        Number(
+          basis.pivot.x
+        ),
+      y:
+        Number(
+          basis.firstAnchor.y
+        ) -
+        Number(
+          basis.pivot.y
+        )
+    };
+
+    const secondVector = {
+      x:
+        Number(
+          basis.secondAnchor.x
+        ) -
+        Number(
+          basis.pivot.x
+        ),
+      y:
+        Number(
+          basis.secondAnchor.y
+        ) -
+        Number(
+          basis.pivot.y
+        )
+    };
+
+    const determinant =
+      firstVector.x *
+        secondVector.y -
+      firstVector.y *
+        secondVector.x;
+
+    if (
+      !Number.isFinite(
+        determinant
+      ) ||
+      Math.abs(
+        determinant
+      ) <
+        0.000000001
+    ) {
+      throw new Error(
+        `Dynamic Webs | Corner asset ${basisName} basis for web "${webId}" is degenerate.`
+      );
+    }
+  }
+
+  if (
+    !Object.isFrozen(
+      presentation
+    ) ||
+    !Object.isFrozen(
+      presentation.supportedAngleRangeDeg
+    ) ||
+    !Object.isFrozen(
+      presentation.source
+    ) ||
+    !Object.isFrozen(
+      presentation.target
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Corner asset presentation for web "${webId}" is not deeply immutable.`
     );
   }
 }

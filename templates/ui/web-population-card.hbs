@@ -124,17 +124,16 @@
         <div class="form-group">
           <label>Web thickness</label>
           <div class="form-fields">
-            <input
-              type="number"
-              value="{{thicknessMultiplier}}"
-              min="{{thicknessMinimum}}"
-              max="{{thicknessMaximum}}"
-              step="{{thicknessStep}}"
+            <select
               data-dynamic-webs-population-field="thicknessMultiplier"
               data-dynamic-webs-population-control
             >
-            <span class="units">×</span>
+              {{#each thicknessOptions}}
+                <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
           </div>
+          <p class="hint">Choose one of four discrete fibre-thickness levels.</p>
         </div>
       </div>
     </details>
@@ -151,3 +150,4 @@
     </div>
   </div>
 </details>
+

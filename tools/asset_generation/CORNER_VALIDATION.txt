@@ -1,0 +1,34 @@
+Dynamic Webs corner asset validation
+====================================
+
+Generator version: 1.3.0
+Master seed: dynamic-webs:web-corner-assets:v3
+Topology: distributed-sheet
+Angle families: 12
+Variants per family: 6
+Expected assets: 72
+
+Visual topology
+---------------
+Corner assets contain no compulsory hub, radial spoke fan, capture rings or
+authored knot. Wall supports, cross-corner scaffolds, local mesh edges and
+staggered tethers distribute intersections throughout an irregular sheet.
+
+Visibility guardrails
+---------------------
+Full-strength threshold angle: 20 degrees
+Minimum narrow-angle factor: 0.8
+Full minimum mean alpha: 1.7
+Full minimum alpha > 64 coverage: 0.9%
+Full minimum alpha > 128 coverage: 0.7%
+
+Whole-canvas density is scaled modestly only below 20 degrees because acute
+webs occupy a smaller wedge of the square source canvas. The 5-degree family
+uses factor 0.85; 10 degrees uses 0.90; 15 degrees uses 0.95. Ordinary and
+obtuse families retain the full thresholds.
+
+The validator also requires generator version 1.3.0, the v3 master seed and
+manifest topology "distributed-sheet", so an old hub-and-spoke asset set cannot
+pass without being regenerated.
+
+Generated WebPs are local outputs and are not included in replacement ZIPs.

@@ -19,6 +19,10 @@ import {
 } from "./WebCarpetPatchTextureService.js";
 
 import {
+  WebCornerAssetTextureService
+} from "./WebCornerAssetTextureService.js";
+
+import {
   WebCarpetRegionMaskService,
   applyWebCarpetRegionMask,
   destroyWebCarpetRegionMaskResource
@@ -27,6 +31,10 @@ import {
 import {
   getWebColourProfile
 } from "../../simulation/webs/webColourProfiles.js";
+
+import {
+  normaliseSceneWebThickness
+} from "../../config/sceneWebThicknessConfiguration.js";
 
 const WEB_RENDER_CONTAINER_BANDS =
   Object.freeze({
@@ -74,6 +82,12 @@ export class WebRenderService {
         ? options.carpetTextureService
         : new WebCarpetPatchTextureService();
 
+    this.cornerTextureService =
+      options.cornerTextureService instanceof
+        WebCornerAssetTextureService
+        ? options.cornerTextureService
+        : new WebCornerAssetTextureService();
+
     this.carpetMaskResources =
       new Map();
 
@@ -87,6 +101,9 @@ export class WebRenderService {
       0;
 
     this.lastRenderedCarpetPatchCount =
+      0;
+
+    this.lastRenderedCornerAssetCount =
       0;
 
     this.renderRevision =
@@ -222,7 +239,9 @@ export class WebRenderService {
             carpetMaskResources:
               this.carpetMaskResources,
             carpetMaskService:
-              this.carpetMaskService
+              this.carpetMaskService,
+            cornerTextureService:
+              this.cornerTextureService
           });
         }
       }
@@ -333,6 +352,16 @@ export class WebRenderService {
           ),
         0
       );
+
+    this.lastRenderedCornerAssetCount =
+      visibleWebs.filter(
+        (
+          web
+        ) =>
+          web?.kind ===
+            "wall-corner" &&
+          web?.cornerAsset
+      ).length;
 
     return this.container;
   }
@@ -448,6 +477,10 @@ export class WebRenderService {
 
     return clearedTextures ||
       clearedMasks;
+  }
+
+  clearCornerTextureCache() {
+    return this.cornerTextureService.clear();
   }
 
   createDiagnosticSnapshot() {
@@ -603,12 +636,16 @@ export class WebRenderService {
         this.lastRenderedCarpetCount,
       renderedCarpetPatchCount:
         this.lastRenderedCarpetPatchCount,
+      renderedCornerAssetCount:
+        this.lastRenderedCornerAssetCount,
       carpetMaskCount:
         this.carpetMaskResources.size,
       carpetTextures:
         this.carpetTextureService.createDiagnosticSnapshot(),
       carpetMasks:
         this.carpetMaskService.createDiagnosticSnapshot(),
+      cornerTextures:
+        this.cornerTextureService.createDiagnosticSnapshot(),
       renderRevision:
         this.renderRevision,
       lastRenderedAt:
@@ -628,7 +665,8 @@ function renderWebGraphic({
   graphicsByWebId,
   carpetTextureService,
   carpetMaskResources,
-  carpetMaskService
+  carpetMaskService,
+  cornerTextureService
 }) {
   if (
     web?.kind ===
@@ -658,6 +696,183 @@ function renderWebGraphic({
       thicknessMultiplier
     );
 
+  if (
+    web?.kind ===
+      "wall-corner" &&
+    web?.cornerAsset &&
+    cornerTextureService
+  ) {
+    const rendered =
+      renderWallCornerAssetGraphic({
+        pixi,
+        container,
+        web,
+        configuration,
+        thicknessMultiplier:
+          webThicknessMultiplier,
+        graphicsByWebId,
+        cornerTextureService
+      });
+
+    if (rendered) {
+      return;
+    }
+  }
+
+  const graphics =
+    createProceduralWebGraphics({
+      pixi,
+      web,
+      configuration,
+      thicknessMultiplier:
+        webThicknessMultiplier
+    });
+
+  container.addChild(
+    graphics
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    graphics
+  );
+}
+
+function renderWallCornerAssetGraphic({
+  pixi,
+  container,
+  web,
+  configuration,
+  thicknessMultiplier,
+  graphicsByWebId,
+  cornerTextureService
+}) {
+  const fallback =
+    createProceduralWebGraphics({
+      pixi,
+      web,
+      configuration,
+      thicknessMultiplier
+    });
+
+  fallback.name =
+    `${MODULE_ID}.web-corner-fallback.${web.id}`;
+
+  fallback.zIndex =
+    0;
+
+  const display =
+    new pixi.Container();
+
+  configureWebDisplayObject(
+    display
+  );
+
+  display.name =
+    `${MODULE_ID}.web-corner.${web.id}`;
+
+  display.sortableChildren =
+    true;
+
+  display.elevation =
+    resolveWebElevation(
+      web,
+      container.elevation
+    );
+
+  display.zIndex =
+    -10;
+
+  display.addChild(
+    fallback
+  );
+
+  // Attach the procedural presentation before attempting any asset work. An
+  // unavailable Sprite API, unsupported matrix API, failed texture request, or
+  // malformed local asset can therefore never remove the generated corner web.
+  container.addChild(
+    display
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    display
+  );
+
+  if (
+    typeof pixi?.Sprite !==
+      "function"
+  ) {
+    display.dynamicWebsCornerAssetSetupState =
+      "sprite-api-unavailable";
+
+    return true;
+  }
+
+  const profile =
+    getWebColourProfile(
+      web.colourProfileId
+    );
+
+  try {
+    const assetDisplay =
+      cornerTextureService.createCornerDisplay({
+        pixi,
+        presentation:
+          web.cornerAsset,
+        fallbackDisplay:
+          fallback,
+        tint:
+          profile.configuration.captureColour,
+        alphaMultiplier:
+          profile.configuration.alphaMultiplier,
+        thicknessMultiplier
+      });
+
+    if (
+      assetDisplay
+    ) {
+      assetDisplay.zIndex =
+        1;
+
+      display.addChild(
+        assetDisplay
+      );
+
+      display.dynamicWebsCornerAssetSetupState =
+        "pending-or-loaded";
+    } else {
+      display.dynamicWebsCornerAssetSetupState =
+        "asset-display-unavailable";
+    }
+  } catch (error) {
+    display.dynamicWebsCornerAssetSetupState =
+      "setup-failed";
+
+    display.dynamicWebsCornerAssetSetupError =
+      Object.freeze({
+        name:
+          String(
+            error?.name ??
+            "Error"
+          ),
+        message:
+          String(
+            error?.message ??
+            error
+          )
+      });
+  }
+
+  return true;
+}
+
+function createProceduralWebGraphics({
+  pixi,
+  web,
+  configuration,
+  thicknessMultiplier
+}) {
   const graphics =
     new pixi.Graphics();
 
@@ -671,7 +886,7 @@ function renderWebGraphic({
   graphics.elevation =
     resolveWebElevation(
       web,
-      container.elevation
+      0
     );
 
   graphics.zIndex =
@@ -693,7 +908,7 @@ function renderWebGraphic({
             strand.widthPx +
             configuration.underWidthAdditionPx
           ) *
-          webThicknessMultiplier,
+          thicknessMultiplier,
         colour:
           resolveStrandColour(
             strand.underColour,
@@ -712,7 +927,7 @@ function renderWebGraphic({
       {
         width:
           strand.widthPx *
-          webThicknessMultiplier,
+          thicknessMultiplier,
         colour:
           resolveStrandColour(
             strand.colour,
@@ -725,14 +940,7 @@ function renderWebGraphic({
     );
   }
 
-  container.addChild(
-    graphics
-  );
-
-  graphicsByWebId.set(
-    web.id,
-    graphics
-  );
+  return graphics;
 }
 
 function renderWebCarpetPatchGraphic({
@@ -1279,18 +1487,9 @@ function resolveFiniteElevation(
 function resolveThicknessMultiplier(
   value
 ) {
-  const numericValue =
-    Number(
-      value
-    );
-
-  return Number.isFinite(
-    numericValue
-  ) &&
-    numericValue >
-      0
-    ? numericValue
-    : 1;
+  return normaliseSceneWebThickness(
+    value
+  );
 }
 
 function resolveStrandColour(

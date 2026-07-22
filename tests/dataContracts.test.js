@@ -19,7 +19,7 @@ const VALID_DEFAULTS =
       endpointTolerancePx:
         4,
       minimumCornerAngleDeg:
-        35,
+        3,
       maximumCornerAngleDeg:
         145,
       minimumWallLengthGridUnits:
@@ -426,4 +426,3 @@ test(
     );
   }
 );
-

@@ -92,7 +92,7 @@ export const DEFAULT_SCENE_CONFIGURATION =
         `${DEFAULTS_CONTEXT}.webThickness`,
         {
           minimum:
-            0.5,
+            1,
           maximum:
             4
         }
@@ -113,3 +113,4 @@ export const DEFAULT_SCENE_WEB_POPULATION_DENSITY =
 
 export const DEFAULT_SCENE_WEB_POPULATIONS =
   DEFAULT_SCENE_CONFIGURATION.webPopulations;
+

@@ -129,9 +129,11 @@ Colour is owned by each population. Profiles resolve structural, capture and dec
 
 ## Visible thickness
 
-Each population owns a thickness multiplier from `0.5×` to `4×`, using `0.25×` Scene Configuration steps.
+Each population selects one of four discrete thickness levels: `1×`, `2×`, `3×` or `4×`. Scene Configuration presents these as a drop-down and persisted values are capped at `4×`. Historical fractional values from `0.5×` to `4×` remain readable and are rounded to the nearest discrete level when resolved or saved.
 
-Thickness is stored on the immutable web blueprint and applied by the renderer. It does not change strand points, base `widthPx`, functional `collisionWidthPx`, bounds, supports or perches.
+Procedural strands apply the selected level directly to their visible stroke widths. Corner-web assets retain one unfiltered crisp sprite and, above `1×`, add one custom alpha-dilation fringe beneath it. This widens the authored fibres symmetrically without the former directional offset copies or Gaussian blur.
+
+Thickness remains presentation-only. It does not change strand points, base `widthPx`, functional `collisionWidthPx`, bounds, supports, perches, deterministic generation or the spatial index.
 
 ## Deterministic generation
 
@@ -420,3 +422,14 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Querying a stored but currently unrendered level without changing visibility or generation identity
 - Repeated Scene saves without duplicate rendering
 - Baseline diagnostics and deterministic hashes
+
+## Hybrid corner-web presentation
+
+Corner webs retain deterministic procedural strand geometry for spatial
+queries, interactions and future mutable strand state, but may render through
+locally generated transparent-white WebP assets. Ten discrete angle families
+(15–150 degrees) provide six variants each. The selected asset is affinely
+fitted from its authored pivot and two edge anchors onto the exact generated
+wall corner, allowing small corrections such as fitting a 15-degree asset to a
+17-degree corner. Missing assets fail safely to the existing procedural line
+rendering.

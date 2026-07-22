@@ -57,7 +57,24 @@ export function registerRegionConfigHooks() {
     }
   }
 
-  void globalThis.loadTemplates?.([TEMPLATE_PATH]);
+  const loadTemplates =
+    globalThis.foundry?.applications?.handlebars?.loadTemplates;
+
+  if (
+    typeof loadTemplates ===
+      "function"
+  ) {
+    void loadTemplates(
+      [TEMPLATE_PATH]
+    );
+  } else if (
+    typeof globalThis.loadTemplates ===
+      "function"
+  ) {
+    void globalThis.loadTemplates(
+      [TEMPLATE_PATH]
+    );
+  }
 
   if (registered) {
     console.log(`${MODULE_ID} | Region Configuration integration registered.`);

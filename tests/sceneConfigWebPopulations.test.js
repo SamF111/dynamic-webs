@@ -71,6 +71,9 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.match(card, /data-dynamic-webs-population-field="levelId"/u);
   assert.match(card, /data-dynamic-webs-population-field="colourProfileId"/u);
   assert.match(card, /data-dynamic-webs-population-field="thicknessMultiplier"/u);
+  assert.match(card, /<select[^>]*data-dynamic-webs-population-field="thicknessMultiplier"/su);
+  assert.match(card, /\{\{#each thicknessOptions\}\}/u);
+  assert.doesNotMatch(card, /<input[^>]*type="number"[^>]*data-dynamic-webs-population-field="thicknessMultiplier"/su);
   assert.match(card, /data-dynamic-webs-regions-section/u);
   assert.match(card, /data-dynamic-webs-population-field="confineRegionTags"/u);
   assert.match(card, /data-dynamic-webs-population-field="excludeRegionTags"/u);
@@ -84,3 +87,4 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.doesNotMatch(card, /<details[^>]+\sopen(?:\s|>)/u);
   assert.doesNotMatch(template, /name="flags\.dynamic-webs\.(?:webDensity|webColour|webThickness|cornerWebDensity|spanWebDensity|groundWebDensity)"/u);
 });
+
