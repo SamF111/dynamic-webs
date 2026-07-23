@@ -56,6 +56,44 @@ test("Scene Configuration context exposes collapsed modular population cards", a
     assert.equal(context.populationCards[0].excludeRegionTagsInput, "altar");
     assert.match(context.populationCards[0].regionSummary, /Confine: 1/u);
     assert.equal(context.fieldNames.webPopulations, "flags.dynamic-webs.webPopulations");
+    assert.equal(context.fieldNames.spanWebBehaviour, "flags.dynamic-webs.spanWebBehaviour");
+    assert.equal(context.spanWebBehaviour.useWorldMaximumSpanWidth, true);
+    assert.equal(context.spanWebBehaviour.visionOptions.find((option) => option.selected)?.value, "limited");
+    assert.equal(context.spanWebBehaviour.secretDoor, false);
+    assert.equal(context.spanWebBehaviour.destructible, true);
+  } finally { restore(); }
+});
+
+
+test("an unconfigured Scene previews one world-default population without treating an empty array as missing", async () => {
+  const restore = installBaseEnvironment();
+  try {
+    const unconfigured = await createSceneConfigTemplateContext({
+      application: { isEditable: true },
+      scene: {
+        id: "unconfigured-scene",
+        getFlag: () => undefined
+      }
+    });
+
+    assert.equal(unconfigured.populationCards.length, 1);
+    assert.equal(unconfigured.usesWorldPopulationDefaults, true);
+    assert.match(unconfigured.populationDefaultsHint, /world defaults/u);
+    assert.match(unconfigured.populationCards[0].id, /^web-default-[0-9a-f]{8}$/u);
+
+    const explicitEmpty = await createSceneConfigTemplateContext({
+      application: { isEditable: true },
+      scene: {
+        id: "empty-scene",
+        getFlag(_namespace, key) {
+          return key === "webPopulations" ? [] : undefined;
+        }
+      }
+    });
+
+    assert.equal(explicitEmpty.populationCards.length, 0);
+    assert.equal(explicitEmpty.usesWorldPopulationDefaults, false);
+    assert.equal(explicitEmpty.populationDefaultsHint, null);
   } finally { restore(); }
 });
 
@@ -66,6 +104,14 @@ test("Scene Configuration templates contain population operations and no auto-op
   ]);
   assert.match(template, /data-dynamic-webs-populations-value/u);
   assert.match(template, /data-dynamic-webs-add-population/u);
+  assert.match(template, /data-dynamic-webs-span-behaviour-value/u);
+  assert.match(template, /data-dynamic-webs-span-behaviour-section/u);
+  assert.match(template, /<strong>Span behaviour<\/strong>/u);
+  assert.match(template, /data-dynamic-webs-use-world-span-width/u);
+  assert.match(template, /data-dynamic-webs-span-vision-mode/u);
+  assert.match(template, /data-dynamic-webs-span-secret-door/u);
+  assert.match(template, /closed secret doors/u);
+  assert.match(template, /data-dynamic-webs-span-destructible/u);
   assert.match(card, /data-dynamic-webs-duplicate-population/u);
   assert.match(card, /data-dynamic-webs-remove-population/u);
   assert.match(card, /data-dynamic-webs-population-field="levelId"/u);
@@ -87,4 +133,6 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.doesNotMatch(card, /<details[^>]+\sopen(?:\s|>)/u);
   assert.doesNotMatch(template, /name="flags\.dynamic-webs\.(?:webDensity|webColour|webThickness|cornerWebDensity|spanWebDensity|groundWebDensity)"/u);
 });
+
+
 

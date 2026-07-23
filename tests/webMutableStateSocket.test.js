@@ -6,7 +6,7 @@ import {
   registerWebMutableStateSocket
 } from "../scripts/networking/webMutableStateSocket.js";
 
-function createEnvironment({ isGM }) {
+function createEnvironment({ isGM, destructible = true }) {
   const previous = {
     Hooks: globalThis.Hooks,
     game: globalThis.game,
@@ -42,6 +42,9 @@ function createEnvironment({ isGM }) {
       return {
         active: true,
         sceneId: "scene-a",
+        spanWebBehaviour: {
+          destructible
+        },
         levels: [
           {
             id: "level-0",
@@ -406,6 +409,38 @@ test("the responsible GM accepts the player's first movement request before its 
   }
 });
 
+
+
+test("the responsible GM rejects player movement destruction for an indestructible Scene", () => {
+  const environment = createEnvironment({
+    isGM: true,
+    destructible: false
+  });
+
+  try {
+    registerWebMutableStateSocket(environment.runtime);
+
+    const handler = environment.socketHandlers.get("module.dynamic-webs");
+    handler({
+      type: "token-span-movement-request",
+      requestId: "player-a:token-a:indestructible:1",
+      requesterUserId: "player-a",
+      sceneId: "scene-a",
+      tokenId: "token-a",
+      movementFrom: { x: 50, y: 50 },
+      movementTo: { x: 250, y: 50 },
+      segmentFrom: { x: 100, y: 50 },
+      segmentTo: { x: 150, y: 50 },
+      sentAt: Date.now()
+    });
+
+    assert.equal(environment.movementQueries.length, 0);
+    assert.equal(environment.destroyed.length, 0);
+  } finally {
+    environment.restore();
+  }
+});
+
 test("the GM rejects movement requests whose declared path is unrelated to the authoritative TokenDocument", () => {
   const environment =
     createEnvironment({
@@ -473,3 +508,4 @@ test("the GM rejects movement requests whose declared path is unrelated to the a
     environment.restore();
   }
 });
+

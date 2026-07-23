@@ -27,6 +27,9 @@ export class WebMutableStateService {
     this.eligibleWebIds =
       new Set();
 
+    this.destroyable =
+      true;
+
     this.lastMutation =
       null;
 
@@ -38,7 +41,8 @@ export class WebMutableStateService {
     sceneId,
     generationId,
     webs,
-    persistedState = null
+    persistedState = null,
+    destroyable = true
   }) {
     const nextSceneId =
       normaliseIdentifier(
@@ -51,24 +55,27 @@ export class WebMutableStateService {
 
     const validDestroyableIds =
       new Set(
-        (
-          Array.isArray(
-            webs
-          )
-            ? webs
-            : []
-        )
-          .filter(
-            web =>
-              web?.kind ===
-                "wall-span"
-          )
-          .map(
-            web =>
-              String(
-                web.id
+        destroyable ===
+          true
+          ? (
+              Array.isArray(
+                webs
               )
-          )
+                ? webs
+                : []
+            )
+              .filter(
+                web =>
+                  web?.kind ===
+                    "wall-span"
+              )
+              .map(
+                web =>
+                  String(
+                    web.id
+                  )
+              )
+          : []
       );
 
     if (
@@ -93,6 +100,10 @@ export class WebMutableStateService {
       this.lastMutation =
         null;
     }
+
+    this.destroyable =
+      destroyable ===
+        true;
 
     this.eligibleWebIds =
       validDestroyableIds;
@@ -169,6 +180,9 @@ export class WebMutableStateService {
                 persistedState
               ).revision
             : null,
+        destroyable:
+          destroyable ===
+            true,
         eligibleWebCount:
           validDestroyableIds.size,
         prunedWebIds:
@@ -203,6 +217,8 @@ export class WebMutableStateService {
       );
 
     if (
+      this.destroyable !==
+        true ||
       !this.eligibleWebIds.has(
         id
       ) ||
@@ -251,6 +267,8 @@ export class WebMutableStateService {
       ids
     ) {
       if (
+        this.destroyable ===
+          true &&
         this.eligibleWebIds.has(
           id
         ) &&
@@ -379,6 +397,8 @@ export class WebMutableStateService {
 
     this.destroyedWebIds.clear();
     this.eligibleWebIds.clear();
+    this.destroyable =
+      true;
 
     this.lastMutation =
       null;
@@ -487,10 +507,14 @@ export class WebMutableStateService {
         snapshot.destroyedWebIds
       ).filter(
         webId =>
-          eligibility.size ===
-            0 ||
-          eligibility.has(
-            webId
+          this.destroyable ===
+            true &&
+          (
+            eligibility.size ===
+              0 ||
+            eligibility.has(
+              webId
+            )
           )
       );
 
@@ -589,6 +613,9 @@ export class WebMutableStateService {
         ).sort(),
       eligibleWebCount:
         this.eligibleWebIds.size,
+      destroyable:
+        this.destroyable ===
+          true,
       lastMutation:
         this.lastMutation,
       lastReconciliation:
@@ -797,3 +824,4 @@ function deepFreezeClone(
     clone
   );
 }
+

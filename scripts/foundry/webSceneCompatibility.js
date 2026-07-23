@@ -19,6 +19,10 @@ import {
   collectWebRegionRecords
 } from "./webRegionCompatibility.js";
 
+import {
+  isGeneratedSpanWallDocument
+} from "./webSpanWallCompatibility.js";
+
 /** Build the plain active-Scene context consumed by web generation. */
 export function createActiveWebSceneContext(
   scene = globalThis.canvas?.scene,
@@ -256,6 +260,14 @@ function normaliseWallSegment(
     candidate?.document ??
     candidate;
 
+  if (
+    isGeneratedSpanWallDocument(
+      document
+    )
+  ) {
+    return null;
+  }
+
   const coordinates =
     document?.c ??
     document?.coords ??
@@ -489,3 +501,4 @@ function resolveGridSize(
 
   return 100;
 }
+

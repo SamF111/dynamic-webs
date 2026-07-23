@@ -22,6 +22,17 @@ export function synchroniseSceneWebs({ runtime, scene, reason }) {
 
     if (!populationConfiguration.hasActivePopulations) {
       service.clear(normalisedReason);
+      service.reconcileSpanWallsForScene?.({
+        scene,
+        webs:
+          [],
+        destroyedWebIds:
+          [],
+        behaviour:
+          populationConfiguration.spanWebBehaviour,
+        reason:
+          `${normalisedReason}-no-active-populations`
+      });
       return emitStateChanged(service.createDiagnosticSnapshot(), normalisedReason);
     }
 
@@ -139,3 +150,4 @@ function emitStateChanged(snapshot, reason) {
   globalThis.Hooks?.callAll?.(`${MODULE_ID}.stateChanged`, snapshot, { reason });
   return snapshot;
 }
+

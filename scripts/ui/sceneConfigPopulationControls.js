@@ -7,10 +7,6 @@ import {
 } from "../config/sceneWebPopulationIds.js";
 
 import {
-  DEFAULT_WEB_POPULATION_DENSITY
-} from "../config/sceneWebPopulationConfiguration.js";
-
-import {
   readWebPopulationEntriesFromPart,
   readWebPopulationEntryFromCard,
   writeWebPopulationEntryToCard
@@ -117,25 +113,27 @@ function appendCard({ partElement, list, template, source }) {
     usedIds
   });
 
-  const defaultLevel = card.querySelector('[data-dynamic-webs-population-field="levelId"]')?.value || "base";
-  writeWebPopulationEntryToCard(card, source
-    ? { ...source, id, populationId: id }
-    : {
-        id,
-        populationId: id,
-        enabled: true,
-        levelId: defaultLevel,
-        confineRegionTags: [],
-        excludeRegionTags: [],
-        categoryDensities: {
-          "wall-corner": DEFAULT_WEB_POPULATION_DENSITY,
-          "wall-span": DEFAULT_WEB_POPULATION_DENSITY,
-          ground: DEFAULT_WEB_POPULATION_DENSITY,
-          "web-carpet": DEFAULT_WEB_POPULATION_DENSITY
-        },
-        colourProfileId: "natural-white",
-        thicknessMultiplier: 1
-      });
+  const templateDefaults =
+    readWebPopulationEntryFromCard(
+      card
+    );
+
+  writeWebPopulationEntryToCard(
+    card,
+    source
+      ? {
+          ...source,
+          id,
+          populationId:
+            id
+        }
+      : {
+          ...templateDefaults,
+          id,
+          populationId:
+            id
+        }
+  );
 
   list.appendChild(fragment);
   return list.querySelector(`[data-population-id="${escapeSelector(id)}"]`)
@@ -158,3 +156,4 @@ function updateDisabledStates(partElement, editable) {
 function escapeSelector(value) {
   return globalThis.CSS?.escape?.(value) ?? String(value).replace(/["\\]/g, "\\$&");
 }
+

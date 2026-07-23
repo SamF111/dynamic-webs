@@ -71,6 +71,10 @@ Completed:
 - GM-authoritative swept token movement destruction with client socket and Scene-update synchronisation
 - Destroyed spans filtered from rendering and intact-only spatial queries without geometry regeneration
 - Generic public movement-query and web-destruction API with no critter-specific setting
+- GM-facing world defaults for new and never-configured Scene populations
+- Independent default corner, span, ground and carpet densities, colour and thickness
+- Stable implicit population resolution for missing `webPopulations` flags while preserving explicit empty arrays
+- GM-facing maximum wall-span width in Scene grid units
 
 Current Scene flags:
 
@@ -404,7 +408,7 @@ Regression coverage includes world settings, v13/v14 providers, per-level alloca
 
 Dynamic Webs now stores an explicit array of independently configured web populations. Each population owns its target level, four category-density states, colour profile and visible thickness. Empty arrays generate no webs, and the former pre-release Scene-wide flags are not used as a fallback.
 
-Opaque population IDs participate in blueprint IDs and v4 deterministic seeds, allowing multiple populations to occupy the same level without collisions. IDs are generated once, hidden from the UI and preserved across all population edits. Scene Configuration provides presentation-only numbered collapsed cards with add, duplicate and remove operations. Each card contains separately collapsible Web options and Appearance sections, both closed by default. New populations start at the middle `standard` density. Population changes regenerate once, while viewed-level changes remain visibility-only.
+Opaque population IDs participate in blueprint IDs and v4 deterministic seeds, allowing multiple populations to occupy the same level without collisions. IDs are generated once, hidden from the UI and preserved across all population edits. Scene Configuration provides presentation-only numbered collapsed cards with add, duplicate and remove operations. Each card contains separately collapsible Web options and Appearance sections, both closed by default. New populations originally started at the middle `standard` density; Milestone 7.2 later moved category, colour and thickness defaults into GM-facing world settings without changing existing Scene populations. Population changes regenerate once, while viewed-level changes remain visibility-only.
 
 ### Exit criteria — met
 
@@ -528,10 +532,6 @@ Diagnostics report index revision, snapshot revision, cell size, build duration,
 - Level and elevation compatibility are explicit and tested.
 - Result ordering is stable.
 - The API is sufficient for later Ambient Critters integration and token-intersection work without internal imports.
-
-### Deferred settings enhancement
-
-Add GM-only world settings for the default quantity or density of each web category. These values should initialise new or otherwise unconfigured Scene populations and must not silently overwrite existing per-Scene population settings.
 
 ---
 
@@ -712,100 +712,105 @@ Corner, ground and carpet webs remain ineligible for token destruction and canno
 
 ---
 
-## Milestone 8 — Optional web barriers
+## Milestone 7.2 — Categorised GM defaults and Scene span reach — complete
+
+Dynamic Webs exposes world defaults through Foundry's standard Settings Configuration without weakening Scene ownership.
+
+### Delivered settings presentation
+
+- Ordinary visible Foundry world settings
+- Generation Defaults, Population Defaults, Appearance Defaults, Level Awareness and Maintenance headings added to the standard settings form
+- No separate submenu and no legacy FormApplication dependency
+
+### Population-default contract
+
+- Adding a new population uses the current world defaults.
+- Duplicating a population copies the source population.
+- A Scene with no persisted `webPopulations` flag resolves one stable implicit population from the current defaults.
+- Saving Scene Configuration persists that same stable population ID.
+- An explicit `[]` remains an intentional no-web Scene.
+- Changing world defaults never rewrites an existing explicit population array.
+
+### Maximum-span contract
+
+- The world default is stored in grid units and starts at `1.5`.
+- The supported range is `0.35–10` in `0.05` increments.
+- Every Scene may follow the current world value or store a Scene override.
+- The effective value applies to every wall-span population and never becomes a population field.
+- Changing the applicable value regenerates geometry because eligible opposing-wall pairs change.
+
+### Exit criteria — met
+
+- New populations reflect independent world density, colour and thickness defaults.
+- Existing populations and explicit empty arrays remain unchanged.
+- Missing Scene configuration produces deterministic stable identifiers.
+- Wider settings admit wider span candidates; narrower settings reject them.
+- The world settings page is represented by one categorised menu.
+
+---
+
+## Milestone 8 — Scene wall-span behaviour and derived walls — implementation candidate
 
 **Target:** v0.8.0
 
-Allow generated webs to optionally participate in Foundry wall behaviour. This feature must remain opt-in and separate from visual rendering, immutable geometry and ordinary authored Scene walls.
+This milestone adds opt-in Foundry wall behaviour to intact **wall-span webs only**. Corner, ground and carpet webs remain visual and do not create WallDocuments.
 
-### Scene policy
+### Scene controls
 
-Support a Scene-level barrier mode such as:
+One collapsed **Span behaviour** section appears below the population cards and stores a compact Scene-wide policy:
 
-- `none`
-- `vision`
-- `movement`
-- `vision-and-movement`
+- Maximum span width using either the world default or a Scene override
+- Vision mode: `none`, `limited` or `blocked`
+- Optional movement blocking represented only as a closed secret door
+- Destructible or indestructible span webs
 
-The default must be `none`. Changing barrier mode should synchronise barrier behaviour from the existing immutable web population without reshuffling or regenerating web geometry.
+The authored world defaults are limited vision, no secret door and destructible spans.
 
-Example JSON-authored configuration:
+### Derived-wall contract
 
-```json
-{
-  "webBarriers": {
-    "mode": "none",
-    "strandRoles": [
-      "structural"
-    ],
-    "intactOnly": true
-  }
-}
-```
+- No vision and no secret door creates no WallDocument.
+- Limited vision creates a limited-sight wall with no movement restriction.
+- Blocked vision creates a normal-sight wall with no movement restriction.
+- Movement blocking is available only through a module-owned closed secret door.
+- Vision and secret-door movement behaviour remain independently selectable.
+- One stable derived wall is reconciled per intact wall-span web.
+- Destroying a span removes its derived wall; restoring it recreates the wall.
+- An opened secret door retains its door state during ordinary reconciliation.
 
-### Implement
+### Feedback prevention
 
-- A dedicated barrier service separate from generation and rendering
-- Stable barrier identifiers derived from stable web and strand identifiers
-- Vision-only barriers
-- Movement-only barriers
-- Combined vision and movement barriers
-- Configurable strand roles eligible to create barriers
-- Level-compatible barrier creation and filtering
-- Barrier reconciliation after deterministic regeneration
-- Barrier reconciliation after strand breakage or restoration
-- Cleanup on Scene change, canvas teardown and module disable
-- GM-authoritative creation when embedded Foundry WallDocuments are used
-- Diagnostics reporting authored structural walls and generated web barriers separately
-- Foundry v13 and v14 compatibility adapters
+Every generated wall carries explicit Dynamic Webs ownership and source-web flags. Structural wall collection excludes generated walls before corner or span candidate detection. Wall create, update and delete lifecycle hooks also ignore them. Repeated reconciliation therefore cannot create recursive webs or duplicate derived walls.
 
-The implementation may use flagged embedded WallDocuments or a compatibility-layer synthetic barrier representation, but consumers and generation code must observe the same ownership and feedback-prevention contracts.
+### Destructibility contract
 
-### Feedback-prevention contract
+- Destructible spans retain the existing GM-authoritative swept token interaction and compact Scene persistence.
+- Indestructible spans are excluded from local movement handling and player socket requests.
+- Switching a Scene to indestructible restores persisted destroyed spans, clears their IDs and repairs the Scene flag.
+- Corner, ground and carpet webs remain permanently ineligible for destruction.
 
-Dynamic Webs barriers must never become source walls for further web generation. Otherwise one generated web could create barriers that create more webs, causing recursive population growth.
+### Level compatibility
 
-When embedded WallDocuments are used:
+- Base-level walls use ordinary Foundry wall data.
+- Foundry v13 Levels walls receive compatible level and wall-height flags.
+- Foundry v14 walls receive native level identifiers.
+- Generated walls retain the source span's level identity.
 
-- Every module-owned barrier must carry an explicit ownership flag such as `flags.dynamic-webs.generatedWebBarrier`.
-- Structural wall collection must exclude module-owned barriers before corner or span candidate detection.
-- Module-owned barriers must not contribute to generation seeds, structural wall counts, candidate counts or `supportingWallIds`.
-- `createWall`, `updateWall` and `deleteWall` lifecycle handlers must ignore module-owned barriers.
-- Barrier synchronisation must not schedule a web-generation rebuild.
-- Cleanup must remove only explicitly flagged Dynamic Webs barriers and never authored walls.
-- Reload and reconciliation must replace or reuse barriers by stable identifier rather than duplicating them.
+### Regression coverage
 
-Equivalent safeguards are required if the implementation uses synthetic barriers rather than embedded WallDocuments.
+- Vision-only walls never block movement.
+- Movement blocking is emitted only as a secret door.
+- Full, limited and absent vision map to their intended wall senses.
+- Generated walls are excluded from source-wall collection and lifecycle rebuilds.
+- Repeated synchronisation creates no duplicates and removes stale walls.
+- Non-GM clients never create, update or delete generated walls.
+- Indestructible state restores persisted spans and blocks future destruction.
 
-### Constraints
+### Remaining acceptance work
 
-- Enabling or disabling barriers must not alter web placement, geometry or identifiers.
-- Vision and movement restriction must be independently selectable.
-- Broken strands must stop contributing barriers when `intactOnly` is enabled.
-- Level-incompatible tokens and vision sources must not interact with a web barrier.
-- Generated barriers must remain distinguishable from authored Scene walls in diagnostics and cleanup.
-- Barrier creation and deletion must be idempotent across repeated lifecycle synchronisations.
-
-### Regression tests
-
-Test that:
-
-- Web hashes and identifiers are identical with barriers disabled and enabled.
-- Repeated barrier synchronisation does not duplicate WallDocuments or synthetic barriers.
-- Generated barriers are excluded from wall-corner and wall-span candidate detection.
-- Generated barrier hook events do not schedule recursive rebuilds.
-- Repeated reload and rebuild cycles do not increase the generated web population.
-- Vision-only, movement-only and combined modes map to the intended Foundry restrictions.
-- Broken and restored strands update their barriers without regenerating unrelated geometry.
-
-### Exit criteria
-
-- A Scene can independently select no barriers, vision barriers, movement barriers or both.
-- Barrier state follows the current immutable geometry and mutable strand state.
-- Module-owned barriers never generate additional webs.
-- Repeated synchronisation produces no duplicate barriers or recursive web growth.
-- Authored Scene walls remain untouched.
-- Foundry v13 and v14 behaviour is verified.
+- Live Foundry v13 verification with Base Level and theripper93's Levels.
+- Live Foundry v14 verification with native Scene elevation.
+- Multiplayer verification of player vision, secret-door movement and mutable-state convergence.
+- Confirm the generated-wall presentation and cleanup behaviour through Scene changes and module upgrades.
 
 ---
 
@@ -1117,3 +1122,5 @@ Every milestone must preserve these rules:
 - Frozen snapshots rather than mutable internal objects
 - Module-owned web barriers must never be eligible source walls for generation
 - Generated barrier lifecycle events must not trigger recursive web rebuilds
+
+

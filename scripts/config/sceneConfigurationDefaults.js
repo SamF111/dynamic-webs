@@ -4,6 +4,7 @@ import sceneConfigurationDefaultsData from "../../data/scene-configuration-defau
 };
 
 import {
+  assertBoolean,
   assertJsonObject,
   assertNumberInRange,
   assertRequiredString,
@@ -25,6 +26,10 @@ const expectedKeys =
     "webColour",
     "webThickness",
     "webPopulationDensity",
+    "webPopulationCategoryDensities",
+    "webPopulationColour",
+    "webPopulationThickness",
+    "spanWebBehaviour",
     "webPopulations"
   ];
 
@@ -61,7 +66,78 @@ if (
     0
 ) {
   throw new Error(
-    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only webDensity, webColour, webThickness, webPopulationDensity and webPopulations.`
+    `Dynamic Webs | ${DEFAULTS_CONTEXT} must contain only ${expectedKeys.join(", ")}.`
+  );
+}
+
+const populationCategoryDensities =
+  assertJsonObject(
+    rawDefaults.webPopulationCategoryDensities,
+    `${DEFAULTS_CONTEXT}.webPopulationCategoryDensities`
+  );
+
+const expectedPopulationCategoryIds =
+  [
+    "wall-corner",
+    "wall-span",
+    "ground",
+    "web-carpet"
+  ];
+
+const populationCategoryKeys =
+  Object.keys(
+    populationCategoryDensities
+  );
+
+if (
+  populationCategoryKeys.length !==
+    expectedPopulationCategoryIds.length ||
+  expectedPopulationCategoryIds.some(
+    (
+      categoryId
+    ) =>
+      !Object.prototype.hasOwnProperty.call(
+        populationCategoryDensities,
+        categoryId
+      )
+  )
+) {
+  throw new Error(
+    `Dynamic Webs | ${DEFAULTS_CONTEXT}.webPopulationCategoryDensities must contain exactly ${expectedPopulationCategoryIds.join(", ")}.`
+  );
+}
+
+
+const spanWebBehaviour =
+  assertJsonObject(
+    rawDefaults.spanWebBehaviour,
+    `${DEFAULTS_CONTEXT}.spanWebBehaviour`
+  );
+
+const expectedSpanWebBehaviourKeys =
+  [
+    "visionMode",
+    "secretDoor",
+    "destructible"
+  ];
+
+if (
+  Object.keys(
+    spanWebBehaviour
+  ).length !==
+    expectedSpanWebBehaviourKeys.length ||
+  expectedSpanWebBehaviourKeys.some(
+    (
+      key
+    ) =>
+      !Object.prototype.hasOwnProperty.call(
+        spanWebBehaviour,
+        key
+      )
+  )
+) {
+  throw new Error(
+    `Dynamic Webs | ${DEFAULTS_CONTEXT}.spanWebBehaviour must contain exactly ${expectedSpanWebBehaviourKeys.join(", ")}.`
   );
 }
 
@@ -82,10 +158,63 @@ export const DEFAULT_SCENE_CONFIGURATION =
         rawDefaults.webPopulationDensity,
         `${DEFAULTS_CONTEXT}.webPopulationDensity`
       ),
+    webPopulationCategoryDensities:
+      Object.fromEntries(
+        expectedPopulationCategoryIds.map(
+          (
+            categoryId
+          ) => [
+            categoryId,
+            assertRequiredString(
+              populationCategoryDensities[
+                categoryId
+              ],
+              `${DEFAULTS_CONTEXT}.webPopulationCategoryDensities.${categoryId}`
+            )
+          ]
+        )
+      ),
+    webPopulationColour:
+      assertRequiredString(
+        rawDefaults.webPopulationColour,
+        `${DEFAULTS_CONTEXT}.webPopulationColour`
+      ),
+    webPopulationThickness:
+      assertNumberInRange(
+        rawDefaults.webPopulationThickness,
+        `${DEFAULTS_CONTEXT}.webPopulationThickness`,
+        {
+          minimum:
+            1,
+          maximum:
+            4
+        }
+      ),
+    spanWebBehaviour: {
+      visionMode:
+        assertRequiredString(
+          spanWebBehaviour.visionMode,
+          `${DEFAULTS_CONTEXT}.spanWebBehaviour.visionMode`
+        ),
+      secretDoor:
+        assertBoolean(
+          spanWebBehaviour.secretDoor,
+          `${DEFAULTS_CONTEXT}.spanWebBehaviour.secretDoor`
+        ),
+      destructible:
+        assertBoolean(
+          spanWebBehaviour.destructible,
+          `${DEFAULTS_CONTEXT}.spanWebBehaviour.destructible`
+        )
+    },
     webPopulations:
       Array.isArray(rawDefaults.webPopulations)
         ? rawDefaults.webPopulations
-        : (() => { throw new TypeError(`Dynamic Webs | ${DEFAULTS_CONTEXT}.webPopulations must be an array.`); })(),
+        : (() => {
+            throw new TypeError(
+              `Dynamic Webs | ${DEFAULTS_CONTEXT}.webPopulations must be an array.`
+            );
+          })(),
     webThickness:
       assertNumberInRange(
         rawDefaults.webThickness,
@@ -110,6 +239,18 @@ export const DEFAULT_SCENE_WEB_THICKNESS =
 
 export const DEFAULT_SCENE_WEB_POPULATION_DENSITY =
   DEFAULT_SCENE_CONFIGURATION.webPopulationDensity;
+
+export const DEFAULT_SCENE_WEB_POPULATION_CATEGORY_DENSITIES =
+  DEFAULT_SCENE_CONFIGURATION.webPopulationCategoryDensities;
+
+export const DEFAULT_SCENE_WEB_POPULATION_COLOUR =
+  DEFAULT_SCENE_CONFIGURATION.webPopulationColour;
+
+export const DEFAULT_SCENE_WEB_POPULATION_THICKNESS =
+  DEFAULT_SCENE_CONFIGURATION.webPopulationThickness;
+
+export const DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR =
+  DEFAULT_SCENE_CONFIGURATION.spanWebBehaviour;
 
 export const DEFAULT_SCENE_WEB_POPULATIONS =
   DEFAULT_SCENE_CONFIGURATION.webPopulations;

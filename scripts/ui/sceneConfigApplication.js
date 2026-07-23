@@ -10,13 +10,33 @@ import {
   activateSceneConfigPopulationControls
 } from "./sceneConfigPopulationControls.js";
 
+import {
+  activateSceneConfigSpanBehaviourControls
+} from "./sceneConfigSpanBehaviourControls.js";
+
 const registerSceneConfigHooksInternal = createSceneConfigHookRegistration({
   createTemplateContext: createSceneConfigTemplateContext,
-  activateControls: activateSceneConfigPopulationControls,
+  activateControls: activateSceneConfigControls,
   registerAdditionalHooks: registerPopulationLevelRefreshHooks
 });
 
 let refreshHooksRegistered = false;
+
+function activateSceneConfigControls(
+  application,
+  partElement
+) {
+  activateSceneConfigPopulationControls(
+    application,
+    partElement
+  );
+
+  activateSceneConfigSpanBehaviourControls(
+    application,
+    partElement
+  );
+}
+
 
 export function registerSceneConfigHooks() {
   return registerSceneConfigHooksInternal();
@@ -43,3 +63,4 @@ function registerPopulationLevelRefreshHooks() {
     });
   }
 }
+

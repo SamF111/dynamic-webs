@@ -108,6 +108,10 @@ export function createWebRuntimeState(
       null,
     configuration:
       null,
+    spanWebBehaviour:
+      normaliseOptionalObject(
+        values.spanWebBehaviour
+      ),
     mutableState:
       normaliseOptionalObject(
         values.mutableState
@@ -126,7 +130,8 @@ export function createWebRuntimeSnapshot(
   {
     includeWebs = true,
     spatialDiagnostics = null,
-    mutableStatePersistence = null
+    mutableStatePersistence = null,
+    spanWallDiagnostics = null
   } = {}
 ) {
   return deepFreeze({
@@ -222,6 +227,11 @@ export function createWebRuntimeSnapshot(
     configuration:
       state?.configuration ??
       null,
+    spanWebBehaviour:
+      state?.spanWebBehaviour ??
+      null,
+    spanWalls:
+      spanWallDiagnostics,
     mutableState:
       state?.mutableState ??
       null,
@@ -427,3 +437,4 @@ function deepFreeze(
     clone
   );
 }
+

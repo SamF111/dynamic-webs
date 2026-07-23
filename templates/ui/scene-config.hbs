@@ -13,7 +13,19 @@
     {{#unless editable}}disabled{{/unless}}
   >
 
+  <input
+    type="hidden"
+    name="{{fieldNames.spanWebBehaviour}}"
+    value="{{spanWebBehaviourValue}}"
+    data-dynamic-webs-span-behaviour-value
+    {{#unless editable}}disabled{{/unless}}
+  >
+
   <p class="hint">{{levelProviderHint}}</p>
+
+  {{#if populationDefaultsHint}}
+    <p class="hint">{{populationDefaultsHint}}</p>
+  {{/if}}
 
   <div data-dynamic-webs-population-list>
     {{#each populationCards}}
@@ -33,9 +45,102 @@
     </div>
   </div>
 
+  <details
+    class="dynamic-webs-population-section"
+    data-dynamic-webs-span-behaviour-section
+  >
+    <summary>
+      <strong>Span behaviour</strong>
+      <span class="hint">{{spanWebBehaviour.summary}}</span>
+    </summary>
+
+    <div class="dynamic-webs-population-section-body">
+      <div class="form-group">
+        <label>Use world maximum span width</label>
+        <div class="form-fields">
+          <input
+            type="checkbox"
+            {{#if spanWebBehaviour.useWorldMaximumSpanWidth}}checked{{/if}}
+            data-dynamic-webs-use-world-span-width
+            data-dynamic-webs-span-behaviour-control
+          >
+          <span class="units">{{spanWebBehaviour.worldMaximumSpanGridUnits}} grid units</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Maximum span width</label>
+        <div class="form-fields">
+          <input
+            type="number"
+            value="{{spanWebBehaviour.maximumSpanGridUnits}}"
+            min="{{spanWebBehaviour.maximumMinimum}}"
+            max="{{spanWebBehaviour.maximumMaximum}}"
+            step="{{spanWebBehaviour.maximumStep}}"
+            data-dynamic-webs-span-maximum-width
+            data-dynamic-webs-span-behaviour-control
+          >
+          <span class="units">grid units</span>
+        </div>
+        <p class="hint">Applies to every wall-span population in this Scene. Clear the world-default checkbox to store a Scene override.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Span vision</label>
+        <div class="form-fields">
+          <select
+            data-dynamic-webs-span-vision-mode
+            data-dynamic-webs-span-behaviour-control
+          >
+            {{#each spanWebBehaviour.visionOptions}}
+              <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <p class="hint">None creates no vision wall. Limited permits vision through one limited wall. Blocked uses normal sight blocking.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Treat intact span webs as closed secret doors</label>
+        <div class="form-fields">
+          <input
+            type="checkbox"
+            {{#if spanWebBehaviour.secretDoor}}checked{{/if}}
+            data-dynamic-webs-span-secret-door
+            data-dynamic-webs-span-behaviour-control
+          >
+        </div>
+        <p class="hint">The only movement-blocking mode. Creates module-owned closed secret doors which GMs may open normally.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Span webs are destructible</label>
+        <div class="form-fields">
+          <input
+            type="checkbox"
+            {{#if spanWebBehaviour.destructible}}checked{{/if}}
+            data-dynamic-webs-span-destructible
+            data-dynamic-webs-span-behaviour-control
+          >
+        </div>
+        <p class="hint">When disabled, token movement cannot destroy wall-span webs. Saving restores any currently destroyed spans and clears their stored IDs.</p>
+        <p
+          class="hint warning"
+          data-dynamic-webs-span-indestructible-warning
+          data-destroyed-count="{{spanWebBehaviour.destroyedWebCount}}"
+          hidden
+        >
+          This Scene currently has {{spanWebBehaviour.destroyedWebCount}} destroyed wall-span web(s). Saving with destructibility disabled restores them.
+        </p>
+      </div>
+    </div>
+  </details>
+
   <template data-dynamic-webs-population-template>
     {{#with newPopulationCard}}
       {{> "modules/dynamic-webs/templates/ui/web-population-card.hbs"}}
     {{/with}}
   </template>
 </section>
+
+

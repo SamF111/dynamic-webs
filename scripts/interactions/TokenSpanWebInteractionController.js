@@ -147,7 +147,9 @@ export class TokenSpanWebInteractionController {
 
     if (
       state?.active !==
-        true
+        true ||
+      state?.spanWebBehaviour?.destructible ===
+        false
     ) {
       return null;
     }
@@ -209,6 +211,13 @@ export class TokenSpanWebInteractionController {
 
     const state =
       service.getState();
+
+    if (
+      state?.spanWebBehaviour?.destructible ===
+        false
+    ) {
+      return null;
+    }
 
     const current =
       createWebTokenMovementSnapshot({
@@ -648,7 +657,11 @@ export class TokenSpanWebInteractionController {
       this.runtime
         ?.getWebRuntimeService?.();
 
-    if (!service) {
+    if (
+      !service ||
+      service.getState?.()?.spanWebBehaviour?.destructible ===
+        false
+    ) {
       return null;
     }
 
@@ -1066,3 +1079,4 @@ function appendCollection(
     );
   }
 }
+

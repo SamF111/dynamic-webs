@@ -52,6 +52,11 @@ export function readRawSceneWebConfiguration(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
         ),
+      [SCENE_WEB_FLAG_KEYS.SPAN_WEB_BEHAVIOUR]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.SPAN_WEB_BEHAVIOUR
+        ),
       [SCENE_WEB_FLAG_KEYS.MUTABLE_STATE]:
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
@@ -76,3 +81,4 @@ export function readRawSceneWebConfiguration(
     ? namespaceValues
     : {};
 }
+

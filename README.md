@@ -42,7 +42,7 @@ Destroyed wall-span deviations are stored separately at:
 flags.dynamic-webs.mutableState
 ```
 
-An empty population array means that the Scene generates no webs. There is no implicit population and no fallback from the former pre-release Scene-wide flags.
+An explicitly stored empty population array means that the Scene generates no webs. A missing population flag resolves one stable world-default population, but there is still no fallback from the former pre-release Scene-wide density, colour or thickness flags.
 
 Each population independently stores:
 
@@ -83,9 +83,41 @@ No population card is expanded automatically. The nested Regions, Web options an
 
 Each population receives a hidden opaque ID such as `web-r7Kp2mN4xQ8vT3sL`. The ID is generated once, persisted with the population and never changes when its level, densities, colour, thickness, order or neighbouring populations change. Duplicating a population creates a fresh ID. Removing a population removes only that ID.
 
-New populations start enabled with every density slider at the middle `standard` state. This default is authored as `webPopulationDensity` in `data/scene-configuration-defaults.json`.
+New populations start enabled from GM-facing world defaults for corner, span, ground and carpet density, colour and thickness. The authored initial values remain `standard` for every category, `natural-white` and `1×`, but the world GM may change them in Game Settings without rewriting any existing Scene population. Duplicating a population continues to copy the source population rather than the world defaults.
+
+A Scene whose `webPopulations` flag has never been configured resolves one stable implicit population from the current world defaults. Its reserved Scene-qualified ID remains stable across regeneration and becomes explicit when the Scene Configuration form is saved. An explicitly saved empty array remains an intentional no-web Scene and is never repopulated automatically.
 
 Multiple populations may target the same level. This allows combinations such as sparse blue corner webs and dense red ground webs on one floor.
+
+## Categorised GM defaults and Scene span behaviour
+
+Dynamic Webs uses Foundry's standard **Configure Settings** page. All world settings remain ordinary Foundry settings, with module-added headings for:
+
+- **Generation Defaults** — maximum span width, span vision, secret-door movement blocking and span destructibility
+- **Population Defaults** — independent corner, span, ground and carpet densities
+- **Appearance Defaults** — web colour and thickness
+- **Level Awareness** — the Foundry v13 provider selector when applicable
+- **Maintenance** — the client-local carpet texture cache action
+
+No separate Dynamic Webs settings window or legacy FormApplication is used.
+
+Population defaults apply only to newly added populations and Scenes whose `flags.dynamic-webs.webPopulations` value has never been configured. Existing arrays, including `[]`, remain authoritative and are not silently rewritten when a world default changes.
+
+The authored maximum span width is `1.5` Scene grid units. The supported range is `0.35–10` in `0.05` increments. Each Scene may continue following that world default or store its own maximum-width override.
+
+Below the population cards, Scene Configuration provides one collapsed **Span behaviour** section. These controls are Scene-wide rather than population fields:
+
+- Maximum span width using either the current world default or a Scene override
+- Vision mode: **None**, **Limited** or **Blocked**
+- Optional movement blocking represented only by module-owned **closed secret-door** walls
+- Destructible or indestructible wall-span webs
+
+Vision and movement are independent. A vision-only span never blocks movement. Enabling the secret-door option creates movement blocking through a Foundry secret door, while retaining the selected vision mode. Corner, ground and carpet webs never create these walls.
+
+Generated span walls are derived from intact immutable wall-span blueprints and carry explicit Dynamic Webs ownership flags. They are excluded from structural-wall collection and ignored by wall lifecycle rebuild hooks, preventing recursive web generation. Reconciliation creates, updates or removes one wall per intact span and preserves a GM-opened secret door's open state.
+
+When Scene span webs are indestructible, token movement does not query or destroy them. Any previously persisted destroyed-span IDs are restored and the compact Scene mutable-state flag is repaired during reconciliation.
+
 
 ## Region-aware generation
 
@@ -218,7 +250,8 @@ On `canvasReady` Dynamic Webs:
 2. Reads and validates `flags.dynamic-webs.webPopulations`.
 3. Resolves the selected level and category presets for each enabled population.
 4. Skips populations with unavailable levels or no implemented active category.
-5. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
+5. Applies the current world maximum-span-width rule to every active span category.
+6. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
 6. Stores all immutable blueprints.
 7. Loads the Scene-owned destroyed-span revision and stable IDs.
 8. Reconciles those IDs against the newly generated wall-span population, pruning obsolete IDs without mutating geometry.
@@ -442,6 +475,8 @@ This runs JavaScript syntax checks and the complete Node regression suite.
 
 Automated validation must be followed by live Foundry smoke tests in v13 and v14, including:
 
+- GM world defaults for new populations, including preservation of existing Scene arrays and explicit `[]`
+- Maximum span-width changes at narrow and wide passage boundaries
 - Adding, duplicating and removing populations
 - Different populations on different levels
 - Different colours and thicknesses on the same level
@@ -477,7 +512,9 @@ Generate and validate the authored span atlas with:
 
 ## Whole-span destruction
 
-A committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
+When the Scene's **Span webs are destructible** option is enabled, a committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
+
+Destroyed spans stop rendering and immediately stop contributing generated vision or secret-door walls. Restoring a span recreates its derived wall when the Scene behaviour requires one. Disabling destructibility restores all currently destroyed spans and prevents both local GM destruction and player socket requests from mutating them.
 
 Destroyed IDs are compact Scene-owned mutable state separate from immutable blueprints. The persisted value contains only a schema version, monotonic revision and sorted stable wall-span IDs:
 
@@ -492,3 +529,5 @@ flags["dynamic-webs"].mutableState = {
 Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration and the responsible GM repairs the Scene flag. Geometry, strands, textures, generation IDs and PIXI state are never persisted. The GM commits mutations, queues the Scene-flag write and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`; Foundry's `updateScene` propagation provides a second convergence path. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
 
 Generic consumers use `dynamicWebs.api.interactions` and own their own eligibility policy. Dynamic Webs contains no critter-specific flags, UI fields or internal imports.
+
+

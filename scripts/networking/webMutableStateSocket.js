@@ -443,6 +443,8 @@ function handleTokenSpanMovementRequest({
     !service ||
     state?.active !==
       true ||
+    state?.spanWebBehaviour?.destructible ===
+      false ||
     state?.sceneId !==
       request.sceneId ||
     normaliseIdentifier(
@@ -1127,3 +1129,4 @@ function normaliseIdentifier(
   return text ||
     null;
 }
+

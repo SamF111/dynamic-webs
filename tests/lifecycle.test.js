@@ -272,3 +272,54 @@ test("Region geometry and tag changes schedule deterministic rebuilds", () => {
     assert.equal(controller.createDiagnosticSnapshot().pendingReason, "update-region");
   } finally { environment.restore(); }
 });
+
+
+test("Scene span-behaviour updates regenerate the active Scene immediately", () => {
+  const environment = createEnvironment();
+  try {
+    const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
+
+    controller.handleSceneUpdated(environment.scene, {
+      flags: {
+        "dynamic-webs": {
+          spanWebBehaviour: {
+            visionMode: "blocked",
+            secretDoor: true,
+            destructible: false
+          }
+        }
+      }
+    });
+
+    assert.equal(environment.timeoutCallbacks.size, 0);
+    assert.equal(environment.generateCalls.length, 1);
+    assert.equal(environment.generateCalls[0].reason, "scene-span-web-behaviour-update");
+  } finally {
+    environment.restore();
+  }
+});
+
+test("module-owned generated span walls never schedule recursive regeneration", () => {
+  const environment = createEnvironment();
+  try {
+    const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
+    const generatedWall = {
+      parent: { id: "scene" },
+      flags: {
+        "dynamic-webs": {
+          generatedSpanWall: true,
+          spanWebId: "span-a"
+        }
+      }
+    };
+
+    controller.handleWallCreated(generatedWall);
+    controller.handleWallUpdated(generatedWall, { c: [0, 0, 100, 0] });
+    controller.handleWallDeleted(generatedWall);
+
+    assert.equal(environment.timeoutCallbacks.size, 0);
+    assert.equal(environment.generateCalls.length, 0);
+  } finally {
+    environment.restore();
+  }
+});

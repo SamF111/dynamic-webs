@@ -354,3 +354,49 @@ test("sort-layer compatibility never touches the deprecated PrimaryCanvasGroup g
     globalThis.canvas = previous.canvas;
   }
 });
+
+
+test(
+  "structural wall collection excludes Dynamic Webs generated span walls",
+  () => {
+    const previousCanvas = globalThis.canvas;
+
+    try {
+      globalThis.canvas = {
+        walls: {
+          placeables: [
+            {
+              document: {
+                id: "source-wall",
+                c: [0, 0, 100, 0],
+                door: 0
+              }
+            },
+            {
+              document: {
+                id: "generated-web-wall",
+                c: [0, 20, 100, 20],
+                door: 0,
+                flags: {
+                  "dynamic-webs": {
+                    generatedSpanWall: true,
+                    spanWebId: "wall-span:scene:population:base:web"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      };
+
+      const walls = collectStructuralWallSegments({ walls: [] });
+
+      assert.deepEqual(
+        walls.map((wall) => wall.wallId),
+        ["source-wall"]
+      );
+    } finally {
+      globalThis.canvas = previousCanvas;
+    }
+  }
+);

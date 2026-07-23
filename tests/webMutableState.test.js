@@ -143,3 +143,28 @@ test("internal rollback restores the earlier eligibility set after a failed rege
   assert.deepEqual(service.createSnapshot().destroyedWebIds, ["span-a"]);
   assert.deepEqual(service.createSnapshot().eligibleWebIds, ["span-a", "span-b"]);
 });
+
+
+test("indestructible Scene policy restores persisted spans and disables all destruction", () => {
+  const service = new WebMutableStateService();
+
+  const snapshot = service.reconcile({
+    sceneId: "scene-a",
+    generationId: 1,
+    webs,
+    destroyable: false,
+    persistedState: {
+      revision: 6,
+      destroyedWebIds: ["span-a", "span-b"]
+    }
+  });
+
+  assert.equal(snapshot.destroyable, false);
+  assert.equal(snapshot.eligibleWebCount, 0);
+  assert.deepEqual(snapshot.eligibleWebIds, []);
+  assert.deepEqual(snapshot.destroyedWebIds, []);
+  assert.equal(snapshot.revision, 7);
+  assert.deepEqual(snapshot.lastReconciliation.prunedWebIds, ["span-a", "span-b"]);
+  assert.equal(service.destroyWeb("span-a", { cause: "test" }), false);
+  assert.deepEqual(service.destroyWebs(["span-a", "span-b"], { cause: "test" }), []);
+});

@@ -32,6 +32,20 @@ import {
   formatRegionRoleTagsForInput
 } from "../config/regionTagConfiguration.js";
 
+import {
+  MAXIMUM_MAXIMUM_SPAN_GRID_UNITS,
+  MAXIMUM_SPAN_GRID_UNITS_STEP,
+  MINIMUM_MAXIMUM_SPAN_GRID_UNITS
+} from "../config/moduleSettings.js";
+
+import {
+  SPAN_WEB_VISION_OPTIONS
+} from "../config/spanWebBehaviourContract.js";
+
+import {
+  getSceneWebMutableStateConfiguration
+} from "../config/sceneWebMutableStateConfiguration.js";
+
 const DENSITY_LABELS = new Map(
   WEB_DENSITY_OPTIONS.map((option) => [option.id, option.label])
 );
@@ -42,12 +56,70 @@ const COLOUR_LABELS = new Map(
 
 export async function createSceneConfigTemplateContext({ application, scene }) {
   const configuration = getSceneWebPopulationConfiguration(scene);
+  const mutableState =
+    getSceneWebMutableStateConfiguration(
+      scene
+    );
   const editable = application?.isEditable !== false;
 
   return {
     editable,
     fieldNames: {
-      webPopulations: `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS}`
+      webPopulations: `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS}`,
+      spanWebBehaviour: `${SCENE_WEB_FLAG_PATH}.${SCENE_WEB_FLAG_KEYS.SPAN_WEB_BEHAVIOUR}`
+    },
+    spanWebBehaviourValue:
+      JSON.stringify({
+        schemaVersion:
+          1,
+        maximumSpanGridUnits:
+          configuration.spanWebBehaviour.maximumSpanGridUnitsOverride,
+        visionMode:
+          configuration.spanWebBehaviour.visionMode,
+        secretDoor:
+          configuration.spanWebBehaviour.secretDoor,
+        destructible:
+          configuration.spanWebBehaviour.destructible
+      }),
+    spanWebBehaviour: {
+      useWorldMaximumSpanWidth:
+        configuration.spanWebBehaviour.usesWorldMaximumSpanWidth,
+      maximumSpanGridUnits:
+        configuration.spanWebBehaviour.maximumSpanGridUnits,
+      worldMaximumSpanGridUnits:
+        configuration.spanWebBehaviour.worldMaximumSpanGridUnits,
+      maximumMinimum:
+        MINIMUM_MAXIMUM_SPAN_GRID_UNITS,
+      maximumMaximum:
+        MAXIMUM_MAXIMUM_SPAN_GRID_UNITS,
+      maximumStep:
+        MAXIMUM_SPAN_GRID_UNITS_STEP,
+      visionMode:
+        configuration.spanWebBehaviour.visionMode,
+      visionOptions:
+        SPAN_WEB_VISION_OPTIONS.map(
+          (
+            option
+          ) => ({
+            value:
+              option.id,
+            label:
+              option.label,
+            selected:
+              option.id ===
+              configuration.spanWebBehaviour.visionMode
+          })
+        ),
+      secretDoor:
+        configuration.spanWebBehaviour.secretDoor,
+      destructible:
+        configuration.spanWebBehaviour.destructible,
+      destroyedWebCount:
+        mutableState.destroyedWebIds.length,
+      summary:
+        createSpanBehaviourSummary(
+          configuration.spanWebBehaviour
+        )
     },
     populationValue: JSON.stringify(
       configuration.populations.map(toPersistedPopulation)
@@ -75,6 +147,14 @@ export async function createSceneConfigTemplateContext({ application, scene }) {
       template: true
     }),
     hasPopulations: configuration.populations.length > 0,
+    usesWorldPopulationDefaults:
+      configuration.usesWorldPopulationDefaults ===
+      true,
+    populationDefaultsHint:
+      configuration.usesWorldPopulationDefaults ===
+        true
+        ? "This Scene has no saved web-population configuration. It is currently using the GM's world defaults; saving this Scene Configuration makes the displayed population explicit for this Scene."
+        : null,
     provider: configuration.provider,
     levelProviderHint: createLevelProviderHint(configuration.provider)
   };
@@ -213,3 +293,35 @@ function createRegionSummary(confineTags, excludeTags) {
   return parts.join(" · ");
 }
 
+
+
+
+function createSpanBehaviourSummary(
+  behaviour
+) {
+  const visionLabel =
+    SPAN_WEB_VISION_OPTIONS.find(
+      (
+        option
+      ) =>
+        option.id ===
+        behaviour.visionMode
+    )?.label ??
+    behaviour.visionMode;
+
+  const parts =
+    [
+      `${behaviour.maximumSpanGridUnits} grid`,
+      `${visionLabel} vision`,
+      behaviour.secretDoor
+        ? "Secret doors"
+        : "Free movement",
+      behaviour.destructible
+        ? "Destructible"
+        : "Indestructible"
+    ];
+
+  return parts.join(
+    " · "
+  );
+}

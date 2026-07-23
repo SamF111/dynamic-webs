@@ -40,6 +40,14 @@ import {
 } from "./lifecycle/sceneLifecycle.js";
 
 import {
+  hasPersistedSceneWebPopulations
+} from "./config/sceneWebPopulationConfiguration.js";
+
+import {
+  getSceneSpanWebBehaviourConfiguration
+} from "./config/sceneSpanWebBehaviourConfiguration.js";
+
+import {
   disposeWebMutableStateSocket,
   registerWebMutableStateSocket
 } from "./networking/webMutableStateSocket.js";
@@ -168,7 +176,84 @@ async function initialiseDynamicWebs() {
                 true,
               reason:
                 "world-settings-clear-carpet-texture-cache"
-            })
+            }),
+      onMaximumSpanWidthChanged:
+        () => {
+          const scene =
+            globalThis.canvas?.scene ??
+            null;
+
+          if (!scene) {
+            return null;
+          }
+
+          const behaviour =
+            getSceneSpanWebBehaviourConfiguration(
+              scene
+            );
+
+          if (
+            behaviour.usesWorldMaximumSpanWidth !==
+              true
+          ) {
+            return null;
+          }
+
+          return getSceneWebLifecycleController()
+            ?.scheduleRebuild(
+              "world-maximum-span-width-update"
+            ) ??
+            null;
+        },
+      onDefaultWebPopulationSettingsChanged:
+        () => {
+          const scene =
+            globalThis.canvas?.scene ??
+            null;
+
+          if (
+            !scene ||
+            hasPersistedSceneWebPopulations(
+              scene
+            )
+          ) {
+            return null;
+          }
+
+          return getSceneWebLifecycleController()
+            ?.scheduleRebuild(
+              "world-default-web-population-update"
+            ) ??
+            null;
+        },
+      onDefaultSpanWebBehaviourSettingsChanged:
+        () => {
+          const scene =
+            globalThis.canvas?.scene ??
+            null;
+
+          if (!scene) {
+            return null;
+          }
+
+          const behaviour =
+            getSceneSpanWebBehaviourConfiguration(
+              scene
+            );
+
+          if (
+            behaviour.hasPersistedConfiguration ===
+              true
+          ) {
+            return null;
+          }
+
+          return getSceneWebLifecycleController()
+            ?.scheduleRebuild(
+              "world-default-span-web-behaviour-update"
+            ) ??
+            null;
+        }
     });
 
     const runtime =
@@ -353,3 +438,5 @@ globalThis.addEventListener?.(
   "pagehide",
   handleClientUnload
 );
+
+

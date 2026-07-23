@@ -26,6 +26,8 @@ export const SCENE_WEB_FLAG_KEYS =
       "carpetWebDensity",
     WEB_POPULATIONS:
       "webPopulations",
+    SPAN_WEB_BEHAVIOUR:
+      "spanWebBehaviour",
     MUTABLE_STATE:
       "mutableState"
   });
@@ -38,6 +40,17 @@ export function doesSceneUpdateAffectWebPopulations(
   return doesSceneUpdateAffectFlag(
     changed,
     SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
+  );
+}
+
+
+/** Determine whether a Scene differential affects Scene-wide span behaviour. */
+export function doesSceneUpdateAffectSpanWebBehaviour(
+  changed
+) {
+  return doesSceneUpdateAffectFlag(
+    changed,
+    SCENE_WEB_FLAG_KEYS.SPAN_WEB_BEHAVIOUR
   );
 }
 
@@ -225,3 +238,4 @@ function objectContainsPath(
 
   return false;
 }
+

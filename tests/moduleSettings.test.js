@@ -2,12 +2,23 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK,
+  DEFAULT_MAXIMUM_SPAN_GRID_UNITS,
+  DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK,
   DEFAULT_WEB_LEVEL_PROVIDER_MODE,
+  DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK,
   LEVEL_PROVIDER_MODE_CHANGED_HOOK,
+  MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK,
+  MODULE_SETTINGS_CATEGORY_DEFINITIONS,
   MODULE_SETTING_KEYS,
+  applyModuleSettingsCategories,
   createAvailableWebLevelProviderChoices,
   createWebLevelProviderHint,
+  getConfiguredDefaultSpanWebBehaviourSettings,
+  getConfiguredDefaultWebPopulationSettings,
+  getConfiguredMaximumSpanGridUnits,
   getConfiguredWebLevelProviderMode,
+  normaliseConfiguredMaximumSpanGridUnits,
   normaliseConfiguredWebLevelProviderMode,
   registerModuleSettings,
   resetModuleSettingsRegistrationForTests,
@@ -18,700 +29,384 @@ import {
   WEB_LEVEL_PROVIDER_MODES
 } from "../scripts/simulation/webs/webLevelContract.js";
 
+const EXPECTED_SETTING_KEYS = Object.freeze([
+  MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS,
+  MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE,
+  MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
+  MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE,
+  MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY,
+  MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY,
+  MODULE_SETTING_KEYS.DEFAULT_GROUND_WEB_DENSITY,
+  MODULE_SETTING_KEYS.DEFAULT_CARPET_WEB_DENSITY,
+  MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR,
+  MODULE_SETTING_KEYS.DEFAULT_WEB_THICKNESS,
+  MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE,
+  MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE
+]);
+
 function preserveGlobals() {
   return {
-    game:
-      globalThis.game,
-    canvas:
-      globalThis.canvas,
-    Hooks:
-      globalThis.Hooks,
-    Levels:
-      globalThis.Levels
+    game: globalThis.game,
+    canvas: globalThis.canvas,
+    Hooks: globalThis.Hooks,
+    Levels: globalThis.Levels
   };
 }
 
-function restoreGlobals(
-  previous
-) {
+function restoreGlobals(previous) {
   resetModuleSettingsRegistrationForTests();
-
-  globalThis.game =
-    previous.game;
-
-  globalThis.canvas =
-    previous.canvas;
-
-  globalThis.Hooks =
-    previous.Hooks;
-
-  globalThis.Levels =
-    previous.Levels;
+  globalThis.game = previous.game;
+  globalThis.canvas = previous.canvas;
+  globalThis.Hooks = previous.Hooks;
+  globalThis.Levels = previous.Levels;
 }
 
-test(
-  "Foundry v13 with Levels mirrors Ambient Critters' two-choice provider setting",
-  () => {
-    const previous =
-      preserveGlobals();
+function createSettingsHarness(initialValues = {}) {
+  const registrations = [];
+  const menus = [];
+  const writes = [];
+  const values = new Map(Object.entries(initialValues));
 
-    const registrations =
-      [];
-
-    const hookRegistrations =
-      [];
-
-    const emittedHooks =
-      [];
-
-    let changedMode =
-      null;
-
-    globalThis.game = {
-      release: {
-        generation:
-          13
+  return {
+    registrations,
+    menus,
+    writes,
+    values,
+    settings: {
+      register(moduleId, key, configuration) {
+        registrations.push({ moduleId, key, configuration });
+        if (!values.has(key)) values.set(key, configuration.default);
       },
-      modules: {
-        get(
-          id
-        ) {
-          return id ===
-            "levels"
-            ? {
-                active:
-                  true
-              }
-            : null;
-        }
+      registerMenu(moduleId, key, configuration) {
+        menus.push({ moduleId, key, configuration });
       },
-      settings: {
-        register(
-          moduleId,
-          key,
-          configuration
-        ) {
-          registrations.push({
-            moduleId,
-            key,
-            configuration
-          });
-        },
-        get() {
-          return WEB_LEVEL_PROVIDER_MODES.BASE;
-        }
+      get(moduleId, key) {
+        assert.equal(moduleId, "dynamic-webs");
+        return values.get(key);
+      },
+      async set(moduleId, key, value) {
+        assert.equal(moduleId, "dynamic-webs");
+        values.set(key, value);
+        writes.push({ moduleId, key, value });
+        return value;
       }
-    };
-
-    globalThis.canvas = {};
-
-    globalThis.Hooks = {
-      on(
-        event,
-        callback
-      ) {
-        hookRegistrations.push({
-          event,
-          callback
-        });
-      },
-      callAll(
-        event,
-        value
-      ) {
-        emittedHooks.push({
-          event,
-          value
-        });
-      }
-    };
-
-    resetModuleSettingsRegistrationForTests();
-
-    try {
-      assert.equal(
-        registerModuleSettings({
-          onLevelProviderChanged:
-            (
-              mode
-            ) => {
-              changedMode =
-                mode;
-            }
-        }),
-        true
-      );
-
-      assert.equal(
-        registerModuleSettings(),
-        false
-      );
-
-      assert.equal(
-        registrations.length,
-        2
-      );
-
-      const registration =
-        registrations[0];
-
-      assert.equal(
-        registration.moduleId,
-        "dynamic-webs"
-      );
-
-      assert.equal(
-        registration.key,
-        MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE
-      );
-
-      assert.equal(
-        registration.configuration.name,
-        "Level Awareness Provider"
-      );
-
-      assert.equal(
-        registration.configuration.scope,
-        "world"
-      );
-
-      assert.equal(
-        registration.configuration.config,
-        true
-      );
-
-      assert.equal(
-        registration.configuration.default,
-        DEFAULT_WEB_LEVEL_PROVIDER_MODE
-      );
-
-      assert.equal(
-        DEFAULT_WEB_LEVEL_PROVIDER_MODE,
-        WEB_LEVEL_PROVIDER_MODES.BASE
-      );
-
-      assert.deepEqual(
-        registration.configuration.choices,
-        {
-          [WEB_LEVEL_PROVIDER_MODES.BASE]:
-            "Base Level only",
-          [WEB_LEVEL_PROVIDER_MODES.LEVELS_V13]:
-            "theripper93's Levels"
-        }
-      );
-
-      assert.match(
-        registration.configuration.hint,
-        /Base Level only or theripper93's Levels/
-      );
-
-      assert.equal(
-        getConfiguredWebLevelProviderMode(),
-        WEB_LEVEL_PROVIDER_MODES.BASE
-      );
-
-      registration.configuration.onChange(
-        WEB_LEVEL_PROVIDER_MODES.LEVELS_V13
-      );
-
-      assert.equal(
-        changedMode,
-        WEB_LEVEL_PROVIDER_MODES.LEVELS_V13
-      );
-
-      assert.equal(
-        getConfiguredWebLevelProviderMode(),
-        WEB_LEVEL_PROVIDER_MODES.LEVELS_V13
-      );
-
-      assert.deepEqual(
-        emittedHooks,
-        [
-          {
-            event:
-              LEVEL_PROVIDER_MODE_CHANGED_HOOK,
-            value:
-              WEB_LEVEL_PROVIDER_MODES.LEVELS_V13
-          }
-        ]
-      );
-
-      assert.equal(
-        hookRegistrations[0]?.event,
-        "renderSettingsConfig"
-      );
-    } finally {
-      restoreGlobals(
-        previous
-      );
     }
+  };
+}
+
+function findRegistration(harness, key) {
+  return harness.registrations.find((entry) => entry.key === key)?.configuration ?? null;
+}
+
+test("v13 registers all settings in Foundry's standard settings page and no submenu", () => {
+  const previous = preserveGlobals();
+  const harness = createSettingsHarness({
+    [MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE]: WEB_LEVEL_PROVIDER_MODES.BASE
+  });
+  const emitted = [];
+  const registeredHooks = [];
+  let changedMode = null;
+
+  globalThis.game = {
+    release: { generation: 13 },
+    modules: {
+      get(id) {
+        return id === "levels" ? { active: true } : null;
+      }
+    },
+    user: { isGM: true },
+    settings: harness.settings
+  };
+  globalThis.canvas = {};
+  globalThis.Hooks = {
+    on(event, callback) {
+      registeredHooks.push({ event, callback });
+      return registeredHooks.length;
+    },
+    callAll(event, ...args) {
+      emitted.push({ event, args });
+    }
+  };
+
+  try {
+    assert.equal(registerModuleSettings({
+      onLevelProviderChanged(mode) {
+        changedMode = mode;
+      }
+    }), true);
+    assert.equal(registerModuleSettings(), false);
+
+    assert.deepEqual(
+      harness.registrations.map((entry) => entry.key),
+      EXPECTED_SETTING_KEYS
+    );
+    assert.equal(harness.registrations.length, 12);
+    assert.ok(harness.registrations.every((entry) => entry.moduleId === "dynamic-webs"));
+    assert.ok(harness.registrations.every((entry) => entry.configuration.scope === "world"));
+    assert.ok(harness.registrations.every((entry) => entry.configuration.config === true));
+    assert.equal(harness.menus.length, 0);
+    assert.ok(registeredHooks.some((entry) => entry.event === "renderSettingsConfig"));
+
+    const provider = findRegistration(harness, MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE);
+    assert.deepEqual(provider.choices, {
+      [WEB_LEVEL_PROVIDER_MODES.BASE]: "Base Level only",
+      [WEB_LEVEL_PROVIDER_MODES.LEVELS_V13]: "theripper93's Levels"
+    });
+    assert.equal(provider.default, DEFAULT_WEB_LEVEL_PROVIDER_MODE);
+    assert.equal(getConfiguredWebLevelProviderMode(), WEB_LEVEL_PROVIDER_MODES.BASE);
+
+    provider.onChange(WEB_LEVEL_PROVIDER_MODES.LEVELS_V13);
+    assert.equal(changedMode, WEB_LEVEL_PROVIDER_MODES.LEVELS_V13);
+    assert.equal(getConfiguredWebLevelProviderMode(), WEB_LEVEL_PROVIDER_MODES.LEVELS_V13);
+    assert.equal(emitted.at(-1).event, LEVEL_PROVIDER_MODE_CHANGED_HOOK);
+  } finally {
+    restoreGlobals(previous);
   }
-);
+});
 
-test(
-  "Foundry v13 without Levels shows one disabled Base Level selector",
-  () => {
-    const previous =
-      preserveGlobals();
+test("v14 hides only the obsolete provider selector while keeping the other standard settings visible", () => {
+  const previous = preserveGlobals();
+  const harness = createSettingsHarness();
 
-    const registrations =
-      [];
+  globalThis.game = {
+    release: { generation: 14 },
+    modules: { get() { return { active: true }; } },
+    user: { isGM: true },
+    settings: harness.settings
+  };
+  globalThis.canvas = { levels: {} };
+  globalThis.Hooks = { on() {}, callAll() {} };
 
-    let renderSettingsConfig =
-      null;
+  try {
+    registerModuleSettings();
 
-    globalThis.game = {
-      release: {
-        generation:
-          13
-      },
-      modules: {
-        get() {
-          return null;
-        }
-      },
-      settings: {
-        register(
-          moduleId,
-          key,
-          configuration
-        ) {
-          registrations.push({
-            moduleId,
-            key,
-            configuration
-          });
-        },
-        get() {
-          return WEB_LEVEL_PROVIDER_MODES.BASE;
-        }
+    assert.equal(
+      findRegistration(harness, MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE).config,
+      false
+    );
+
+    for (const key of EXPECTED_SETTING_KEYS.filter((key) => key !== MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE)) {
+      assert.equal(findRegistration(harness, key).config, true);
+    }
+
+    assert.equal(shouldShowWebLevelProviderSetting(), false);
+    assert.equal(
+      normaliseConfiguredWebLevelProviderMode(WEB_LEVEL_PROVIDER_MODES.BASE),
+      WEB_LEVEL_PROVIDER_MODES.NATIVE_V14
+    );
+    assert.match(createWebLevelProviderHint(), /native Scene elevation/);
+  } finally {
+    restoreGlobals(previous);
+  }
+});
+
+test("the standard settings form receives five idempotent category headings", () => {
+  const previous = preserveGlobals();
+
+  globalThis.game = {
+    release: { generation: 13 },
+    modules: { get() { return { active: true }; } }
+  };
+  globalThis.canvas = {};
+
+  try {
+    const inserted = [];
+    const existingHeadings = new Map();
+    const controls = new Map();
+
+    const documentObject = {
+      createElement(tagName) {
+        return {
+          tagName: tagName.toUpperCase(),
+          textContent: "",
+          className: "",
+          dataset: {}
+        };
       }
     };
 
-    globalThis.canvas = {};
-    globalThis.Levels =
-      undefined;
-
-    globalThis.Hooks = {
-      on(
-        event,
-        callback
-      ) {
-        if (
-          event ===
-            "renderSettingsConfig"
-        ) {
-          renderSettingsConfig =
-            callback;
+    for (const definition of MODULE_SETTINGS_CATEGORY_DEFINITIONS) {
+      const parent = {
+        querySelector(selector) {
+          const match = /data-dynamic-webs-settings-category="([^"]+)"/u.exec(selector);
+          return match ? existingHeadings.get(match[1]) ?? null : null;
+        },
+        insertBefore(heading, row) {
+          existingHeadings.set(heading.dataset.dynamicWebsSettingsCategory, heading);
+          inserted.push({ heading, row });
         }
-      },
-      callAll() {}
-    };
-
-    resetModuleSettingsRegistrationForTests();
-
-    try {
-      registerModuleSettings();
-
-      const registration =
-        registrations[0];
-
-      assert.deepEqual(
-        registration.configuration.choices,
-        {
-          [WEB_LEVEL_PROVIDER_MODES.BASE]:
-            "Base Level only"
-        }
-      );
-
-      assert.match(
-        registration.configuration.hint,
-        /Install and enable theripper93's Levels/
-      );
-
-      const rowStyles =
-        new Map();
+      };
 
       const row = {
-        style: {
-          setProperty(
-            name,
-            value
-          ) {
-            rowStyles.set(
-              name,
-              value
-            );
-          }
-        }
+        parentNode: parent,
+        ownerDocument: documentObject,
+        style: { setProperty() {} }
       };
 
-      const select = {
-        tagName:
-          "SELECT",
-        disabled:
-          false,
-        title:
-          "",
-        closest(
-          selector
-        ) {
-          return selector ===
-            ".form-group"
-            ? row
-            : null;
+      controls.set(`dynamic-webs.${definition.firstSettingKey}`, {
+        closest(selector) {
+          return selector === ".form-group" ? row : null;
         }
-      };
-
-      const html = {
-        querySelector(
-          selector
-        ) {
-          assert.equal(
-            selector,
-            '[name="dynamic-webs.levelProviderMode"]'
-          );
-
-          return select;
-        }
-      };
-
-      assert.equal(
-        typeof renderSettingsConfig,
-        "function"
-      );
-
-      renderSettingsConfig(
-        {},
-        html
-      );
-
-      assert.equal(
-        select.disabled,
-        true
-      );
-
-      assert.equal(
-        select.title,
-        "Base Level is the only level-awareness provider available in this Foundry setup."
-      );
-
-      assert.equal(
-        rowStyles.get(
-          "opacity"
-        ),
-        "0.65"
-      );
-    } finally {
-      restoreGlobals(
-        previous
-      );
-    }
-  }
-);
-
-test(
-  "Foundry v14 hides the setting and always resolves native Scene elevation",
-  () => {
-    const previous =
-      preserveGlobals();
-
-    const registrations =
-      [];
-
-    let changedMode =
-      null;
-
-    globalThis.game = {
-      release: {
-        generation:
-          14
-      },
-      modules: {
-        get() {
-          return {
-            active:
-              true
-          };
-        }
-      },
-      settings: {
-        register(
-          moduleId,
-          key,
-          configuration
-        ) {
-          registrations.push({
-            moduleId,
-            key,
-            configuration
-          });
-        },
-        get() {
-          return WEB_LEVEL_PROVIDER_MODES.BASE;
-        }
-      }
-    };
-
-    globalThis.canvas = {
-      levels: {}
-    };
-
-    globalThis.Hooks = {
-      on() {},
-      callAll() {}
-    };
-
-    resetModuleSettingsRegistrationForTests();
-
-    try {
-      registerModuleSettings({
-        onLevelProviderChanged:
-          (
-            mode
-          ) => {
-            changedMode =
-              mode;
-          }
       });
-
-      const registration =
-        registrations[0];
-
-      assert.equal(
-        registration.configuration.config,
-        false
-      );
-
-      assert.deepEqual(
-        registration.configuration.choices,
-        {
-          [WEB_LEVEL_PROVIDER_MODES.BASE]:
-            "Base Level only"
-        }
-      );
-
-      assert.match(
-        registration.configuration.hint,
-        /uses native Scene elevation automatically/
-      );
-
-      assert.equal(
-        getConfiguredWebLevelProviderMode(),
-        WEB_LEVEL_PROVIDER_MODES.NATIVE_V14
-      );
-
-      registration.configuration.onChange(
-        WEB_LEVEL_PROVIDER_MODES.BASE
-      );
-
-      assert.equal(
-        changedMode,
-        WEB_LEVEL_PROVIDER_MODES.NATIVE_V14
-      );
-
-      assert.equal(
-        shouldShowWebLevelProviderSetting(),
-        false
-      );
-    } finally {
-      restoreGlobals(
-        previous
-      );
     }
+
+    const root = {
+      querySelector(selector) {
+        const match = /^\[name="(.+)"\]$/u.exec(selector);
+        return match ? controls.get(match[1].replaceAll('\\"', '"').replaceAll('\\\\', '\\')) ?? null : null;
+      }
+    };
+
+    assert.equal(applyModuleSettingsCategories(root), 5);
+    assert.deepEqual(inserted.map((entry) => entry.heading.textContent), [
+      "Generation Defaults",
+      "Population Defaults",
+      "Appearance Defaults",
+      "Level Awareness",
+      "Maintenance"
+    ]);
+    assert.equal(applyModuleSettingsCategories(root), 0);
+  } finally {
+    restoreGlobals(previous);
   }
-);
+});
 
-test(
-  "provider helpers expose only choices valid for the active Foundry setup",
-  () => {
-    const previous =
-      preserveGlobals();
+test("v13 without Levels offers only Base Level", () => {
+  const previous = preserveGlobals();
 
-    try {
-      globalThis.game = {
-        version:
-          "13.351",
-        modules: {
-          get() {
-            return null;
-          }
-        }
-      };
-
-      globalThis.canvas = {
-        levels: {
-          active:
-            true
-        }
-      };
-
-      assert.deepEqual(
-        createAvailableWebLevelProviderChoices(),
-        {
-          [WEB_LEVEL_PROVIDER_MODES.BASE]:
-            "Base Level only",
-          [WEB_LEVEL_PROVIDER_MODES.LEVELS_V13]:
-            "theripper93's Levels"
-        }
-      );
-
-      assert.equal(
-        normaliseConfiguredWebLevelProviderMode(
-          WEB_LEVEL_PROVIDER_MODES.NATIVE_V14
-        ),
-        WEB_LEVEL_PROVIDER_MODES.BASE
-      );
-
-      assert.match(
-        createWebLevelProviderHint(),
-        /theripper93's Levels module/
-      );
-    } finally {
-      restoreGlobals(
-        previous
-      );
-    }
-  }
-);
-
-
-test(
-  "world cache-clear setting broadcasts local carpet-cache clearing and resets itself",
-  async () => {
-    const previous =
-      preserveGlobals();
-
-    const registrations =
-      [];
-
-    const setCalls =
-      [];
-
-    const emittedHooks =
-      [];
-
-    let clearCalls =
-      0;
-
+  try {
     globalThis.game = {
-      release: {
-        generation:
-          13
-      },
-      user: {
-        isGM:
-          true
-      },
-      modules: {
-        get() {
-          return null;
-        }
-      },
-      settings: {
-        register(
-          moduleId,
-          key,
-          configuration
-        ) {
-          registrations.push({
-            moduleId,
-            key,
-            configuration
-          });
-        },
-        get() {
-          return WEB_LEVEL_PROVIDER_MODES.BASE;
-        },
-        async set(
-          moduleId,
-          key,
-          value
-        ) {
-          setCalls.push({
-            moduleId,
-            key,
-            value
-          });
-        }
-      }
+      release: { generation: 13 },
+      modules: { get() { return null; } }
     };
+    globalThis.canvas = {};
+    globalThis.Levels = undefined;
 
-    globalThis.canvas =
-      {};
-
-    globalThis.Hooks = {
-      on() {},
-      callAll(
-        event
-      ) {
-        emittedHooks.push(
-          event
-        );
-      }
-    };
-
-    resetModuleSettingsRegistrationForTests();
-
-    try {
-      registerModuleSettings({
-        onCarpetTextureCacheClearRequested:
-          async () => {
-            clearCalls +=
-              1;
-          }
-      });
-
-      const registration =
-        registrations.find(
-          (
-            entry
-          ) =>
-            entry.key ===
-              MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE
-        );
-
-      assert.ok(
-        registration
-      );
-
-      assert.equal(
-        registration.configuration.type,
-        Boolean
-      );
-
-      await registration.configuration.onChange(
-        true
-      );
-
-      assert.equal(
-        clearCalls,
-        1
-      );
-
-      assert.deepEqual(
-        setCalls,
-        [
-          {
-            moduleId:
-              "dynamic-webs",
-            key:
-              MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
-            value:
-              false
-          }
-        ]
-      );
-
-      assert.ok(
-        emittedHooks.includes(
-          "dynamic-webs.carpetTextureCacheClearRequested"
-        )
-      );
-    } finally {
-      restoreGlobals(
-        previous
-      );
-    }
+    assert.equal(shouldShowWebLevelProviderSetting(), true);
+    assert.deepEqual(createAvailableWebLevelProviderChoices(), {
+      [WEB_LEVEL_PROVIDER_MODES.BASE]: "Base Level only"
+    });
+    assert.match(createWebLevelProviderHint(), /Install and enable theripper93's Levels/);
+    assert.equal(
+      normaliseConfiguredWebLevelProviderMode(WEB_LEVEL_PROVIDER_MODES.LEVELS_V13),
+      WEB_LEVEL_PROVIDER_MODES.BASE
+    );
+  } finally {
+    restoreGlobals(previous);
   }
-);
+});
+
+test("world setting changes update independent cached defaults and emit focused hooks", () => {
+  const previous = preserveGlobals();
+  const harness = createSettingsHarness();
+  const emitted = [];
+  const callbackKinds = [];
+
+  globalThis.game = {
+    release: { generation: 13 },
+    modules: { get() { return null; } },
+    user: { isGM: true },
+    settings: harness.settings
+  };
+  globalThis.canvas = {};
+  globalThis.Hooks = {
+    on() {},
+    callAll(event, ...args) {
+      emitted.push({ event, args });
+    }
+  };
+
+  try {
+    registerModuleSettings({
+      onMaximumSpanWidthChanged() { callbackKinds.push("maximum"); },
+      onDefaultWebPopulationSettingsChanged() { callbackKinds.push("population"); },
+      onDefaultSpanWebBehaviourSettingsChanged() { callbackKinds.push("span"); }
+    });
+
+    findRegistration(harness, MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS).onChange(2.74);
+    assert.equal(getConfiguredMaximumSpanGridUnits(), 2.75);
+
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY).onChange("infested");
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR).onChange("blood-red");
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_WEB_THICKNESS).onChange(4);
+
+    const population = getConfiguredDefaultWebPopulationSettings();
+    assert.equal(population.categoryDensities["wall-span"], "infested");
+    assert.equal(population.colourProfileId, "blood-red");
+    assert.equal(population.thicknessMultiplier, 4);
+
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE).onChange("blocked");
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR).onChange(true);
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE).onChange(false);
+
+    assert.deepEqual(getConfiguredDefaultSpanWebBehaviourSettings(), {
+      visionMode: "blocked",
+      secretDoor: true,
+      destructible: false
+    });
+
+    assert.deepEqual(callbackKinds, [
+      "maximum",
+      "population",
+      "population",
+      "population",
+      "span",
+      "span",
+      "span"
+    ]);
+    assert.ok(emitted.some((entry) => entry.event === MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK));
+    assert.ok(emitted.some((entry) => entry.event === DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK));
+    assert.ok(emitted.some((entry) => entry.event === DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK));
+  } finally {
+    restoreGlobals(previous);
+  }
+});
+
+test("carpet-cache maintenance action broadcasts, calls the client callback and resets", async () => {
+  const previous = preserveGlobals();
+  const harness = createSettingsHarness();
+  const emitted = [];
+  let clearCount = 0;
+
+  globalThis.game = {
+    release: { generation: 13 },
+    modules: { get() { return null; } },
+    user: { isGM: true },
+    settings: harness.settings
+  };
+  globalThis.canvas = {};
+  globalThis.Hooks = {
+    on() {},
+    callAll(event) {
+      emitted.push(event);
+    }
+  };
+
+  try {
+    registerModuleSettings({
+      async onCarpetTextureCacheClearRequested() {
+        clearCount += 1;
+      }
+    });
+
+    const registration = findRegistration(harness, MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE);
+    await registration.onChange(true);
+
+    assert.equal(clearCount, 1);
+    assert.ok(emitted.includes(CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK));
+    assert.deepEqual(harness.writes.at(-1), {
+      moduleId: "dynamic-webs",
+      key: MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
+      value: false
+    });
+  } finally {
+    restoreGlobals(previous);
+  }
+});
+
+test("maximum span normalisation clamps and snaps to the authored step", () => {
+  assert.equal(normaliseConfiguredMaximumSpanGridUnits("not-a-number"), DEFAULT_MAXIMUM_SPAN_GRID_UNITS);
+  assert.equal(normaliseConfiguredMaximumSpanGridUnits(0), 0.35);
+  assert.equal(normaliseConfiguredMaximumSpanGridUnits(2.73), 2.75);
+  assert.equal(normaliseConfiguredMaximumSpanGridUnits(100), 10);
+});

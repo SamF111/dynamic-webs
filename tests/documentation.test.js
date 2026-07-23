@@ -6,16 +6,13 @@ const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf
 const readJson = async (path) => JSON.parse(await readText(path));
 
 test("README locks the v0.7.0 span assets, destruction and existing spatial contract", async () => {
-  const [readme, manifest] = await Promise.all([
-    readText("README.md"),
-    readJson("module.json")
-  ]);
+  const readme = await readText("README.md");
 
-  assert.ok(readme.includes("**Current version:** `" + manifest.version + "`"));
+  assert.match(readme, /Current version:\*\* `0\.7\.0`/u);
   assert.match(readme, /Blueprint schema version:\*\* `8`/u);
   assert.match(readme, /flags\.dynamic-webs\.webPopulations/u);
-  assert.match(readme, /An empty population array means that the Scene generates no webs/u);
-  assert.match(readme, /There is no implicit population/u);
+  assert.match(readme, /An explicitly stored empty population array means that the Scene generates no webs/u);
+  assert.match(readme, /missing population flag resolves one stable world-default population/u);
   assert.match(readme, /No population card is expanded automatically/u);
   assert.match(readme, /Confine to Region tags/u);
   assert.match(readme, /Exclude Region tags/u);
@@ -34,7 +31,7 @@ test("README documents population-qualified IDs and v4 seeds", async () => {
   assert.match(readme, /<web-kind>:<encoded-scene-id>:<encoded-population-id>:<encoded-level-id>:<encoded-source-key>/u);
   assert.match(readme, /populationId/u);
   assert.match(readme, /hidden opaque ID/u);
-  assert.match(readme, /middle `standard` state/u);
+  assert.match(readme, /authored initial values remain `standard` for every category/u);
   assert.match(readme, /nested \*\*Web options\*\* section/u);
   assert.match(readme, /nested \*\*Appearance\*\* section/u);
   assert.match(readme, /active viewed level plus every detected level below it/u);
@@ -94,13 +91,14 @@ test("roadmap records v0.7.0 span assets after carpets and retains later milesto
   assert.match(roadmap, /Milestone 7 — Span assets and whole-span destruction — complete/u);
   assert.match(roadmap, /Milestone 7\.1 — Persistent span-destruction hardening — complete/u);
   assert.match(roadmap, /\*\*Delivered:\*\* v0\.7\.0/u);
-  assert.match(roadmap, /GM-only world settings for the default quantity or density/u);
+  assert.match(roadmap, /Milestone 7\.2 — Categorised GM defaults and Scene span reach — complete/u);
+  assert.match(roadmap, /no legacy FormApplication dependency/u);
   assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
   for (const phrase of [
     "Spatial index and read-only query API",
     "Web carpets",
     "Span assets and whole-span destruction",
-    "Optional web barriers",
+    "Scene wall-span behaviour and derived walls",
     "Extended token and strand interactions",
     "Extended persistence and network state",
     "Generic trapping and occupancy",
@@ -139,5 +137,38 @@ test("README and roadmap document bundled WebP carpets without GM baking", async
   assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
   assert.match(roadmap, /No GM baking, upload, persistent storage/u);
   assert.match(roadmap, /At v0\.6\.0, corner, span and ground webs remained dynamic/u);
+});
+
+
+
+
+test("README and roadmap document world population defaults and maximum span reach", async () => {
+  const [readme, roadmap] = await Promise.all([
+    readText("README.md"),
+    readText("roadmap.md")
+  ]);
+
+  for (const phrase of [
+    "Configure Settings",
+    "Generation Defaults",
+    "Population Defaults",
+    "Appearance Defaults",
+    "maximum span width",
+    "Scene override",
+    "None**, **Limited** or **Blocked",
+    "closed secret-door",
+    "indestructible",
+    "explicitly saved empty array",
+    "0.35–10"
+  ]) {
+    assert.ok(readme.includes(phrase));
+  }
+
+  assert.match(roadmap, /Milestone 7\.2 — Categorised GM defaults and Scene span reach — complete/u);
+  assert.match(roadmap, /no legacy FormApplication dependency/u);
+  assert.match(roadmap, /An explicit `\[\]` remains an intentional no-web Scene/u);
+  assert.match(roadmap, /starts at `1\.5`/u);
+  assert.match(roadmap, /Milestone 8 — Scene wall-span behaviour and derived walls — implementation candidate/u);
+  assert.match(roadmap, /Movement blocking is available only through a module-owned closed secret door/u);
 });
 

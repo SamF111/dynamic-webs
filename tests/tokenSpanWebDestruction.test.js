@@ -589,3 +589,68 @@ test("the initiating player submits the first pass-through movement to the GM", 
     globalThis.canvas = previousCanvas;
   }
 });
+
+
+test("indestructible Scene span policy skips token movement queries and destruction", () => {
+  const previousGame = globalThis.game;
+  const previousCanvas = globalThis.canvas;
+
+  const token = {
+    id: "token-indestructible",
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    elevation: 0,
+    parent: { id: "scene-a" }
+  };
+
+  let queryCount = 0;
+  let destroyCount = 0;
+
+  const service = {
+    getState() {
+      return {
+        active: true,
+        sceneId: "scene-a",
+        spanWebBehaviour: { destructible: false },
+        levels: [{ id: "base", elevationBand: { bottom: -Infinity, top: Infinity } }]
+      };
+    },
+    queryMovementIntersections() {
+      queryCount += 1;
+      return [{ webId: "span-a" }];
+    },
+    destroyWebs() {
+      destroyCount += 1;
+      return { changed: true, destroyedWebIds: ["span-a"], state: {} };
+    }
+  };
+
+  globalThis.game = { user: { id: "gm", isGM: true } };
+  globalThis.canvas = {
+    dimensions: { size: 100 },
+    scene: {
+      id: "scene-a",
+      grid: { size: 100 },
+      tokens: [token]
+    },
+    tokens: { placeables: [token] }
+  };
+
+  try {
+    const controller = new TokenSpanWebInteractionController({
+      runtime: { getWebRuntimeService: () => service }
+    });
+
+    controller.prime(globalThis.canvas.scene);
+    token.x = 100;
+
+    assert.equal(controller.handleTokenUpdated(token, { x: 100 }, {}, "gm"), null);
+    assert.equal(queryCount, 0);
+    assert.equal(destroyCount, 0);
+  } finally {
+    globalThis.game = previousGame;
+    globalThis.canvas = previousCanvas;
+  }
+});

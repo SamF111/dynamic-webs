@@ -68,6 +68,14 @@ import {
   reportDiagnostic
 } from "../../diagnostics/diagnosticReporter.js";
 
+import {
+  getSceneSpanWebBehaviourConfiguration
+} from "../../config/sceneSpanWebBehaviourConfiguration.js";
+
+import {
+  WebSpanWallService
+} from "./WebSpanWallService.js";
+
 /** Own deterministic all-level web blueprints and transient visible rendering. */
 export class WebRuntimeService {
   constructor(
@@ -121,6 +129,12 @@ export class WebRuntimeService {
             webRuntimeService:
               this
           });
+
+    this.spanWallService =
+      options.spanWallService instanceof
+        WebSpanWallService
+        ? options.spanWallService
+        : new WebSpanWallService();
 
     this.state =
       createWebRuntimeState();
@@ -226,6 +240,11 @@ export class WebRuntimeService {
       }
     );
 
+    const spanWebBehaviour =
+      getSceneSpanWebBehaviourConfiguration(
+        scene
+      );
+
     const persistedMutableState =
       getSceneWebMutableStateConfiguration(
         scene
@@ -249,7 +268,9 @@ export class WebRuntimeService {
         persistedState:
           enteringScene
             ? persistedMutableState
-            : null
+            : null,
+        destroyable:
+          spanWebBehaviour.destructible
       });
 
     nextSpatialIndex.applyDestroyedWebIds(
@@ -365,6 +386,7 @@ export class WebRuntimeService {
         ),
       configuration:
         generated.configuration,
+      spanWebBehaviour,
       mutableState,
       webs:
         generated.webs,
@@ -398,6 +420,11 @@ export class WebRuntimeService {
             : "scene-state-reconciliation"
       });
     }
+
+    this.#requestSpanWallReconciliation(
+      scene,
+      operationReason
+    );
 
     return this.createDiagnosticSnapshot();
   }
@@ -767,6 +794,47 @@ export class WebRuntimeService {
     );
   }
 
+  getSpanWallDiagnostics() {
+    return this.spanWallService.createDiagnosticSnapshot();
+  }
+
+  async flushSpanWallReconciliation() {
+    return this.spanWallService.flush();
+  }
+
+  reconcileSpanWallsForScene({
+    scene =
+      globalThis.canvas?.scene,
+    webs = [],
+    destroyedWebIds = [],
+    behaviour = null,
+    reason =
+      "explicit-span-wall-reconciliation"
+  } = {}) {
+    if (
+      !scene
+    ) {
+      return false;
+    }
+
+    const resolvedBehaviour =
+      behaviour ??
+      getSceneSpanWebBehaviourConfiguration(
+        scene
+      );
+
+    return this.spanWallService.requestReconciliation({
+      scene,
+      webs,
+      destroyedWebIds,
+      behaviour:
+        resolvedBehaviour,
+      generationId:
+        this.state.generationId,
+      reason
+    });
+  }
+
   /** Wait for any queued Scene-flag write, primarily for tests and tooling. */
   async flushMutableStatePersistence() {
     while (
@@ -893,6 +961,20 @@ export class WebRuntimeService {
     webIds,
     metadata = {}
   ) {
+    if (
+      this.state.spanWebBehaviour?.destructible ===
+        false
+    ) {
+      return Object.freeze({
+        changed:
+          false,
+        destroyedWebIds:
+          Object.freeze([]),
+        state:
+          this.getMutableState()
+      });
+    }
+
     const requestedIds =
       Array.from(
         new Set(
@@ -1361,7 +1443,9 @@ export class WebRuntimeService {
         spatialDiagnostics:
           this.spatialIndex.createDiagnosticSnapshot(),
         mutableStatePersistence:
-          this.getMutableStatePersistence()
+          this.getMutableStatePersistence(),
+        spanWallDiagnostics:
+          this.spanWallService.createDiagnosticSnapshot()
       }
     );
   }
@@ -1377,7 +1461,9 @@ export class WebRuntimeService {
         spatialDiagnostics:
           this.spatialIndex.createDiagnosticSnapshot(),
         mutableStatePersistence:
-          this.getMutableStatePersistence()
+          this.getMutableStatePersistence(),
+        spanWallDiagnostics:
+          this.spanWallService.createDiagnosticSnapshot()
       }
     );
   }
@@ -1713,6 +1799,43 @@ export class WebRuntimeService {
       mutableState:
         this.getMutableState()
     };
+
+    this.#requestSpanWallReconciliation(
+      resolveSceneDocument(
+        this.state.sceneId
+      ),
+      reason
+    );
+  }
+
+  #requestSpanWallReconciliation(
+    scene,
+    reason
+  ) {
+    if (
+      !scene ||
+      this.state.active !==
+        true
+    ) {
+      return false;
+    }
+
+    return this.spanWallService.requestReconciliation({
+      scene,
+      webs:
+        this.state.webs,
+      destroyedWebIds:
+        this.getMutableState().destroyedWebIds,
+      behaviour:
+        this.state.spanWebBehaviour,
+      generationId:
+        this.state.generationId,
+      reason:
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "span-wall-reconciliation"
+    });
   }
 
   #restorePreviousRendering({
@@ -2200,3 +2323,4 @@ function deepFreezeClone(
     clone
   );
 }
+

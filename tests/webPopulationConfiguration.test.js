@@ -8,9 +8,16 @@ import {
 } from "../scripts/config/sceneWebPopulationConfiguration.js";
 
 import {
+  createImplicitSceneWebPopulationId,
   createWebPopulationId,
   createUniqueWebPopulationId
 } from "../scripts/config/sceneWebPopulationIds.js";
+
+import {
+  MODULE_SETTING_KEYS,
+  registerModuleSettings,
+  resetModuleSettingsRegistrationForTests
+} from "../scripts/config/moduleSettings.js";
 
 function withBaseEnvironment(callback) {
   const previousGame = globalThis.game;
@@ -30,12 +37,37 @@ function withBaseEnvironment(callback) {
   }
 }
 
-test("empty modular configuration produces no implicit population", () => withBaseEnvironment(() => {
+test("a Scene with no persisted population flag resolves one stable world-default population", () => withBaseEnvironment(() => {
   const scene = { id: "scene", getFlag: () => undefined };
+  const first = getSceneWebPopulationConfiguration(scene);
+  const second = getSceneWebPopulationConfiguration(scene);
+
+  assert.equal(first.populationSource, "world-default");
+  assert.equal(first.hasPersistedPopulations, false);
+  assert.equal(first.usesWorldPopulationDefaults, true);
+  assert.equal(first.populations.length, 1);
+  assert.equal(first.populations[0].id, createImplicitSceneWebPopulationId("scene"));
+  assert.equal(second.populations[0].id, first.populations[0].id);
+  assert.equal(first.hasActivePopulations, true);
+  assert.equal(Object.isFrozen(first.populations), true);
+}));
+
+test("an explicit empty population array remains an intentional no-web Scene", () => withBaseEnvironment(() => {
+  const scene = {
+    id: "scene",
+    getFlag(_namespace, key) {
+      return key === "webPopulations"
+        ? []
+        : undefined;
+    }
+  };
+
   const configuration = getSceneWebPopulationConfiguration(scene);
+  assert.equal(configuration.populationSource, "scene");
+  assert.equal(configuration.hasPersistedPopulations, true);
+  assert.equal(configuration.usesWorldPopulationDefaults, false);
   assert.deepEqual(configuration.populations, []);
   assert.equal(configuration.hasActivePopulations, false);
-  assert.equal(Object.isFrozen(configuration.populations), true);
 }));
 
 test("population configuration normalises independent level, density, colour and thickness", () => withBaseEnvironment(() => {
@@ -169,6 +201,122 @@ test("default population uses hidden random identity and middle density", () => 
 });
 
 
+
+test("world defaults affect only new and genuinely unconfigured populations", () => {
+  const previousGame =
+    globalThis.game;
+
+  const previousCanvas =
+    globalThis.canvas;
+
+  const previousHooks =
+    globalThis.Hooks;
+
+  const registrations =
+    [];
+
+  const values =
+    new Map([
+      [MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE, "base"],
+      [MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS, 3.25],
+      [MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY, "sparse"],
+      [MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY, "dense"],
+      [MODULE_SETTING_KEYS.DEFAULT_GROUND_WEB_DENSITY, "disabled"],
+      [MODULE_SETTING_KEYS.DEFAULT_CARPET_WEB_DENSITY, "infested"],
+      [MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR, "arcane-blue"],
+      [MODULE_SETTING_KEYS.DEFAULT_WEB_THICKNESS, 4]
+    ]);
+
+  globalThis.game = {
+    release: { generation: 13 },
+    version: "13",
+    modules: { get: () => ({ active: false }) },
+    user: { isGM: true },
+    settings: {
+      register(moduleId, key, configuration) {
+        registrations.push({ moduleId, key, configuration });
+      },
+      get(_moduleId, key) {
+        return values.get(key);
+      }
+    }
+  };
+
+  globalThis.canvas = { scene: null };
+  globalThis.Hooks = { on() {}, callAll() {} };
+  resetModuleSettingsRegistrationForTests();
+
+  try {
+    registerModuleSettings();
+
+    const implicit = getSceneWebPopulationConfiguration({
+      id: "unconfigured",
+      getFlag: () => undefined
+    }).populations[0];
+
+    assert.deepEqual(implicit.categoryDensities, {
+      "wall-corner": "sparse",
+      "wall-span": "dense",
+      ground: "disabled",
+      "web-carpet": "infested"
+    });
+    assert.equal(implicit.colourProfileId, "arcane-blue");
+    assert.equal(implicit.thicknessMultiplier, 4);
+    assert.equal(implicit.generationOptions.spanWebs.maximumSpanGridUnits, 3.25);
+
+    const apiCreated = normaliseSceneWebPopulations([
+      {
+        levelId: "base"
+      }
+    ], {
+      levels: [{ id: "base" }],
+      generateMissingIds: true
+    })[0];
+
+    assert.deepEqual(apiCreated.categoryDensities, implicit.categoryDensities);
+    assert.equal(apiCreated.colourProfileId, "arcane-blue");
+    assert.equal(apiCreated.thicknessMultiplier, 4);
+
+    const configuredScene = {
+      id: "configured",
+      getFlag(_namespace, key) {
+        return key === "webPopulations"
+          ? [{
+              id: "saved",
+              levelId: "base",
+              categoryDensities: {
+                "wall-corner": "standard",
+                "wall-span": "standard",
+                ground: "standard",
+                "web-carpet": "standard"
+              },
+              colourProfileId: "natural-white",
+              thicknessMultiplier: 1
+            }]
+          : undefined;
+      }
+    };
+
+    const defaultSpanRegistration = registrations.find((entry) =>
+      entry.key === MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY
+    );
+    defaultSpanRegistration.configuration.onChange("disabled");
+
+    const existing = getSceneWebPopulationConfiguration(
+      configuredScene
+    ).populations[0];
+
+    assert.equal(existing.categoryDensities["wall-span"], "standard");
+    assert.equal(existing.colourProfileId, "natural-white");
+    assert.equal(existing.thicknessMultiplier, 1);
+  } finally {
+    resetModuleSettingsRegistrationForTests();
+    globalThis.game = previousGame;
+    globalThis.canvas = previousCanvas;
+    globalThis.Hooks = previousHooks;
+  }
+});
+
 test("population Region roles reject exact tag reuse", () => {
   assert.throws(() => normaliseSceneWebPopulations([{
     id: "web-region-conflict",
@@ -178,4 +326,5 @@ test("population Region roles reject exact tag reuse", () => {
     categoryDensities: {}
   }], { levels: [{ id: "base" }] }), /cannot be reused/u);
 });
+
 

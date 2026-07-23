@@ -1,4 +1,3 @@
-
 import {
   getSceneWebPopulationConfiguration
 } from "../config/sceneWebPopulationConfiguration.js";
@@ -131,6 +130,13 @@ export function createBaselineDiagnosticReport({
         state.colourProfileId,
       thicknessMultiplier:
         state.thicknessMultiplier,
+      spanWebBehaviour:
+        state.spanWebBehaviour ??
+        scenePopulationConfiguration?.spanWebBehaviour ??
+        null,
+      spanWalls:
+        state.spanWalls ??
+        null,
       populationCount:
         webPopulations.length,
       activePopulationCount:
@@ -188,6 +194,12 @@ export function createBaselineDiagnosticReport({
         state.colourProfileId,
       thicknessMultiplier:
         state.thicknessMultiplier,
+      spanWebBehaviour:
+        state.spanWebBehaviour ??
+        null,
+      spanWalls:
+        state.spanWalls ??
+        null,
       categoryDensities:
         state.categoryDensities,
       categoryDensitySources:
@@ -630,3 +642,4 @@ function deepFreeze(
         value
       );
 }
+

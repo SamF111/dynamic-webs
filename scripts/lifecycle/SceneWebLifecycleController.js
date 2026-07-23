@@ -4,6 +4,7 @@ import {
 } from "../module/moduleConstants.js";
 
 import {
+  doesSceneUpdateAffectSpanWebBehaviour,
   doesSceneUpdateAffectWebGeometry,
   doesSceneUpdateAffectWebMutableState,
   doesSceneUpdateAffectWebPopulations
@@ -32,6 +33,10 @@ import {
 import {
   TokenSpanWebInteractionController
 } from "../interactions/TokenSpanWebInteractionController.js";
+
+import {
+  isGeneratedSpanWallDocument
+} from "../foundry/webSpanWallCompatibility.js";
 
 /**
  * Own Foundry hooks and debounced Scene web regeneration.
@@ -415,6 +420,20 @@ export class SceneWebLifecycleController {
     }
 
     if (
+      doesSceneUpdateAffectSpanWebBehaviour(
+        changed
+      )
+    ) {
+      this.clearPendingRebuild();
+
+      this.synchroniseActiveScene(
+        "scene-span-web-behaviour-update"
+      );
+
+      return;
+    }
+
+    if (
       doesSceneUpdateAffectWebMutableState(
         changed
       )
@@ -495,6 +514,14 @@ export class SceneWebLifecycleController {
     wallDocument
   ) {
     if (
+      isGeneratedSpanWallDocument(
+        wallDocument
+      )
+    ) {
+      return;
+    }
+
+    if (
       this.#doesWallBelongToActiveScene(
         wallDocument
       )
@@ -515,6 +542,14 @@ export class SceneWebLifecycleController {
     wallDocument,
     changed
   ) {
+    if (
+      isGeneratedSpanWallDocument(
+        wallDocument
+      )
+    ) {
+      return;
+    }
+
     if (
       !this.#doesWallBelongToActiveScene(
         wallDocument
@@ -539,6 +574,14 @@ export class SceneWebLifecycleController {
   handleWallDeleted(
     wallDocument
   ) {
+    if (
+      isGeneratedSpanWallDocument(
+        wallDocument
+      )
+    ) {
+      return;
+    }
+
     if (
       this.#doesWallBelongToActiveScene(
         wallDocument
@@ -1017,3 +1060,4 @@ function normaliseReason(
     ? text
     : "scene-lifecycle";
 }
+

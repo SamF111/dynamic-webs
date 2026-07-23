@@ -3,5 +3,18 @@
   "webColour": "natural-white",
   "webThickness": 1,
   "webPopulationDensity": "standard",
+  "webPopulationCategoryDensities": {
+    "wall-corner": "standard",
+    "wall-span": "standard",
+    "ground": "standard",
+    "web-carpet": "standard"
+  },
+  "webPopulationColour": "natural-white",
+  "webPopulationThickness": 1,
+  "spanWebBehaviour": {
+    "visionMode": "limited",
+    "secretDoor": false,
+    "destructible": true
+  },
   "webPopulations": []
 }

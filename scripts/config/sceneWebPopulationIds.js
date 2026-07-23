@@ -222,3 +222,61 @@ function normaliseRandomToken(
     ? token
     : null;
 }
+
+
+/**
+ * Create the stable reserved ID used while a Scene has no persisted
+ * webPopulations flag. Saving Scene Configuration persists this same ID, so
+ * generation and destroyed-span identifiers do not change merely because the
+ * implicit population became explicit.
+ *
+ * @param {unknown} sceneId - Scene identifier.
+ * @returns {string} Stable Scene-qualified default-population ID.
+ */
+export function createImplicitSceneWebPopulationId(
+  sceneId
+) {
+  const text =
+    String(
+      sceneId ??
+      "scene"
+    ).trim() ||
+    "scene";
+
+  return `web-default-${hashText(text)}`;
+}
+
+function hashText(
+  value
+) {
+  let hash =
+    0x811c9dc5;
+
+  for (
+    const character of
+    String(
+      value
+    )
+  ) {
+    hash ^=
+      character.charCodeAt(
+        0
+      );
+
+    hash =
+      Math.imul(
+        hash,
+        0x01000193
+      ) >>>
+      0;
+  }
+
+  return hash
+    .toString(
+      16
+    )
+    .padStart(
+      8,
+      "0"
+    );
+}

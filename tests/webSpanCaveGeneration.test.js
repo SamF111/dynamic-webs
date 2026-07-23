@@ -53,3 +53,221 @@ test("moderately skewed cave walls can generate a four-anchor span asset", () =>
   assert.notEqual(target.secondWallStart.y, target.secondWallEnd.y);
   assert.notEqual(target.secondWallStart.x, target.secondWallEnd.x);
 });
+
+
+import {
+  WebGenerationService
+} from "../scripts/simulation/webs/WebGenerationService.js";
+
+import {
+  getSceneWebPopulationConfiguration
+} from "../scripts/config/sceneWebPopulationConfiguration.js";
+
+import {
+  MODULE_SETTING_KEYS,
+  registerModuleSettings,
+  resetModuleSettingsRegistrationForTests
+} from "../scripts/config/moduleSettings.js";
+
+test("the GM maximum-span setting gates modular passage eligibility in grid units", () => {
+  const previousGame =
+    globalThis.game;
+
+  const previousCanvas =
+    globalThis.canvas;
+
+  const previousHooks =
+    globalThis.Hooks;
+
+  const registrations =
+    [];
+
+  const values =
+    new Map([
+      [MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE, "base"],
+      [MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS, 1.5]
+    ]);
+
+  globalThis.game = {
+    release: {
+      generation:
+        13
+    },
+    version:
+      "13",
+    modules: {
+      get() {
+        return {
+          active:
+            false
+        };
+      }
+    },
+    user: {
+      isGM:
+        true
+    },
+    settings: {
+      register(
+        moduleId,
+        key,
+        configuration
+      ) {
+        registrations.push({
+          moduleId,
+          key,
+          configuration
+        });
+      },
+      get(
+        _moduleId,
+        key
+      ) {
+        return values.get(
+          key
+        );
+      }
+    }
+  };
+
+  globalThis.canvas = {
+    scene:
+      null
+  };
+
+  globalThis.Hooks = {
+    on() {},
+    callAll() {}
+  };
+
+  resetModuleSettingsRegistrationForTests();
+
+  try {
+    registerModuleSettings();
+
+    const scene = {
+      id:
+        "span-setting-scene",
+      getFlag() {
+        return undefined;
+      }
+    };
+
+    const generationContext = {
+      sceneId:
+        scene.id,
+      sceneRect: {
+        x:
+          0,
+        y:
+          0,
+        width:
+          800,
+        height:
+          800,
+        right:
+          800,
+        bottom:
+          800
+      },
+      gridSize:
+        100,
+      wallSegments: [
+        {
+          wallId:
+            "upper",
+          a: {
+            x:
+              100,
+            y:
+              100
+          },
+          b: {
+            x:
+              500,
+            y:
+              100
+          }
+        },
+        {
+          wallId:
+            "lower",
+          a: {
+            x:
+              100,
+            y:
+              300
+          },
+          b: {
+            x:
+              500,
+            y:
+              300
+          }
+        }
+      ]
+    };
+
+    const service =
+      new WebGenerationService();
+
+    const narrowConfiguration =
+      getSceneWebPopulationConfiguration(
+        scene
+      );
+
+    const narrowResult =
+      service.generate(
+        generationContext,
+        {
+          populations:
+            narrowConfiguration.activePopulations
+        }
+      );
+
+    assert.equal(
+      narrowResult.counts.span,
+      0
+    );
+
+    const maximumSpanRegistration =
+      registrations.find(
+        (
+          entry
+        ) =>
+          entry.key ===
+            MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS
+      );
+
+    maximumSpanRegistration.configuration.onChange(
+      2.5
+    );
+
+    const wideConfiguration =
+      getSceneWebPopulationConfiguration(
+        scene
+      );
+
+    const wideResult =
+      service.generate(
+        generationContext,
+        {
+          populations:
+            wideConfiguration.activePopulations
+        }
+      );
+
+    assert.equal(
+      wideResult.counts.span,
+      1
+    );
+  } finally {
+    resetModuleSettingsRegistrationForTests();
+    globalThis.game =
+      previousGame;
+    globalThis.canvas =
+      previousCanvas;
+    globalThis.Hooks =
+      previousHooks;
+  }
+});

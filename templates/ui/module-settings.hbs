@@ -1,0 +1,170 @@
+<form class="flexcol" autocomplete="off">
+  <p class="hint">
+    These are world defaults. Existing explicit Scene populations and Scene span-behaviour overrides are not silently rewritten.
+  </p>
+
+  <details class="dynamic-webs-population-section" open>
+    <summary>
+      <strong>Generation defaults</strong>
+      <span class="hint">Span eligibility and behaviour</span>
+    </summary>
+
+    <div class="dynamic-webs-population-section-body">
+      <div class="form-group">
+        <label>Maximum span width</label>
+        <div class="form-fields">
+          <input
+            type="number"
+            name="{{fieldNames.maximumSpanGridUnits}}"
+            value="{{maximumSpanGridUnits}}"
+            min="{{maximumSpanMinimum}}"
+            max="{{maximumSpanMaximum}}"
+            step="{{maximumSpanStep}}"
+          >
+          <span class="units">grid units</span>
+        </div>
+        <p class="hint">Default maximum wall-to-wall passage width for Scenes without a Scene override.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Span vision</label>
+        <div class="form-fields">
+          <select name="{{fieldNames.defaultSpanVisionMode}}">
+            {{#each spanVisionOptions}}
+              <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <p class="hint">Default vision effect for intact wall-span webs. None creates no vision wall, Limited permits vision through one limited wall, and Blocked uses normal sight blocking.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Treat intact spans as closed secret doors</label>
+        <div class="form-fields">
+          <input
+            type="checkbox"
+            name="{{fieldNames.defaultSpanSecretDoor}}"
+            {{#if defaultSpanSecretDoor}}checked{{/if}}
+          >
+        </div>
+        <p class="hint">Movement blocking is available only through module-owned closed secret-door walls. GMs may open those doors normally.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Span webs are destructible</label>
+        <div class="form-fields">
+          <input
+            type="checkbox"
+            name="{{fieldNames.defaultSpanDestructible}}"
+            {{#if defaultSpanDestructible}}checked{{/if}}
+          >
+        </div>
+        <p class="hint">When disabled, token movement cannot destroy wall-span webs and any stored destroyed-span IDs are restored during Scene reconciliation.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="dynamic-webs-population-section">
+    <summary>
+      <strong>Population defaults</strong>
+      <span class="hint">Density by category</span>
+    </summary>
+
+    <div class="dynamic-webs-population-section-body">
+      {{#each densityFields}}
+        <div class="form-group">
+          <label>{{label}}</label>
+          <div class="form-fields">
+            <select name="{{name}}">
+              {{#each options}}
+                <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </details>
+
+  <details class="dynamic-webs-population-section">
+    <summary>
+      <strong>Appearance defaults</strong>
+      <span class="hint">Colour and thickness</span>
+    </summary>
+
+    <div class="dynamic-webs-population-section-body">
+      <div class="form-group">
+        <label>Web colour</label>
+        <div class="form-fields">
+          <select name="{{fieldNames.defaultWebColour}}">
+            {{#each colourOptions}}
+              <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Web thickness</label>
+        <div class="form-fields">
+          <select name="{{fieldNames.defaultWebThickness}}">
+            {{#each thicknessOptions}}
+              <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  {{#if showLevelProvider}}
+    <details class="dynamic-webs-population-section">
+      <summary>
+        <strong>Level awareness</strong>
+        <span class="hint">Foundry v13 provider</span>
+      </summary>
+
+      <div class="dynamic-webs-population-section-body">
+        <div class="form-group">
+          <label>Level Awareness Provider</label>
+          <div class="form-fields">
+            <select
+              name="{{fieldNames.levelProviderMode}}"
+              {{#if levelProviderDisabled}}disabled{{/if}}
+            >
+              {{#each levelProviderOptions}}
+                <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <p class="hint">{{levelProviderHint}}</p>
+        </div>
+      </div>
+    </details>
+  {{/if}}
+
+  <details class="dynamic-webs-population-section">
+    <summary>
+      <strong>Maintenance</strong>
+      <span class="hint">Client-local caches</span>
+    </summary>
+
+    <div class="dynamic-webs-population-section-body">
+      <div class="form-group">
+        <label>Web carpet texture cache</label>
+        <div class="form-fields">
+          <button type="button" data-dynamic-webs-clear-carpet-cache>
+            <i class="fas fa-trash"></i> Clear cache
+          </button>
+        </div>
+        <p class="hint">Clears Dynamic Webs' client-local bundled carpet texture request cache on every connected client. Scene data and generated geometry are unchanged.</p>
+      </div>
+    </div>
+  </details>
+
+  <footer class="sheet-footer flexrow">
+    <button type="submit">
+      <i class="fas fa-save"></i> Save defaults
+    </button>
+  </footer>
+</form>

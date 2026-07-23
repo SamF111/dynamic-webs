@@ -45,6 +45,7 @@ import {
 } from "../simulation/webs/webLevelContract.js";
 
 import {
+  createImplicitSceneWebPopulationId,
   createUniqueWebPopulationId
 } from "./sceneWebPopulationIds.js";
 
@@ -52,6 +53,14 @@ import {
   normaliseRegionRoleTags,
   validateRegionTagListsAreUnique
 } from "./regionTagConfiguration.js";
+
+import {
+  getConfiguredDefaultWebPopulationSettings
+} from "./moduleSettings.js";
+
+import {
+  getSceneSpanWebBehaviourConfiguration
+} from "./sceneSpanWebBehaviourConfiguration.js";
 
 export const DEFAULT_WEB_POPULATION_DENSITY =
   normaliseSceneWebCategoryDensity(
@@ -61,23 +70,31 @@ export const DEFAULT_WEB_POPULATION_DENSITY =
 
 export function createDefaultSceneWebPopulation({
   levels = [],
-  usedIds = new Set()
+  usedIds = new Set(),
+  preferredId = null,
+  defaults = getConfiguredDefaultWebPopulationSettings()
 } = {}) {
   const level = Array.isArray(levels) && levels.length > 0
     ? levels[0]
     : { id: BASE_WEB_LEVEL_ID };
 
+  const resolvedDefaults =
+    normaliseNewPopulationDefaults(
+      defaults
+    );
+
   return deepFreeze({
     id: createUniqueWebPopulationId({
+      preferredId,
       usedIds
     }),
     enabled: true,
     levelId: String(level.id ?? BASE_WEB_LEVEL_ID),
     confineRegionTags: Object.freeze([]),
     excludeRegionTags: Object.freeze([]),
-    categoryDensities: createDefaultCategoryDensities(),
-    colourProfileId: DEFAULT_SCENE_WEB_COLOUR,
-    thicknessMultiplier: DEFAULT_SCENE_WEB_THICKNESS
+    categoryDensities: resolvedDefaults.categoryDensities,
+    colourProfileId: resolvedDefaults.colourProfileId,
+    thicknessMultiplier: resolvedDefaults.thicknessMultiplier
   });
 }
 
@@ -85,16 +102,41 @@ export function getSceneWebPopulationConfiguration(scene) {
   validateScene(scene);
 
   const provider = resolveWebLevelProvider({ scene });
-  const raw = readRawSceneWebConfiguration(scene)[SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS];
-  const populations = normaliseSceneWebPopulations(raw, {
-    levels: provider.levels
-  });
+  const spanWebBehaviour =
+    getSceneSpanWebBehaviourConfiguration(
+      scene
+    );
+  const rawConfiguration = readRawSceneWebConfiguration(scene);
+  const raw = rawConfiguration[SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS];
+  const hasPersistedPopulations =
+    hasPersistedSceneWebPopulations(
+      scene,
+      rawConfiguration
+    );
+
+  const populations =
+    hasPersistedPopulations
+      ? normaliseSceneWebPopulations(raw, {
+          levels: provider.levels
+        })
+      : Object.freeze([
+          createDefaultSceneWebPopulation({
+            levels: provider.levels,
+            preferredId:
+              createImplicitSceneWebPopulationId(
+                scene.id
+              )
+          })
+        ]);
 
   const levelsById = new Map(provider.levels.map((level) => [level.id, level]));
 
   const resolvedPopulations = Object.freeze(populations.map((population) => {
     const level = levelsById.get(population.levelId) ?? null;
-    const generation = resolvePopulationGeneration(population);
+    const generation = resolvePopulationGeneration(
+      population,
+      spanWebBehaviour
+    );
 
     return deepFreeze({
       ...population,
@@ -112,6 +154,14 @@ export function getSceneWebPopulationConfiguration(scene) {
   return deepFreeze({
     provider,
     levels: provider.levels,
+    spanWebBehaviour,
+    populationSource:
+      hasPersistedPopulations
+        ? "scene"
+        : "world-default",
+    hasPersistedPopulations,
+    usesWorldPopulationDefaults:
+      !hasPersistedPopulations,
     populations: resolvedPopulations,
     enabledPopulations: resolvedPopulations.filter((population) => population.enabled),
     activePopulations: resolvedPopulations.filter((population) => population.generationActive),
@@ -136,6 +186,13 @@ export function normaliseSceneWebPopulations(
 
   const usedIds = new Set();
   const fallbackLevelId = String(levels?.[0]?.id ?? BASE_WEB_LEVEL_ID);
+  const creationDefaults =
+    generateMissingIds ===
+      true
+      ? normaliseNewPopulationDefaults(
+          getConfiguredDefaultWebPopulationSettings()
+        )
+      : null;
 
   return Object.freeze(parsed.map((entry, index) => {
     const source = requirePlainObject(entry, `web population ${index + 1}`);
@@ -176,7 +233,9 @@ export function normaliseSceneWebPopulations(
 
     for (const definition of WEB_CATEGORY_DENSITY_DEFINITIONS) {
       categoryDensities[definition.categoryId] = normaliseSceneWebCategoryDensity(
-        categorySource[definition.categoryId] ?? DEFAULT_WEB_POPULATION_DENSITY,
+        categorySource[definition.categoryId] ??
+          creationDefaults?.categoryDensities?.[definition.categoryId] ??
+          DEFAULT_WEB_POPULATION_DENSITY,
         definition.categoryId
       );
     }
@@ -197,10 +256,12 @@ export function normaliseSceneWebPopulations(
       excludeRegionTags,
       categoryDensities,
       colourProfileId: normaliseSceneWebColour(
-        source.colourProfileId
+        source.colourProfileId ??
+        creationDefaults?.colourProfileId
       ),
       thicknessMultiplier: normaliseSceneWebThickness(
-        source.thicknessMultiplier
+        source.thicknessMultiplier ??
+        creationDefaults?.thicknessMultiplier
       )
     });
   }));
@@ -211,9 +272,14 @@ export function validateSceneWebPopulations(value, options = {}) {
   return true;
 }
 
-function resolvePopulationGeneration(population) {
+function resolvePopulationGeneration(
+  population,
+  spanWebBehaviour
+) {
   const categories = {};
   const generationOptions = {};
+  const maximumSpanGridUnits =
+    spanWebBehaviour.maximumSpanGridUnits;
 
   for (const definition of WEB_CATEGORY_DENSITY_DEFINITIONS) {
     const densityId = population.categoryDensities[definition.categoryId];
@@ -223,6 +289,9 @@ function resolvePopulationGeneration(population) {
     const options = generationActive && definition.generationKey
       ? Object.freeze({
           ...preset.configuration[definition.generationKey],
+          ...(definition.categoryId === "wall-span"
+            ? { maximumSpanGridUnits }
+            : {}),
           enabled: true
         })
       : definition.implemented && definition.generationKey
@@ -253,13 +322,87 @@ function resolvePopulationGeneration(population) {
   };
 }
 
-function createDefaultCategoryDensities() {
-  return Object.freeze(Object.fromEntries(
-    WEB_CATEGORY_DENSITY_DEFINITIONS.map((definition) => [
-      definition.categoryId,
-      DEFAULT_WEB_POPULATION_DENSITY
-    ])
-  ));
+export function hasPersistedSceneWebPopulations(
+  scene,
+  rawConfiguration = null
+) {
+  validateScene(
+    scene
+  );
+
+  const raw =
+    rawConfiguration ??
+    readRawSceneWebConfiguration(
+      scene
+    );
+
+  const value =
+    raw?.[
+      SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
+    ];
+
+  return value !==
+    null &&
+    value !==
+      undefined &&
+    value !==
+      "";
+}
+
+function normaliseNewPopulationDefaults(
+  value
+) {
+  const source =
+    value &&
+    typeof value ===
+      "object" &&
+    !Array.isArray(
+      value
+    )
+      ? value
+      : {};
+
+  const categorySource =
+    source.categoryDensities &&
+    typeof source.categoryDensities ===
+      "object" &&
+    !Array.isArray(
+      source.categoryDensities
+    )
+      ? source.categoryDensities
+      : {};
+
+  const categoryDensities =
+    Object.fromEntries(
+      WEB_CATEGORY_DENSITY_DEFINITIONS.map(
+        (
+          definition
+        ) => [
+          definition.categoryId,
+          normaliseSceneWebCategoryDensity(
+            categorySource[
+              definition.categoryId
+            ] ??
+              DEFAULT_WEB_POPULATION_DENSITY,
+            definition.categoryId
+          )
+        ]
+      )
+    );
+
+  return deepFreeze({
+    categoryDensities,
+    colourProfileId:
+      normaliseSceneWebColour(
+        source.colourProfileId ??
+        DEFAULT_SCENE_WEB_COLOUR
+      ),
+    thicknessMultiplier:
+      normaliseSceneWebThickness(
+        source.thicknessMultiplier ??
+        DEFAULT_SCENE_WEB_THICKNESS
+      )
+  });
 }
 
 function parsePopulationArray(value) {
@@ -311,3 +454,5 @@ function deepFreeze(value) {
   for (const child of Object.values(value)) deepFreeze(child);
   return Object.freeze(value);
 }
+
+
