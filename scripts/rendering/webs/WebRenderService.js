@@ -84,6 +84,29 @@ export class WebRenderService {
     this.graphicsByWebId =
       new Map();
 
+    /**
+     * Lightweight presentation metadata retained for incremental mutation.
+     * Immutable web geometry remains owned by WebRuntimeService.
+     */
+    this.renderMetadataByWebId =
+      new Map();
+
+    /**
+     * The most recent full-render configuration is reused when one restored
+     * span needs to be inserted without rebuilding unrelated display objects.
+     */
+    this.lastConfiguration =
+      null;
+
+    this.incrementalMutationCount =
+      0;
+
+    this.lastIncrementalMutationAt =
+      null;
+
+    this.lastIncrementalMutation =
+      null;
+
     this.carpetTextureService =
       options.carpetTextureService instanceof
         WebCarpetPatchTextureService
@@ -202,6 +225,19 @@ export class WebRenderService {
         ? webs
         : [];
 
+    this.lastConfiguration =
+      Object.freeze({
+        ...(
+          configuration &&
+          typeof configuration ===
+            "object"
+            ? configuration
+            : {}
+        ),
+        layerMode,
+        thicknessMultiplier
+      });
+
     const renderGroups =
       createWebRenderGroups(
         visibleWebs
@@ -273,6 +309,16 @@ export class WebRenderService {
             groundTextureService:
               this.groundTextureService
           });
+
+          this.renderMetadataByWebId.set(
+            String(
+              web.id
+            ),
+            createRenderedWebMetadata({
+              web,
+              thicknessMultiplier
+            })
+          );
         }
       }
 
@@ -416,6 +462,375 @@ export class WebRenderService {
     return this.container;
   }
 
+  /**
+   * Remove one rendered web without rebuilding any sibling web presentation.
+   *
+   * The immutable blueprint and spatial index are intentionally untouched.
+   *
+   * @param {string} webId - Stable generated web identifier.
+   * @returns {boolean} True when one visible display was removed.
+   */
+  removeWeb(
+    webId
+  ) {
+    const identifier =
+      normaliseRenderedWebId(
+        webId
+      );
+
+    if (!identifier) {
+      return false;
+    }
+
+    const display =
+      this.graphicsByWebId.get(
+        identifier
+      ) ??
+      null;
+
+    if (!display) {
+      return false;
+    }
+
+    const metadata =
+      this.renderMetadataByWebId.get(
+        identifier
+      ) ??
+      null;
+
+    const parent =
+      display.parent ??
+      null;
+
+    if (
+      parent &&
+      typeof parent.removeChild ===
+        "function"
+    ) {
+      parent.removeChild(
+        display
+      );
+    }
+
+    destroyDisplayObject(
+      display
+    );
+
+    const maskResource =
+      this.carpetMaskResources.get(
+        identifier
+      ) ??
+      null;
+
+    if (maskResource) {
+      destroyWebCarpetRegionMaskResource(
+        maskResource
+      );
+
+      this.carpetMaskResources.delete(
+        identifier
+      );
+    }
+
+    this.graphicsByWebId.delete(
+      identifier
+    );
+
+    this.renderMetadataByWebId.delete(
+      identifier
+    );
+
+    applyRenderedCountDelta(
+      this,
+      metadata,
+      -1
+    );
+
+    this.#recordIncrementalMutation({
+      action:
+        "remove",
+      webIds:
+        [
+          identifier
+        ]
+    });
+
+    markParentForSorting(
+      parent
+    );
+
+    return true;
+  }
+
+  /**
+   * Insert one visible web into its existing elevation/band container.
+   *
+   * A missing container is created only for that elevation/band. Other
+   * containers and display objects remain untouched.
+   *
+   * @param {object} web - Immutable generated web blueprint.
+   * @param {object} [configuration] - Current rendering configuration.
+   * @returns {boolean} True when one display was inserted.
+   */
+  restoreWeb(
+    web,
+    configuration =
+      this.lastConfiguration
+  ) {
+    const identifier =
+      normaliseRenderedWebId(
+        web?.id
+      );
+
+    if (
+      !identifier ||
+      this.graphicsByWebId.has(
+        identifier
+      )
+    ) {
+      return false;
+    }
+
+    const resolvedConfiguration =
+      configuration &&
+      typeof configuration ===
+        "object"
+        ? configuration
+        : this.lastConfiguration;
+
+    /**
+     * A real full render always records its configuration. Returning false is
+     * preferable to forcing a complete redraw when a test double or an
+     * already-cleared renderer has no active presentation state.
+     */
+    if (!resolvedConfiguration) {
+      return false;
+    }
+
+    const pixi =
+      requirePixi();
+
+    const layerMode =
+      resolvedConfiguration.layerMode ??
+      this.lastLayerMode ??
+      "under-tokens";
+
+    const parent =
+      resolveCanvasParentForWebLayer(
+        layerMode
+      );
+
+    if (!parent) {
+      throw new Error(
+        `${MODULE_TITLE} | The canvas parent for restored generated webs is unavailable.`
+      );
+    }
+
+    const thicknessMultiplier =
+      resolveThicknessMultiplier(
+        resolvedConfiguration.thicknessMultiplier ??
+        this.lastThicknessMultiplier
+      );
+
+    const elevation =
+      resolveWebElevation(
+        web,
+        0
+      );
+
+    const band =
+      resolveWebRenderContainerBand(
+        web
+      );
+
+    let container =
+      collectActiveContainers(
+        this.containers,
+        this.container
+      ).find(
+        candidate =>
+          candidate?.destroyed !==
+            true &&
+          resolveFiniteElevation(
+            candidate.elevation,
+            0
+          ) ===
+            elevation &&
+          (
+            candidate.dynamicWebsRenderBand ??
+            WEB_RENDER_CONTAINER_BANDS.STRANDS
+          ) ===
+            band
+      ) ??
+      null;
+
+    if (!container) {
+      container =
+        new pixi.Container();
+
+      configureWebContainer(
+        container,
+        resolvedConfiguration,
+        layerMode,
+        elevation,
+        band,
+        [
+          `${MODULE_ID}.webs`,
+          "incremental",
+          band,
+          `elevation-${formatElevationForName(elevation)}`
+        ].join(
+          "."
+        )
+      );
+
+      parent.addChild(
+        container
+      );
+
+      this.containers.push(
+        container
+      );
+
+      sortTrackedContainers(
+        this.containers
+      );
+    }
+
+    renderWebGraphic({
+      pixi,
+      container,
+      web,
+      configuration:
+        resolvedConfiguration,
+      thicknessMultiplier,
+      graphicsByWebId:
+        this.graphicsByWebId,
+      carpetTextureService:
+        this.carpetTextureService,
+      carpetMaskResources:
+        this.carpetMaskResources,
+      carpetMaskService:
+        this.carpetMaskService,
+      cornerTextureService:
+        this.cornerTextureService,
+      spanTextureService:
+        this.spanTextureService,
+      groundTextureService:
+        this.groundTextureService
+    });
+
+    const metadata =
+      createRenderedWebMetadata({
+        web,
+        thicknessMultiplier
+      });
+
+    this.renderMetadataByWebId.set(
+      identifier,
+      metadata
+    );
+
+    applyRenderedCountDelta(
+      this,
+      metadata,
+      1
+    );
+
+    this.container =
+      collectActiveContainers(
+        this.containers,
+        container
+      )
+        .filter(
+          candidate =>
+            candidate?.destroyed !==
+              true
+        )
+        .sort(
+          compareWebContainers
+        )
+        .at(
+          -1
+        ) ??
+      container;
+
+    this.lastContainerCount =
+      collectActiveContainers(
+        this.containers,
+        this.container
+      ).filter(
+        candidate =>
+          candidate?.destroyed !==
+            true
+      ).length;
+
+    this.lastElevations =
+      Object.freeze(
+        createSortedUniqueElevations(
+          this.containers
+            .filter(
+              candidate =>
+                candidate?.destroyed !==
+                  true
+            )
+            .map(
+              candidate =>
+                candidate.elevation
+            )
+        )
+      );
+
+    this.#recordIncrementalMutation({
+      action:
+        "restore",
+      webIds:
+        [
+          identifier
+        ]
+    });
+
+    markParentForSorting(
+      parent
+    );
+
+    return true;
+  }
+
+  #recordIncrementalMutation({
+    action,
+    webIds
+  }) {
+    this.incrementalMutationCount +=
+      1;
+
+    this.renderRevision +=
+      1;
+
+    this.lastRenderedAt =
+      Date.now();
+
+    this.lastIncrementalMutationAt =
+      this.lastRenderedAt;
+
+    this.lastIncrementalMutation =
+      Object.freeze({
+        action:
+          String(
+            action
+          ),
+        webIds:
+          Object.freeze([
+            ...webIds
+          ])
+      });
+
+    this.lastThicknessMultipliersByPopulation =
+      createThicknessMultipliersByPopulation(
+        this.renderMetadataByWebId
+      );
+  }
+
   clear() {
     for (
       const resource of
@@ -449,6 +864,10 @@ export class WebRenderService {
       [];
 
     this.graphicsByWebId.clear();
+    this.renderMetadataByWebId.clear();
+
+    this.lastConfiguration =
+      null;
 
     const parentsToSort =
       new Set();
@@ -717,7 +1136,13 @@ export class WebRenderService {
       lastRenderedAt:
         this.lastRenderedAt,
       lastClearedAt:
-        this.lastClearedAt
+        this.lastClearedAt,
+      incrementalMutationCount:
+        this.incrementalMutationCount,
+      lastIncrementalMutationAt:
+        this.lastIncrementalMutationAt,
+      lastIncrementalMutation:
+        this.lastIncrementalMutation
     });
   }
 }
@@ -1880,6 +2305,225 @@ function resolveStrandColour(
   }
 
   return fallback;
+}
+
+function createRenderedWebMetadata({
+  web,
+  thicknessMultiplier
+}) {
+  return Object.freeze({
+    id:
+      String(
+        web?.id ??
+        ""
+      ),
+    kind:
+      String(
+        web?.kind ??
+        ""
+      ),
+    populationId:
+      String(
+        web?.populationId ??
+        "default"
+      ),
+    thicknessMultiplier:
+      resolveThicknessMultiplier(
+        web?.thicknessMultiplier ??
+        thicknessMultiplier
+      ),
+    carpetPatchCount:
+      web?.kind ===
+          "web-carpet" &&
+        Array.isArray(
+          web?.carpet?.patches
+        )
+        ? web.carpet.patches.length
+        : 0,
+    hasCornerAsset:
+      web?.kind ===
+        "wall-corner" &&
+      Boolean(
+        web?.cornerAsset
+      ),
+    hasSpanAsset:
+      web?.kind ===
+        "wall-span" &&
+      Boolean(
+        web?.spanAsset
+      ),
+    hasGroundAsset:
+      web?.kind ===
+        "ground" &&
+      Boolean(
+        web?.groundAsset
+      )
+  });
+}
+
+function applyRenderedCountDelta(
+  service,
+  metadata,
+  delta
+) {
+  if (
+    !metadata ||
+    !Number.isFinite(
+      Number(
+        delta
+      )
+    )
+  ) {
+    return;
+  }
+
+  const amount =
+    Number(
+      delta
+    );
+
+  if (
+    metadata.kind ===
+      "web-carpet"
+  ) {
+    service.lastRenderedCarpetCount =
+      clampNonNegative(
+        service.lastRenderedCarpetCount +
+        amount
+      );
+
+    service.lastRenderedCarpetPatchCount =
+      clampNonNegative(
+        service.lastRenderedCarpetPatchCount +
+        (
+          metadata.carpetPatchCount *
+          amount
+        )
+      );
+  }
+
+  if (
+    metadata.hasCornerAsset
+  ) {
+    service.lastRenderedCornerAssetCount =
+      clampNonNegative(
+        service.lastRenderedCornerAssetCount +
+        amount
+      );
+  }
+
+  if (
+    metadata.hasSpanAsset
+  ) {
+    service.lastRenderedSpanAssetCount =
+      clampNonNegative(
+        service.lastRenderedSpanAssetCount +
+        amount
+      );
+  }
+
+  if (
+    metadata.hasGroundAsset
+  ) {
+    service.lastRenderedGroundAssetCount =
+      clampNonNegative(
+        service.lastRenderedGroundAssetCount +
+        amount
+      );
+  }
+}
+
+function createThicknessMultipliersByPopulation(
+  metadataByWebId
+) {
+  return Object.freeze(
+    Object.fromEntries(
+      Array.from(
+        metadataByWebId.values()
+      ).map(
+        metadata => [
+          metadata.populationId,
+          metadata.thicknessMultiplier
+        ]
+      )
+    )
+  );
+}
+
+function destroyDisplayObject(
+  display
+) {
+  if (
+    !display ||
+    display.destroyed ===
+      true ||
+    typeof display.destroy !==
+      "function"
+  ) {
+    return;
+  }
+
+  try {
+    display.destroy({
+      children:
+        true
+    });
+  } catch (_error) {
+    display.destroy();
+  }
+}
+
+function sortTrackedContainers(
+  containers
+) {
+  containers.sort(
+    compareWebContainers
+  );
+}
+
+function compareWebContainers(
+  first,
+  second
+) {
+  return resolveFiniteElevation(
+    first?.elevation,
+    0
+  ) -
+    resolveFiniteElevation(
+      second?.elevation,
+      0
+    ) ||
+    resolveWebRenderBandOrder(
+      first?.dynamicWebsRenderBand
+    ) -
+    resolveWebRenderBandOrder(
+      second?.dynamicWebsRenderBand
+    );
+}
+
+function normaliseRenderedWebId(
+  value
+) {
+  const identifier =
+    String(
+      value ??
+      ""
+    ).trim();
+
+  return identifier ||
+    null;
+}
+
+function clampNonNegative(
+  value
+) {
+  return Math.max(
+    0,
+    Number(
+      value
+    ) ||
+    0
+  );
 }
 
 function requirePixi() {

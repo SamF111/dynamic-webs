@@ -81,11 +81,52 @@ export function getGeneratedSpanWallWebId(
     null;
 }
 
+
+/** Return whether one generated wall is an already-open secret door. */
+export function isGeneratedSpanWallOpenSecretDoor(
+  wallDocument
+) {
+  if (
+    !isGeneratedSpanWallDocument(
+      wallDocument
+    )
+  ) {
+    return false;
+  }
+
+  const document =
+    wallDocument?.document ??
+    wallDocument;
+
+  const constants =
+    resolveWallConstants();
+
+  const door =
+    Number(
+      document?.door ??
+      document?._source?.door ??
+      constants.doorNone
+    );
+
+  const state =
+    Number(
+      document?.ds ??
+      document?._source?.ds ??
+      constants.doorClosed
+    );
+
+  return door ===
+    constants.doorSecret &&
+    state ===
+      constants.doorOpen;
+}
+
 /** Create one Foundry WallDocument payload for an intact wall-span web. */
 export function createGeneratedSpanWallData({
   web,
   behaviour,
-  existingWall = null
+  existingWall = null,
+  preserveDoorState = true
 }) {
   if (
     web?.kind !==
@@ -141,7 +182,9 @@ export function createGeneratedSpanWallData({
       constants.doorClosed
     );
 
-  const preserveDoorState =
+  const shouldPreserveDoorState =
+    preserveDoorState ===
+      true &&
     secretDoor &&
     existingDoor ===
       constants.doorSecret;
@@ -176,7 +219,7 @@ export function createGeneratedSpanWallData({
         : constants.doorNone,
     ds:
       secretDoor
-        ? preserveDoorState
+        ? shouldPreserveDoorState
           ? existingDoorState
           : constants.doorClosed
         : constants.doorClosed,
@@ -493,6 +536,9 @@ function resolveWallConstants() {
     doorClosed:
       constants.WALL_DOOR_STATES?.CLOSED ??
       0,
+    doorOpen:
+      constants.WALL_DOOR_STATES?.OPEN ??
+      1,
     directionBoth:
       constants.WALL_DIRECTIONS?.BOTH ??
       0

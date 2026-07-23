@@ -133,6 +133,45 @@
           This Scene currently has {{spanWebBehaviour.destroyedWebCount}} destroyed wall-span web(s). Saving with destructibility disabled restores them.
         </p>
       </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>Web state and wall maintenance</label>
+        <div class="form-fields">
+          <button
+            type="button"
+            data-dynamic-webs-restore-destroyed-spans
+            data-destroyed-count="{{spanWebBehaviour.destroyedWebCount}}"
+            {{#unless spanWebBehaviour.hasDestroyedWebs}}disabled{{/unless}}
+            {{#unless editable}}disabled{{/unless}}
+          >
+            <i class="fas fa-undo"></i> Restore Destroyed Span Webs
+            (<span data-dynamic-webs-restore-span-count>{{spanWebBehaviour.destroyedWebCount}}</span>)
+          </button>
+
+          <button
+            type="button"
+            data-dynamic-webs-update-span-walls
+            data-active-scene="{{#if spanWebBehaviour.isActiveScene}}true{{else}}false{{/if}}"
+            {{#unless editable}}disabled{{/unless}}
+          >
+            <i class="fas fa-sync-alt"></i> Update Web Walls
+          </button>
+
+          <button
+            type="button"
+            data-dynamic-webs-delete-span-walls
+            {{#unless editable}}disabled{{/unless}}
+          >
+            <i class="fas fa-trash"></i> Delete Web Walls
+          </button>
+        </div>
+        <p class="hint">Restore Destroyed Span Webs clears this Scene's persistent destroyed-span state immediately. The active Scene restores incrementally; an inactive Scene restores its saved state without generating geometry and completes derived-wall creation when next opened. Save configuration changes before using Update Web Walls, which fully reconciles the active Scene. Delete Web Walls removes every generated web WallDocument without changing populations or destroyed-span state.</p>
+        {{#unless spanWebBehaviour.isActiveScene}}
+          <p class="hint warning">Open this Scene on the canvas before using Update Web Walls. Delete Web Walls remains available for inactive Scenes.</p>
+        {{/unless}}
+      </div>
     </div>
   </details>
 

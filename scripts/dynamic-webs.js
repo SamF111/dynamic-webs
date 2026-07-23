@@ -7,6 +7,7 @@ import {
 } from "./module/moduleConstants.js";
 
 import {
+  getDynamicWebsRuntime,
   initialiseRuntime
 } from "./runtime/runtimeRegistry.js";
 
@@ -51,6 +52,12 @@ import {
   disposeWebMutableStateSocket,
   registerWebMutableStateSocket
 } from "./networking/webMutableStateSocket.js";
+
+import {
+  cleanUpLingeringWebWallsAcrossWorld,
+  prepareDynamicWebsForUninstall,
+  restoreDestroyedSpanWebsAcrossWorld
+} from "./maintenance/WebWallMaintenanceService.js";
 
 let initialisationPromise =
   null;
@@ -253,7 +260,25 @@ async function initialiseDynamicWebs() {
               "world-default-span-web-behaviour-update"
             ) ??
             null;
-        }
+        },
+      onRestoreDestroyedSpanWebsRequested:
+        () =>
+          restoreDestroyedSpanWebsAcrossWorld({
+            runtime:
+              getDynamicWebsRuntime()
+          }),
+      onCleanupLingeringWebWallsRequested:
+        () =>
+          cleanUpLingeringWebWallsAcrossWorld({
+            runtime:
+              getDynamicWebsRuntime()
+          }),
+      onPrepareUninstallRequested:
+        () =>
+          prepareDynamicWebsForUninstall({
+            runtime:
+              getDynamicWebsRuntime()
+          })
     });
 
     const runtime =

@@ -51,6 +51,10 @@ import {
   normaliseSpanWebVisionMode
 } from "./spanWebBehaviourContract.js";
 
+import {
+  activateSettingsConfigMaintenanceControls
+} from "../ui/settingsConfigMaintenanceControls.js";
+
 
 
 export const MODULE_SETTING_KEYS =
@@ -225,7 +229,10 @@ export function registerModuleSettings({
   onCarpetTextureCacheClearRequested = null,
   onMaximumSpanWidthChanged = null,
   onDefaultWebPopulationSettingsChanged = null,
-  onDefaultSpanWebBehaviourSettingsChanged = null
+  onDefaultSpanWebBehaviourSettingsChanged = null,
+  onRestoreDestroyedSpanWebsRequested = null,
+  onCleanupLingeringWebWallsRequested = null,
+  onPrepareUninstallRequested = null
 } = {}) {
   if (
     settingsRegistered
@@ -271,7 +278,11 @@ export function registerModuleSettings({
     onCarpetTextureCacheClearRequested
   );
 
-  registerDefaultSettingsCategorisationHook();
+  registerDefaultSettingsCategorisationHook({
+    onRestoreDestroyedSpanWebsRequested,
+    onCleanupLingeringWebWallsRequested,
+    onPrepareUninstallRequested
+  });
 
   cachedWebLevelProviderMode =
     readInitialWebLevelProviderMode(
@@ -483,7 +494,8 @@ export function resetModuleSettingsRegistrationForTests() {
  * headings before the first setting in each group.
  */
 export function applyModuleSettingsCategories(
-  html
+  html,
+  maintenanceActions = {}
 ) {
   const root =
     resolveSettingsConfigRoot(
@@ -568,10 +580,17 @@ export function applyModuleSettingsCategories(
     root
   );
 
+  activateSettingsConfigMaintenanceControls(
+    root,
+    maintenanceActions
+  );
+
   return insertedCount;
 }
 
-function registerDefaultSettingsCategorisationHook() {
+function registerDefaultSettingsCategorisationHook(
+  maintenanceActions = {}
+) {
   if (
     settingsConfigHookRegistered
   ) {
@@ -595,7 +614,8 @@ function registerDefaultSettingsCategorisationHook() {
       html
     ) => {
       applyModuleSettingsCategories(
-        html
+        html,
+        maintenanceActions
       );
     }
   );

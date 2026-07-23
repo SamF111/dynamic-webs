@@ -327,6 +327,12 @@ function createEnvironment({
   const clearCalls =
     [];
 
+  const removeWebCalls =
+    [];
+
+  const restoreWebCalls =
+    [];
+
   const renderService =
     new WebRenderService();
 
@@ -354,6 +360,30 @@ function createEnvironment({
       clearCalls.push(
         true
       );
+
+      return true;
+    };
+
+  renderService.removeWeb =
+    webId => {
+      removeWebCalls.push(
+        String(
+          webId
+        )
+      );
+
+      return true;
+    };
+
+  renderService.restoreWeb =
+    (
+      web,
+      configuration
+    ) => {
+      restoreWebCalls.push({
+        web,
+        configuration
+      });
 
       return true;
     };
@@ -388,6 +418,8 @@ function createEnvironment({
     service,
     renderCalls,
     clearCalls,
+    removeWebCalls,
+    restoreWebCalls,
     setFlagCalls,
     webId,
     restore() {
@@ -1208,6 +1240,104 @@ test(
 );
 
 test(
+  "destroying and restoring one span use incremental presentation without a full redraw",
+  () => {
+    const environment =
+      createEnvironment({
+        webKind:
+          "wall-span"
+      });
+
+    try {
+      const generated =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          reason:
+            "runtime-incremental-span-test"
+        });
+
+      const fullRenderCount =
+        environment.renderCalls.length;
+
+      const destroyed =
+        environment.service.destroyWebs(
+          [
+            environment.webId
+          ],
+          {
+            cause:
+              "token-movement"
+          }
+        );
+
+      assert.equal(
+        destroyed.changed,
+        true
+      );
+
+      assert.deepEqual(
+        environment.removeWebCalls,
+        [
+          environment.webId
+        ]
+      );
+
+      assert.equal(
+        environment.renderCalls.length,
+        fullRenderCount
+      );
+
+      assert.equal(
+        environment.service.getState().generationId,
+        generated.generationId
+      );
+
+      assert.equal(
+        environment.service.getState().webs[0].id,
+        environment.webId
+      );
+
+      const restored =
+        environment.service.restoreWeb(
+          environment.webId,
+          {
+            cause:
+              "test-restore"
+          }
+        );
+
+      assert.equal(
+        restored.changed,
+        true
+      );
+
+      assert.equal(
+        environment.restoreWebCalls.length,
+        1
+      );
+
+      assert.equal(
+        environment.restoreWebCalls[0].web.id,
+        environment.webId
+      );
+
+      assert.equal(
+        environment.renderCalls.length,
+        fullRenderCount
+      );
+
+      assert.equal(
+        environment.service.getState().generationId,
+        generated.generationId
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
   "failed mutable-state redraw rolls back revision, intact state and persistence",
   () => {
     const environment =
@@ -1224,10 +1354,10 @@ test(
           "runtime-mutable-rollback"
       });
 
-      environment.service.renderService.render =
+      environment.service.renderService.removeWeb =
         () => {
           throw new Error(
-            "mutable redraw failed"
+            "incremental removal failed"
           );
         };
 
@@ -1242,7 +1372,7 @@ test(
                 "test-mutable-failure"
             }
           ),
-        /mutable redraw failed/u
+        /incremental removal failed/u
       );
 
       assert.equal(

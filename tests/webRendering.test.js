@@ -208,6 +208,23 @@ function createWeb(
   });
 }
 
+function createSpanWeb(
+  id = "wall-span:scene:index-0",
+  elevationBottom = 0
+) {
+  const source =
+    createWeb(
+      id,
+      elevationBottom
+    );
+
+  return Object.freeze({
+    ...source,
+    kind:
+      "wall-span"
+  });
+}
+
 function createConfiguration(
   thicknessMultiplier = 1
 ) {
@@ -699,3 +716,152 @@ test(
   }
 );
 
+
+
+test(
+  "incremental span removal and restoration preserve unrelated display objects",
+  () => {
+    const environment =
+      installPixi();
+
+    try {
+      const service =
+        new WebRenderService();
+
+      const ground =
+        createWeb(
+          "ground:scene:stable"
+        );
+
+      const span =
+        createSpanWeb(
+          "wall-span:scene:mutable"
+        );
+
+      const container =
+        service.render(
+          [
+            ground,
+            span
+          ],
+          createConfiguration()
+        );
+
+      const groundDisplay =
+        service.graphicsByWebId.get(
+          ground.id
+        );
+
+      const originalSpanDisplay =
+        service.graphicsByWebId.get(
+          span.id
+        );
+
+      assert.equal(
+        container.children.length,
+        2
+      );
+
+      assert.equal(
+        service.removeWeb(
+          span.id
+        ),
+        true
+      );
+
+      assert.equal(
+        originalSpanDisplay.destroyed,
+        true
+      );
+
+      assert.equal(
+        groundDisplay.destroyed,
+        false
+      );
+
+      assert.equal(
+        service.graphicsByWebId.get(
+          ground.id
+        ),
+        groundDisplay
+      );
+
+      assert.equal(
+        container.children.length,
+        1
+      );
+
+      assert.equal(
+        service.createDiagnosticSnapshot().renderRevision,
+        2
+      );
+
+      assert.equal(
+        service.restoreWeb(
+          span,
+          createConfiguration()
+        ),
+        true
+      );
+
+      const restoredSpanDisplay =
+        service.graphicsByWebId.get(
+          span.id
+        );
+
+      assert.notEqual(
+        restoredSpanDisplay,
+        originalSpanDisplay
+      );
+
+      assert.equal(
+        service.graphicsByWebId.get(
+          ground.id
+        ),
+        groundDisplay
+      );
+
+      assert.equal(
+        groundDisplay.destroyed,
+        false
+      );
+
+      assert.equal(
+        container.children.length,
+        2
+      );
+
+      const diagnostics =
+        service.createDiagnosticSnapshot();
+
+      assert.equal(
+        diagnostics.renderedWebCount,
+        2
+      );
+
+      assert.equal(
+        diagnostics.renderRevision,
+        3
+      );
+
+      assert.equal(
+        diagnostics.incrementalMutationCount,
+        2
+      );
+
+      assert.deepEqual(
+        diagnostics.lastIncrementalMutation,
+        {
+          action:
+            "restore",
+          webIds:
+            [
+              span.id
+            ]
+        }
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);

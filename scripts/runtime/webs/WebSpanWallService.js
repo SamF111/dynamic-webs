@@ -7,6 +7,7 @@ import {
   generatedSpanWallMatches,
   getGeneratedSpanWallWebId,
   isGeneratedSpanWallDocument,
+  isGeneratedSpanWallOpenSecretDoor,
   mergeGeneratedSpanWallFlags
 } from "../../foundry/webSpanWallCompatibility.js";
 
@@ -20,11 +21,18 @@ import {
  */
 export class WebSpanWallService {
   constructor() {
-    this.pendingJob =
-      null;
+    this.pendingJobs =
+      [];
 
     this.reconciliationPromise =
       null;
+
+    /**
+     * Fast-path index populated from authoritative Scene WallDocuments.
+     * Missing entries always fall back to a Scene collection scan.
+     */
+    this.wallIdsBySceneId =
+      new Map();
 
     this.diagnostics =
       createEmptyDiagnostics();
@@ -38,101 +46,239 @@ export class WebSpanWallService {
     generationId = null,
     reason = "span-wall-reconciliation"
   }) {
-    if (
-      !scene ||
-      typeof scene !==
-        "object"
-    ) {
-      return false;
-    }
-
     const sceneId =
-      String(
-        scene.id ??
-        ""
-      ).trim();
+      resolveSceneId(
+        scene
+      );
+
+    if (!sceneId) {
+      return false;
+    }
+
+    const job =
+      Object.freeze({
+        type:
+          "reconcile",
+        scene,
+        sceneId,
+        webs:
+          Object.freeze([
+            ...(
+              Array.isArray(
+                webs
+              )
+                ? webs
+                : []
+            )
+          ]),
+        destroyedWebIds:
+          Object.freeze([
+            ...new Set(
+              (
+                Array.isArray(
+                  destroyedWebIds
+                )
+                  ? destroyedWebIds
+                  : []
+              ).map(
+                String
+              )
+            )
+          ]),
+        behaviour:
+          normaliseBehaviour(
+            behaviour
+          ),
+        generationId:
+          normaliseGenerationId(
+            generationId
+          ),
+        reason:
+          String(
+            reason ??
+            "span-wall-reconciliation"
+          )
+      });
+
+    /**
+     * A full reconciliation is authoritative for the complete Scene state.
+     * Supersede every still-pending targeted mutation for the same Scene.
+     */
+    this.pendingJobs =
+      this.pendingJobs.filter(
+        pending =>
+          pending.sceneId !==
+            sceneId
+      );
+
+    return this.#queueJob(
+      job
+    );
+  }
+
+  /**
+   * Delete only the generated walls belonging to the supplied destroyed spans.
+   */
+  requestWebRemoval({
+    scene,
+    webIds,
+    generationId = null,
+    reason = "destroy-span-wall"
+  }) {
+    const sceneId =
+      resolveSceneId(
+        scene
+      );
+
+    const identifiers =
+      normaliseIdentifierList(
+        webIds
+      );
 
     if (
-      !sceneId
+      !sceneId ||
+      identifiers.length ===
+        0
     ) {
       return false;
     }
 
-    this.pendingJob = {
-      scene,
-      sceneId,
-      webs:
-        Object.freeze([
-          ...(
-            Array.isArray(
-              webs
-            )
-              ? webs
-              : []
-          )
-        ]),
-      destroyedWebIds:
-        Object.freeze([
-          ...new Set(
-            (
-              Array.isArray(
-                destroyedWebIds
-              )
-                ? destroyedWebIds
-                : []
-            ).map(
-              String
-            )
-          )
-        ]),
-      behaviour:
-        Object.freeze({
-          visionMode:
-            behaviour?.visionMode ??
-            "none",
-          secretDoor:
-            behaviour?.secretDoor ===
-              true,
-          destructible:
-            behaviour?.destructible ===
-              true
-        }),
-      generationId:
-        Number.isInteger(
-          Number(
+    const job =
+      Object.freeze({
+        type:
+          "remove",
+        scene,
+        sceneId,
+        webIds:
+          Object.freeze(
+            identifiers
+          ),
+        generationId:
+          normaliseGenerationId(
             generationId
+          ),
+        reason:
+          String(
+            reason ??
+            "destroy-span-wall"
           )
+      });
+
+    const last =
+      this.pendingJobs.at(
+        -1
+      );
+
+    if (
+      last?.type ===
+        "remove" &&
+      last.sceneId ===
+        sceneId
+    ) {
+      this.pendingJobs[
+        this.pendingJobs.length -
+        1
+      ] =
+        Object.freeze({
+          ...last,
+          webIds:
+            Object.freeze(
+              normaliseIdentifierList([
+                ...last.webIds,
+                ...identifiers
+              ])
+            ),
+          generationId:
+            job.generationId,
+          reason:
+            job.reason
+        });
+
+      this.#markRequested(
+        job
+      );
+
+      this.#ensureDrain();
+
+      return true;
+    }
+
+    return this.#queueJob(
+      job
+    );
+  }
+
+  /**
+   * Create or repair only the generated walls belonging to restored spans.
+   */
+  requestWebRestoration({
+    scene,
+    webs,
+    behaviour,
+    generationId = null,
+    reason = "restore-span-wall"
+  }) {
+    const sceneId =
+      resolveSceneId(
+        scene
+      );
+
+    const restoredWebs =
+      (
+        Array.isArray(
+          webs
         )
-          ? Number(
-              generationId
-            )
-          : null,
-      reason:
-        String(
-          reason ??
-          "span-wall-reconciliation"
-        )
-    };
+          ? webs
+          : []
+      ).filter(
+        web =>
+          web?.kind ===
+            "wall-span" &&
+          String(
+            web?.id ??
+            ""
+          ).trim()
+      );
 
-    this.diagnostics = {
-      ...this.diagnostics,
-      sceneId,
-      pending:
-        true,
-      lastRequestedAt:
-        Date.now(),
-      lastReason:
-        this.pendingJob.reason
-    };
+    if (
+      !sceneId ||
+      restoredWebs.length ===
+        0
+    ) {
+      return false;
+    }
 
-    this.#ensureDrain();
-
-    return true;
+    return this.#queueJob(
+      Object.freeze({
+        type:
+          "restore",
+        scene,
+        sceneId,
+        webs:
+          Object.freeze([
+            ...restoredWebs
+          ]),
+        behaviour:
+          normaliseBehaviour(
+            behaviour
+          ),
+        generationId:
+          normaliseGenerationId(
+            generationId
+          ),
+        reason:
+          String(
+            reason ??
+            "restore-span-wall"
+          )
+      })
+    );
   }
 
   async flush() {
     while (
-      this.pendingJob ||
+      this.pendingJobs.length >
+        0 ||
       this.reconciliationPromise
     ) {
       this.#ensureDrain();
@@ -153,6 +299,76 @@ export class WebSpanWallService {
     );
   }
 
+  /** Forget one Scene's fast-path generated-wall index after external maintenance. */
+  invalidateSceneWallIndex(
+    sceneId
+  ) {
+    const identifier =
+      String(
+        sceneId ??
+        ""
+      ).trim();
+
+    return identifier
+      ? this.wallIdsBySceneId.delete(
+          identifier
+        )
+      : false;
+  }
+
+  #queueJob(
+    job
+  ) {
+    this.pendingJobs.push(
+      job
+    );
+
+    this.#markRequested(
+      job
+    );
+
+    this.#ensureDrain();
+
+    return true;
+  }
+
+  #markRequested(
+    job
+  ) {
+    this.diagnostics = {
+      ...this.diagnostics,
+      sceneId:
+        job.sceneId,
+      pending:
+        true,
+      generationId:
+        job.generationId,
+      lastRequestedAt:
+        Date.now(),
+      lastReason:
+        job.reason,
+      lastOperationType:
+        job.type,
+      targetWebIds:
+        Object.freeze(
+          job.type ===
+            "remove"
+            ? [
+                ...job.webIds
+              ]
+            : job.type ===
+                "restore"
+              ? job.webs.map(
+                  web =>
+                    String(
+                      web.id
+                    )
+                )
+              : []
+        )
+    };
+  }
+
   #ensureDrain() {
     if (
       this.reconciliationPromise
@@ -170,12 +386,13 @@ export class WebSpanWallService {
             this.diagnostics = {
               ...this.diagnostics,
               pending:
-                this.pendingJob !==
-                  null
+                this.pendingJobs.length >
+                  0
             };
 
             if (
-              this.pendingJob
+              this.pendingJobs.length >
+                0
             ) {
               this.#ensureDrain();
             }
@@ -185,35 +402,59 @@ export class WebSpanWallService {
 
   async #drain() {
     while (
-      this.pendingJob
+      this.pendingJobs.length >
+        0
     ) {
       const job =
-        this.pendingJob;
-
-      this.pendingJob =
-        null;
+        this.pendingJobs.shift();
 
       try {
-        const result =
-          await this.#reconcile(
-            job
-          );
+        let result;
+
+        if (
+          job.type ===
+            "remove"
+        ) {
+          result =
+            await this.#removeWebWalls(
+              job
+            );
+        } else if (
+          job.type ===
+            "restore"
+        ) {
+          result =
+            await this.#restoreWebWalls(
+              job
+            );
+        } else {
+          result =
+            await this.#reconcile(
+              job
+            );
+        }
 
         this.diagnostics = {
           ...this.diagnostics,
           sceneId:
             job.sceneId,
           pending:
-            this.pendingJob !==
-              null,
+            this.pendingJobs.length >
+              0,
           generationId:
             job.generationId,
           lastReason:
             job.reason,
+          lastOperationType:
+            job.type,
           lastCompletedAt:
             Date.now(),
           lastError:
             null,
+          deferredCount:
+            0,
+          deferredWallIds:
+            Object.freeze([]),
           ...result
         };
       } catch (error) {
@@ -222,12 +463,14 @@ export class WebSpanWallService {
           sceneId:
             job.sceneId,
           pending:
-            this.pendingJob !==
-              null,
+            this.pendingJobs.length >
+              0,
           generationId:
             job.generationId,
           lastReason:
             job.reason,
+          lastOperationType:
+            job.type,
           lastCompletedAt:
             Date.now(),
           lastError:
@@ -246,7 +489,7 @@ export class WebSpanWallService {
         };
 
         console.warn(
-          "dynamic-webs | Generated wall-span WallDocuments could not be reconciled.",
+          "dynamic-webs | Generated wall-span WallDocuments could not be updated.",
           error
         );
       }
@@ -548,6 +791,10 @@ export class WebSpanWallService {
       );
     }
 
+    this.#rebuildSceneWallIndex(
+      scene
+    );
+
     return {
       authoritative:
         true,
@@ -567,6 +814,544 @@ export class WebSpanWallService {
         ).length
     };
   }
+
+  async #removeWebWalls(
+    job
+  ) {
+    const scene =
+      job.scene;
+
+    if (
+      globalThis.game?.user?.isGM !==
+        true
+    ) {
+      return createNonAuthoritativeResult(
+        scene
+      );
+    }
+
+    if (
+      typeof scene.deleteEmbeddedDocuments !==
+        "function"
+    ) {
+      return {
+        ...createNonAuthoritativeResult(
+          scene
+        ),
+        skippedReason:
+          "scene-not-writable"
+      };
+    }
+
+    const targets =
+      new Set(
+        job.webIds
+      );
+
+    const targetWallsById =
+      new Map();
+
+    const indexed =
+      this.wallIdsBySceneId.get(
+        job.sceneId
+      ) ??
+      this.#rebuildSceneWallIndex(
+        scene
+      );
+
+    for (
+      const webId of
+      targets
+    ) {
+      const wallId =
+        indexed.get(
+          webId
+        );
+
+      const wall =
+        wallId
+          ? resolveSceneWallById(
+              scene,
+              wallId
+            )
+          : null;
+
+      if (wall) {
+        targetWallsById.set(
+          wallId,
+          wall
+        );
+      }
+    }
+
+    /**
+     * The index is only an optimisation. Scan the authoritative collection as
+     * a repair fallback and include duplicate generated walls for the targets.
+     */
+    for (
+      const wall of
+      collectGeneratedWalls(
+        scene
+      )
+    ) {
+      const webId =
+        getGeneratedSpanWallWebId(
+          wall
+        );
+
+      if (
+        !webId ||
+        !targets.has(
+          webId
+        )
+      ) {
+        continue;
+      }
+
+      const wallId =
+        getDocumentId(
+          wall
+        );
+
+      if (wallId) {
+        targetWallsById.set(
+          wallId,
+          wall
+        );
+      }
+    }
+
+    const deleteIds =
+      [];
+
+    const deferredWallIds =
+      [];
+
+    for (
+      const [
+        wallId,
+        wall
+      ] of targetWallsById
+    ) {
+      if (
+        isGeneratedSpanWallOpenSecretDoor(
+          wall
+        )
+      ) {
+        deferredWallIds.push(
+          wallId
+        );
+      } else {
+        deleteIds.push(
+          wallId
+        );
+      }
+    }
+
+    /**
+     * An already-open secret door no longer blocks movement or sight. Leaving
+     * that harmless WallDocument in place avoids Foundry's expensive deferred
+     * perception rebuild during token movement. Full reconciliation and the
+     * explicit maintenance actions remove it later.
+     */
+    if (
+      deleteIds.length >
+        0
+    ) {
+      await scene.deleteEmbeddedDocuments(
+        "Wall",
+        deleteIds
+      );
+    }
+
+    const nextIndex =
+      this.#rebuildSceneWallIndex(
+        scene
+      );
+
+    return {
+      authoritative:
+        true,
+      desiredWallCount:
+        Math.max(
+          0,
+          nextIndex.size -
+            deferredWallIds.length
+        ),
+      activeWallCount:
+        nextIndex.size,
+      createdCount:
+        0,
+      updatedCount:
+        0,
+      deletedCount:
+        deleteIds.length,
+      deferredCount:
+        deferredWallIds.length,
+      deferredWallIds:
+        Object.freeze(
+          deferredWallIds.sort()
+        )
+    };
+  }
+
+  async #restoreWebWalls(
+    job
+  ) {
+    const scene =
+      job.scene;
+
+    if (
+      globalThis.game?.user?.isGM !==
+        true
+    ) {
+      return createNonAuthoritativeResult(
+        scene
+      );
+    }
+
+    const canWrite =
+      typeof scene.createEmbeddedDocuments ===
+        "function" &&
+      typeof scene.updateEmbeddedDocuments ===
+        "function";
+
+    if (!canWrite) {
+      return {
+        ...createNonAuthoritativeResult(
+          scene
+        ),
+        skippedReason:
+          "scene-not-writable"
+      };
+    }
+
+    const wallEffectsEnabled =
+      job.behaviour.secretDoor ===
+        true ||
+      job.behaviour.visionMode !==
+        "none";
+
+    if (!wallEffectsEnabled) {
+      return {
+        authoritative:
+          true,
+        desiredWallCount:
+          collectGeneratedWalls(
+            scene
+          ).length,
+        activeWallCount:
+          collectGeneratedWalls(
+            scene
+          ).length,
+        createdCount:
+          0,
+        updatedCount:
+          0,
+        deletedCount:
+          0
+      };
+    }
+
+    const targetIds =
+      new Set(
+        job.webs.map(
+          web =>
+            String(
+              web.id
+            )
+        )
+      );
+
+    const existingByWebId =
+      new Map();
+
+    for (
+      const wall of
+      collectGeneratedWalls(
+        scene
+      )
+    ) {
+      const webId =
+        getGeneratedSpanWallWebId(
+          wall
+        );
+
+      if (
+        webId &&
+        targetIds.has(
+          webId
+        ) &&
+        !existingByWebId.has(
+          webId
+        )
+      ) {
+        existingByWebId.set(
+          webId,
+          wall
+        );
+      }
+    }
+
+    const createData =
+      [];
+
+    const updateData =
+      [];
+
+    for (
+      const web of
+      job.webs
+    ) {
+      const webId =
+        String(
+          web.id
+        );
+
+      const existing =
+        existingByWebId.get(
+          webId
+        ) ??
+        null;
+
+      const desired =
+        createGeneratedSpanWallData({
+          web,
+          behaviour:
+            job.behaviour,
+          existingWall:
+            existing,
+          preserveDoorState:
+            false
+        });
+
+      const data =
+        {
+          ...desired,
+          flags:
+            mergeGeneratedSpanWallFlags(
+              desired
+            )
+        };
+
+      if (!existing) {
+        createData.push(
+          data
+        );
+
+        continue;
+      }
+
+      if (
+        !generatedSpanWallMatches(
+          existing,
+          data
+        )
+      ) {
+        const wallId =
+          getDocumentId(
+            existing
+          );
+
+        if (wallId) {
+          updateData.push({
+            _id:
+              wallId,
+            ...data
+          });
+        }
+      }
+    }
+
+    if (
+      updateData.length >
+        0
+    ) {
+      await scene.updateEmbeddedDocuments(
+        "Wall",
+        updateData
+      );
+    }
+
+    if (
+      createData.length >
+        0
+    ) {
+      await scene.createEmbeddedDocuments(
+        "Wall",
+        createData
+      );
+    }
+
+    const nextIndex =
+      this.#rebuildSceneWallIndex(
+        scene
+      );
+
+    return {
+      authoritative:
+        true,
+      desiredWallCount:
+        nextIndex.size,
+      activeWallCount:
+        nextIndex.size,
+      createdCount:
+        createData.length,
+      updatedCount:
+        updateData.length,
+      deletedCount:
+        0
+    };
+  }
+
+  #rebuildSceneWallIndex(
+    scene
+  ) {
+    const sceneId =
+      resolveSceneId(
+        scene
+      );
+
+    const index =
+      new Map();
+
+    if (sceneId) {
+      for (
+        const wall of
+        collectGeneratedWalls(
+          scene
+        )
+      ) {
+        const webId =
+          getGeneratedSpanWallWebId(
+            wall
+          );
+
+        const wallId =
+          getDocumentId(
+            wall
+          );
+
+        if (
+          webId &&
+          wallId &&
+          !index.has(
+            webId
+          )
+        ) {
+          index.set(
+            webId,
+            wallId
+          );
+        }
+      }
+
+      this.wallIdsBySceneId.set(
+        sceneId,
+        index
+      );
+    }
+
+    return index;
+  }
+}
+
+function resolveSceneId(
+  scene
+) {
+  if (
+    !scene ||
+    typeof scene !==
+      "object"
+  ) {
+    return null;
+  }
+
+  const sceneId =
+    String(
+      scene.id ??
+      ""
+    ).trim();
+
+  return sceneId ||
+    null;
+}
+
+function normaliseBehaviour(
+  behaviour
+) {
+  return Object.freeze({
+    visionMode:
+      behaviour?.visionMode ??
+      "none",
+    secretDoor:
+      behaviour?.secretDoor ===
+        true,
+    destructible:
+      behaviour?.destructible ===
+        true
+  });
+}
+
+function normaliseGenerationId(
+  value
+) {
+  return Number.isInteger(
+    Number(
+      value
+    )
+  )
+    ? Number(
+        value
+      )
+    : null;
+}
+
+function normaliseIdentifierList(
+  values
+) {
+  return Array.from(
+    new Set(
+      (
+        Array.isArray(
+          values
+        )
+          ? values
+          : []
+      )
+        .map(
+          value =>
+            String(
+              value ??
+              ""
+            ).trim()
+        )
+        .filter(
+          Boolean
+        )
+    )
+  ).sort();
+}
+
+function createNonAuthoritativeResult(
+  scene
+) {
+  return {
+    authoritative:
+      false,
+    desiredWallCount:
+      0,
+    activeWallCount:
+      collectGeneratedWalls(
+        scene
+      ).length,
+    createdCount:
+      0,
+    updatedCount:
+      0,
+    deletedCount:
+      0
+  };
 }
 
 function collectGeneratedWalls(
@@ -613,6 +1398,31 @@ function collectValues(
   return [];
 }
 
+function resolveSceneWallById(
+  scene,
+  wallId
+) {
+  const direct =
+    scene?.walls?.get?.(
+      wallId
+    );
+
+  if (direct) {
+    return direct;
+  }
+
+  return collectValues(
+    scene?.walls
+  ).find(
+    wall =>
+      getDocumentId(
+        wall
+      ) ===
+        wallId
+  ) ??
+    null;
+}
+
 function getDocumentId(
   document
 ) {
@@ -648,12 +1458,20 @@ function createEmptyDiagnostics() {
       0,
     deletedCount:
       0,
+    deferredCount:
+      0,
+    deferredWallIds:
+      Object.freeze([]),
     lastRequestedAt:
       null,
     lastCompletedAt:
       null,
     lastReason:
       null,
+    lastOperationType:
+      null,
+    targetWebIds:
+      Object.freeze([]),
     lastError:
       null
   };

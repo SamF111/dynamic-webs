@@ -97,7 +97,7 @@ Dynamic Webs uses Foundry's standard **Configure Settings** page. All world sett
 - **Population Defaults** — independent corner, span, ground and carpet densities
 - **Appearance Defaults** — web colour and thickness
 - **Level Awareness** — the Foundry v13 provider selector when applicable
-- **Maintenance** — the client-local carpet texture cache action
+- **Maintenance** — the client-local carpet texture cache action, world-wide destroyed-span restoration, lingering-wall cleanup, and a confirmed clear-all preparation step before uninstalling the module
 
 No separate Dynamic Webs settings window or legacy FormApplication is used.
 
@@ -114,7 +114,11 @@ Below the population cards, Scene Configuration provides one collapsed **Span be
 
 Vision and movement are independent. A vision-only span never blocks movement. Enabling the secret-door option creates movement blocking through a Foundry secret door, while retaining the selected vision mode. Corner, ground and carpet webs never create these walls.
 
-Generated span walls are derived from intact immutable wall-span blueprints and carry explicit Dynamic Webs ownership flags. They are excluded from structural-wall collection and ignored by wall lifecycle rebuild hooks, preventing recursive web generation. Reconciliation creates, updates or removes one wall per intact span and preserves a GM-opened secret door's open state.
+Generated span walls are derived from intact immutable wall-span blueprints and carry explicit Dynamic Webs ownership flags. They are excluded from structural-wall collection and ignored by wall lifecycle rebuild hooks, preventing recursive web generation. Reconciliation creates, updates or removes one wall per intact span and preserves a GM-opened secret door's open state. When token movement destroys a span through an already-open generated secret door, Dynamic Webs removes the web immediately but deliberately leaves that harmless open WallDocument for deferred cleanup, avoiding Foundry's expensive wall/perception rebuild during movement. Closed doors and vision-only walls are still removed immediately.
+
+The standard Configure Settings page provides **Restore Destroyed Span Webs in All Scenes**, **Destroy All Lingering Web Walls** and **Clear All Webs and Prepare for Uninstall** buttons. Restore clears the compact destroyed-span state in every Scene. The active Scene uses the incremental runtime restoration path immediately; inactive Scenes do not generate geometry during the maintenance pass, and any retained generated wall linked to a destroyed span is removed so the next Scene synchronisation recreates it in the closed/default state. Clean-up deletes destroyed-span, duplicate and malformed generated walls while retaining valid intact walls. Prepare for Uninstall requires typed confirmation, deletes every generated web wall, clears Dynamic Webs Region flags and resets every Scene to an explicit empty web-population array while removing the remaining Dynamic Webs Scene flags, and clears the active local runtime.
+
+The Scene Configuration **Span behaviour** section also provides **Restore Destroyed Span Webs**, **Update Web Walls** and **Delete Web Walls**. Restore clears that Scene's destroyed-span state and is available for both active and inactive Scenes. Update performs a complete active-Scene reconciliation and therefore removes deferred walls, repairs missing or outdated walls and removes duplicates. Delete removes every generated web WallDocument from that Scene without changing populations or destroyed-span state.
 
 When Scene span webs are indestructible, token movement does not query or destroy them. Any previously persisted destroyed-span IDs are restored and the compact Scene mutable-state flag is repaired during reconciliation.
 
@@ -490,7 +494,7 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Querying a stored but currently unrendered level without changing visibility or generation identity
 - Repeated Scene saves without duplicate rendering
 - Token swept movement crossing an intact wall-span web
-- Destroyed span disappearance on every connected client and state reset through the public API
+- Destroyed span disappearance on every connected client, Scene-level restoration, world-wide restoration and state reset through the public API
 - Scene reload and server restart with destroyed spans still absent
 - Obsolete persisted span IDs pruned after wall or population changes
 - Baseline diagnostics and deterministic hashes
@@ -514,7 +518,7 @@ Generate and validate the authored span atlas with:
 
 When the Scene's **Span webs are destructible** option is enabled, a committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
 
-Destroyed spans stop rendering and immediately stop contributing generated vision or secret-door walls. Restoring a span recreates its derived wall when the Scene behaviour requires one. Disabling destructibility restores all currently destroyed spans and prevents both local GM destruction and player socket requests from mutating them.
+Destroyed spans stop rendering immediately. Vision-only walls and closed generated secret doors are deleted immediately. An already-open generated secret door is instead retained as a harmless deferred-cleanup WallDocument so token movement does not trigger Foundry's expensive wall/perception rebuild; full reconciliation or either maintenance control removes it later. Restoring a span closes and reuses a retained generated secret door, or recreates the wall when none remains. Scene Configuration can restore every destroyed span in one Scene, while Configure Settings can restore every destroyed span across the world. Inactive-Scene restoration changes only compact persistent state and removes retained derived walls; geometry and missing walls are recreated when the Scene is next opened. Disabling destructibility restores all currently destroyed spans and prevents both local GM destruction and player socket requests from mutating them.
 
 Destroyed IDs are compact Scene-owned mutable state separate from immutable blueprints. The persisted value contains only a schema version, monotonic revision and sorted stable wall-span IDs:
 

@@ -112,6 +112,12 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.match(template, /data-dynamic-webs-span-secret-door/u);
   assert.match(template, /closed secret doors/u);
   assert.match(template, /data-dynamic-webs-span-destructible/u);
+  assert.match(template, /data-dynamic-webs-restore-destroyed-spans/u);
+  assert.match(template, /Restore Destroyed Span Webs/u);
+  assert.match(template, /data-dynamic-webs-update-span-walls/u);
+  assert.match(template, /data-dynamic-webs-delete-span-walls/u);
+  assert.match(template, /Update Web Walls/u);
+  assert.match(template, /Delete Web Walls/u);
   assert.match(card, /data-dynamic-webs-duplicate-population/u);
   assert.match(card, /data-dynamic-webs-remove-population/u);
   assert.match(card, /data-dynamic-webs-population-field="levelId"/u);

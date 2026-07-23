@@ -774,8 +774,18 @@ The authored world defaults are limited vision, no secret door and destructible 
 - Movement blocking is available only through a module-owned closed secret door.
 - Vision and secret-door movement behaviour remain independently selectable.
 - One stable derived wall is reconciled per intact wall-span web.
-- Destroying a span removes its derived wall; restoring it recreates the wall.
-- An opened secret door retains its door state during ordinary reconciliation.
+- Destroying a span removes its derived wall immediately unless that wall is an already-open generated secret door.
+- An already-open generated secret door is retained as a harmless deferred-cleanup wall during token movement, avoiding Foundry's expensive perception rebuild.
+- Full reconciliation, Scene maintenance or world maintenance deletes deferred walls.
+- Restoring a span closes and reuses a deferred generated secret door, or recreates the wall when absent.
+- An opened secret door retains its door state during ordinary reconciliation while the span remains intact.
+
+### Maintenance controls
+
+- Foundry's standard Configure Settings page includes **Restore Destroyed Span Webs in All Scenes**. The active Scene uses incremental runtime restoration; inactive Scenes clear only compact persistent state and remove retained generated walls, without generating geometry until those Scenes are next opened.
+- **Destroy All Lingering Web Walls** scans every Scene and deletes walls tied to destroyed spans, duplicate walls and malformed generated walls while preserving one valid wall for each intact span.
+- **Clear All Webs and Prepare for Uninstall** requires typed confirmation, deletes all generated web walls, removes Dynamic Webs Region flags, clears the remaining Dynamic Webs Scene flags, and leaves an explicit empty population array on each Scene so webs cannot reappear before uninstall, and clears the active runtime.
+- Scene Configuration includes **Restore Destroyed Span Webs**, **Update Web Walls** and **Delete Web Walls** inside the existing Span behaviour section. Restore works for active and inactive Scenes; Update performs full active-Scene reconciliation; Delete removes generated WallDocuments without changing web populations or destroyed-span state.
 
 ### Feedback prevention
 

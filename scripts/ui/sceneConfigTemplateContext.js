@@ -61,6 +61,38 @@ export async function createSceneConfigTemplateContext({ application, scene }) {
       scene
     );
   const editable = application?.isEditable !== false;
+  const isActiveScene =
+    String(
+      globalThis.canvas?.scene?.id ??
+      ""
+    ) ===
+    String(
+      scene?.id ??
+      ""
+    );
+  const runtimeMutableState =
+    isActiveScene
+      ? globalThis.dynamicWebs
+          ?.api
+          ?.interactions
+          ?.getState?.() ??
+        null
+      : null;
+  const destroyedWebCount =
+    runtimeMutableState &&
+    String(
+      runtimeMutableState.sceneId ??
+      ""
+    ) ===
+    String(
+      scene?.id ??
+      ""
+    ) &&
+    Array.isArray(
+      runtimeMutableState.destroyedWebIds
+    )
+      ? runtimeMutableState.destroyedWebIds.length
+      : mutableState.destroyedWebIds.length;
 
   return {
     editable,
@@ -114,8 +146,11 @@ export async function createSceneConfigTemplateContext({ application, scene }) {
         configuration.spanWebBehaviour.secretDoor,
       destructible:
         configuration.spanWebBehaviour.destructible,
-      destroyedWebCount:
-        mutableState.destroyedWebIds.length,
+      destroyedWebCount,
+      hasDestroyedWebs:
+        destroyedWebCount >
+          0,
+      isActiveScene,
       summary:
         createSpanBehaviourSummary(
           configuration.spanWebBehaviour

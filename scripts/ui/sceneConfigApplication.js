@@ -14,6 +14,10 @@ import {
   activateSceneConfigSpanBehaviourControls
 } from "./sceneConfigSpanBehaviourControls.js";
 
+import {
+  activateSceneConfigSpanWallControls
+} from "./sceneConfigSpanWallControls.js";
+
 const registerSceneConfigHooksInternal = createSceneConfigHookRegistration({
   createTemplateContext: createSceneConfigTemplateContext,
   activateControls: activateSceneConfigControls,
@@ -32,6 +36,11 @@ function activateSceneConfigControls(
   );
 
   activateSceneConfigSpanBehaviourControls(
+    application,
+    partElement
+  );
+
+  activateSceneConfigSpanWallControls(
     application,
     partElement
   );

@@ -798,6 +798,15 @@ export class WebRuntimeService {
     return this.spanWallService.createDiagnosticSnapshot();
   }
 
+  invalidateSpanWallIndex(
+    sceneId
+  ) {
+    return this.spanWallService.invalidateSceneWallIndex?.(
+      sceneId
+    ) ??
+      false;
+  }
+
   async flushSpanWallReconciliation() {
     return this.spanWallService.flush();
   }
@@ -933,7 +942,8 @@ export class WebRuntimeService {
 
     try {
       this.#refreshAfterMutableStateChange(
-        reason
+        reason,
+        previousMutableState
       );
     } catch (error) {
       this.#rollbackMutableState(
@@ -1052,7 +1062,8 @@ export class WebRuntimeService {
     try {
       this.#refreshAfterMutableStateChange(
         metadata?.cause ??
-        "destroy-webs"
+        "destroy-webs",
+        previousMutableState
       );
     } catch (error) {
       this.#rollbackMutableState(
@@ -1142,7 +1153,8 @@ export class WebRuntimeService {
     try {
       this.#refreshAfterMutableStateChange(
         metadata?.cause ??
-        "restore-web"
+        "restore-web",
+        previousMutableState
       );
     } catch (error) {
       this.#rollbackMutableState(
@@ -1205,7 +1217,8 @@ export class WebRuntimeService {
       try {
         this.#refreshAfterMutableStateChange(
           metadata?.cause ??
-          "reset-web-state"
+          "reset-web-state",
+          previousMutableState
         );
       } catch (error) {
         this.#rollbackMutableState(
@@ -1273,7 +1286,8 @@ export class WebRuntimeService {
 
     try {
       this.#refreshAfterMutableStateChange(
-        reason
+        reason,
+        previousMutableState
       );
     } catch (error) {
       this.#rollbackMutableState(
@@ -1747,25 +1761,18 @@ export class WebRuntimeService {
     );
 
     if (
-      this.state.active ===
-        true
-    ) {
-      this.#refreshAfterMutableStateChange(
-        reason
-      );
-    }
-  }
-
-  #refreshAfterMutableStateChange(
-    reason
-  ) {
-    if (
       this.state.active !==
         true
     ) {
       return;
     }
 
+    /**
+     * Rollback is deliberately conservative. The common mutation path is
+     * incremental; a failed incremental display operation is exceptional and
+     * may have partially changed several display objects, so one full redraw
+     * restores a known-good presentation.
+     */
     const visibleWebs =
       filterIntactWebs(
         filterWebsForVisibleLevels(
@@ -1793,7 +1800,7 @@ export class WebRuntimeService {
         normaliseOptionalIdentifier(
           reason
         ) ??
-        "mutable-web-state",
+        "mutable-web-state-rollback",
       lastOperationAt:
         Date.now(),
       mutableState:
@@ -1806,6 +1813,148 @@ export class WebRuntimeService {
       ),
       reason
     );
+  }
+
+  /**
+   * Apply one mutable-state difference without rebuilding unrelated web
+   * display objects or reconciling every generated span wall.
+   */
+  #refreshAfterMutableStateChange(
+    reason,
+    previousMutableState
+  ) {
+    if (
+      this.state.active !==
+        true
+    ) {
+      return null;
+    }
+
+    const nextMutableState =
+      this.getMutableState();
+
+    const difference =
+      createMutableStateDifference(
+        previousMutableState,
+        nextMutableState
+      );
+
+    const renderingConfiguration =
+      createRenderingConfiguration(
+        this.state.configuration.rendering,
+        this.state.thicknessMultiplier
+      );
+
+    for (
+      const webId of
+      difference.destroyedWebIds
+    ) {
+      this.renderService.removeWeb?.(
+        webId
+      );
+    }
+
+    const restoredWebs =
+      difference.restoredWebIds
+        .map(
+          webId =>
+            this.state.webs.find(
+              web =>
+                String(
+                  web?.id ??
+                  ""
+                ) ===
+                  webId
+            ) ??
+            null
+        )
+        .filter(
+          Boolean
+        );
+
+    const visibleRestoredWebs =
+      filterWebsForVisibleLevels(
+        restoredWebs,
+        this.state.levelVisibility?.visibleLevelIds ??
+        []
+      );
+
+    for (
+      const web of
+      visibleRestoredWebs
+    ) {
+      this.renderService.restoreWeb?.(
+        web,
+        renderingConfiguration
+      );
+    }
+
+    this.state = {
+      ...this.state,
+      presentationRevision:
+        this.state.presentationRevision +
+        (
+          difference.changed
+            ? 1
+            : 0
+        ),
+      lastOperationReason:
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "mutable-web-state",
+      lastOperationAt:
+        Date.now(),
+      mutableState:
+        nextMutableState
+    };
+
+    const scene =
+      resolveSceneDocument(
+        this.state.sceneId
+      );
+
+    if (
+      scene &&
+      difference.destroyedWebIds.length >
+        0
+    ) {
+      this.spanWallService.requestWebRemoval?.({
+        scene,
+        webIds:
+          difference.destroyedWebIds,
+        generationId:
+          this.state.generationId,
+        reason:
+          normaliseOptionalIdentifier(
+            reason
+          ) ??
+          "destroy-span-wall"
+      });
+    }
+
+    if (
+      scene &&
+      restoredWebs.length >
+        0
+    ) {
+      this.spanWallService.requestWebRestoration?.({
+        scene,
+        webs:
+          restoredWebs,
+        behaviour:
+          this.state.spanWebBehaviour,
+        generationId:
+          this.state.generationId,
+        reason:
+          normaliseOptionalIdentifier(
+            reason
+          ) ??
+          "restore-span-wall"
+      });
+    }
+
+    return difference;
   }
 
   #requestSpanWallReconciliation(
@@ -2246,6 +2395,79 @@ function mutableStateMatchesPersistentState(
         webId ===
         persistedIds[index]
     );
+}
+
+function createMutableStateDifference(
+  previous,
+  next
+) {
+  const previousIds =
+    new Set(
+      Array.isArray(
+        previous?.destroyedWebIds
+      )
+        ? previous.destroyedWebIds.map(
+            value =>
+              String(
+                value
+              )
+          )
+        : []
+    );
+
+  const nextIds =
+    new Set(
+      Array.isArray(
+        next?.destroyedWebIds
+      )
+        ? next.destroyedWebIds.map(
+            value =>
+              String(
+                value
+              )
+          )
+        : []
+    );
+
+  const destroyedWebIds =
+    Array.from(
+      nextIds
+    )
+      .filter(
+        webId =>
+          !previousIds.has(
+            webId
+          )
+      )
+      .sort();
+
+  const restoredWebIds =
+    Array.from(
+      previousIds
+    )
+      .filter(
+        webId =>
+          !nextIds.has(
+            webId
+          )
+      )
+      .sort();
+
+  return Object.freeze({
+    changed:
+      destroyedWebIds.length >
+        0 ||
+      restoredWebIds.length >
+        0,
+    destroyedWebIds:
+      Object.freeze(
+        destroyedWebIds
+      ),
+    restoredWebIds:
+      Object.freeze(
+        restoredWebIds
+      )
+  });
 }
 
 function resolveSceneDocument(
