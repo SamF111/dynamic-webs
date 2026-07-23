@@ -15,6 +15,10 @@ import {
   evaluateWebRegionRestrictionForStrands
 } from "../../spatial/webRegionRestrictionIndex.js";
 
+import {
+  createWebGroundAssetPresentation
+} from "../../data/webGroundAssetCatalog.js";
+
 /** Generate deterministic irregular radial ground webs. */
 export class GroundWebGenerator {
   generate({
@@ -188,17 +192,31 @@ function createGroundWeb({
     ? `candidate-${index}`
     : `index-${index}`;
 
+  const webId =
+    createStableWebId({
+      sceneId,
+      populationId,
+      levelId:
+        level.id,
+      kind:
+        WEB_BLUEPRINT_KINDS.GROUND,
+      sourceKey
+    });
+
+  const groundAsset =
+    createWebGroundAssetPresentation({
+      selectionKey:
+        webId,
+      pivot:
+        centre,
+      radiusX,
+      radiusY,
+      rotation
+    });
+
   return createWebBlueprint({
     id:
-      createStableWebId({
-        sceneId,
-        populationId,
-        levelId:
-          level.id,
-        kind:
-          WEB_BLUEPRINT_KINDS.GROUND,
-        sourceKey
-      }),
+      webId,
     sceneId,
     populationId,
     populationLabel,
@@ -216,6 +234,7 @@ function createGroundWeb({
       WEB_BLUEPRINT_KINDS.GROUND,
     hub,
     strands,
+    groundAsset,
     regionIds: regionEvaluation.regionIds,
     regionTags: regionEvaluation.regionTags,
     perches: [{

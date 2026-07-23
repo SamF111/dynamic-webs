@@ -27,6 +27,10 @@ import {
 } from "./WebSpanAssetTextureService.js";
 
 import {
+  WebGroundAssetTextureService
+} from "./WebGroundAssetTextureService.js";
+
+import {
   WebCarpetRegionMaskService,
   applyWebCarpetRegionMask,
   destroyWebCarpetRegionMaskResource
@@ -98,6 +102,12 @@ export class WebRenderService {
         ? options.spanTextureService
         : new WebSpanAssetTextureService();
 
+    this.groundTextureService =
+      options.groundTextureService instanceof
+        WebGroundAssetTextureService
+        ? options.groundTextureService
+        : new WebGroundAssetTextureService();
+
     this.carpetMaskResources =
       new Map();
 
@@ -117,6 +127,9 @@ export class WebRenderService {
       0;
 
     this.lastRenderedSpanAssetCount =
+      0;
+
+    this.lastRenderedGroundAssetCount =
       0;
 
     this.renderRevision =
@@ -256,7 +269,9 @@ export class WebRenderService {
             cornerTextureService:
               this.cornerTextureService,
             spanTextureService:
-              this.spanTextureService
+              this.spanTextureService,
+            groundTextureService:
+              this.groundTextureService
           });
         }
       }
@@ -388,6 +403,16 @@ export class WebRenderService {
           web?.spanAsset
       ).length;
 
+    this.lastRenderedGroundAssetCount =
+      visibleWebs.filter(
+        (
+          web
+        ) =>
+          web?.kind ===
+            "ground" &&
+          web?.groundAsset
+      ).length;
+
     return this.container;
   }
 
@@ -510,6 +535,10 @@ export class WebRenderService {
 
   clearSpanTextureCache() {
     return this.spanTextureService.clear();
+  }
+
+  clearGroundTextureCache() {
+    return this.groundTextureService.clear();
   }
 
   createDiagnosticSnapshot() {
@@ -669,6 +698,8 @@ export class WebRenderService {
         this.lastRenderedCornerAssetCount,
       renderedSpanAssetCount:
         this.lastRenderedSpanAssetCount,
+      renderedGroundAssetCount:
+        this.lastRenderedGroundAssetCount,
       carpetMaskCount:
         this.carpetMaskResources.size,
       carpetTextures:
@@ -679,6 +710,8 @@ export class WebRenderService {
         this.cornerTextureService.createDiagnosticSnapshot(),
       spanTextures:
         this.spanTextureService.createDiagnosticSnapshot(),
+      groundTextures:
+        this.groundTextureService.createDiagnosticSnapshot(),
       renderRevision:
         this.renderRevision,
       lastRenderedAt:
@@ -700,7 +733,8 @@ function renderWebGraphic({
   carpetMaskResources,
   carpetMaskService,
   cornerTextureService,
-  spanTextureService
+  spanTextureService,
+  groundTextureService
 }) {
   if (
     web?.kind ===
@@ -769,6 +803,29 @@ function renderWebGraphic({
           webThicknessMultiplier,
         graphicsByWebId,
         spanTextureService
+      });
+
+    if (rendered) {
+      return;
+    }
+  }
+
+  if (
+    web?.kind ===
+      "ground" &&
+    web?.groundAsset &&
+    groundTextureService
+  ) {
+    const rendered =
+      renderGroundAssetGraphic({
+        pixi,
+        container,
+        web,
+        configuration,
+        thicknessMultiplier:
+          webThicknessMultiplier,
+        graphicsByWebId,
+        groundTextureService
       });
 
     if (rendered) {
@@ -1023,6 +1080,132 @@ function renderWallSpanAssetGraphic({
       "setup-failed";
 
     display.dynamicWebsSpanAssetSetupError =
+      Object.freeze({
+        name:
+          String(
+            error?.name ??
+            "Error"
+          ),
+        message:
+          String(
+            error?.message ??
+            error
+          )
+      });
+  }
+
+  return true;
+}
+
+function renderGroundAssetGraphic({
+  pixi,
+  container,
+  web,
+  configuration,
+  thicknessMultiplier,
+  graphicsByWebId,
+  groundTextureService
+}) {
+  const fallback =
+    createProceduralWebGraphics({
+      pixi,
+      web,
+      configuration,
+      thicknessMultiplier
+    });
+
+  fallback.name =
+    `${MODULE_ID}.web-ground-fallback.${web.id}`;
+
+  fallback.zIndex =
+    0;
+
+  const display =
+    new pixi.Container();
+
+  configureWebDisplayObject(
+    display
+  );
+
+  display.name =
+    `${MODULE_ID}.web-ground.${web.id}`;
+
+  display.sortableChildren =
+    true;
+
+  display.elevation =
+    resolveWebElevation(
+      web,
+      container.elevation
+    );
+
+  display.zIndex =
+    -20;
+
+  display.addChild(
+    fallback
+  );
+
+  container.addChild(
+    display
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    display
+  );
+
+  if (
+    typeof pixi?.Sprite !==
+      "function"
+  ) {
+    display.dynamicWebsGroundAssetSetupState =
+      "sprite-api-unavailable";
+
+    return true;
+  }
+
+  const profile =
+    getWebColourProfile(
+      web.colourProfileId
+    );
+
+  try {
+    const assetDisplay =
+      groundTextureService.createGroundDisplay({
+        pixi,
+        presentation:
+          web.groundAsset,
+        fallbackDisplay:
+          fallback,
+        tint:
+          profile.configuration.captureColour,
+        alphaMultiplier:
+          profile.configuration.alphaMultiplier,
+        thicknessMultiplier
+      });
+
+    if (
+      assetDisplay
+    ) {
+      assetDisplay.zIndex =
+        1;
+
+      display.addChild(
+        assetDisplay
+      );
+
+      display.dynamicWebsGroundAssetSetupState =
+        "pending-or-loaded";
+    } else {
+      display.dynamicWebsGroundAssetSetupState =
+        "asset-display-unavailable";
+    }
+  } catch (error) {
+    display.dynamicWebsGroundAssetSetupState =
+      "setup-failed";
+
+    display.dynamicWebsGroundAssetSetupError =
       Object.freeze({
         name:
           String(

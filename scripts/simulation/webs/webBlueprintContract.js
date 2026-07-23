@@ -359,6 +359,33 @@ export function assertWebBlueprintIntegrity(
     );
   }
 
+
+  if (
+    kind ===
+      WEB_BLUEPRINT_KINDS.GROUND
+  ) {
+    if (
+      blueprint.groundAsset !==
+        undefined &&
+      blueprint.groundAsset !==
+        null
+    ) {
+      assertWebGroundAssetPresentation(
+        blueprint.groundAsset,
+        webId
+      );
+    }
+  } else if (
+    blueprint.groundAsset !==
+      undefined &&
+    blueprint.groundAsset !==
+      null
+  ) {
+    throw new Error(
+      `Dynamic Webs | Non-ground web "${webId}" cannot contain ground asset presentation data.`
+    );
+  }
+
   const expectedWebId =
     createStableWebId({
       sceneId,
@@ -562,6 +589,12 @@ export function assertWebBlueprintIntegrity(
       blueprint.spanAsset &&
       !Object.isFrozen(
         blueprint.spanAsset
+      )
+    ) ||
+    (
+      blueprint.groundAsset &&
+      !Object.isFrozen(
+        blueprint.groundAsset
       )
     )
   ) {
@@ -1311,6 +1344,223 @@ function assertWebSpanAssetPresentation(
   ) {
     throw new Error(
       `Dynamic Webs | Span asset presentation for web "${webId}" is not deeply immutable.`
+    );
+  }
+}
+
+function assertWebGroundAssetPresentation(
+  presentation,
+  webId
+) {
+  if (
+    !presentation ||
+    typeof presentation !==
+      "object" ||
+    Array.isArray(
+      presentation
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Ground web "${webId}" requires a valid ground asset presentation object.`
+    );
+  }
+
+  if (
+    presentation.schemaVersion !==
+      1
+  ) {
+    throw new Error(
+      `Dynamic Webs | Ground asset presentation for web "${webId}" has an unsupported schema version.`
+    );
+  }
+
+  requireIdentifier(
+    presentation.assetId,
+    `ground asset ID for web "${webId}"`
+  );
+
+  const modulePath =
+    requireIdentifier(
+      presentation.modulePath,
+      `ground asset path for web "${webId}"`
+    );
+
+  if (
+    !modulePath.toLowerCase().endsWith(
+      ".webp"
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Ground asset for web "${webId}" must reference a WebP file.`
+    );
+  }
+
+  for (
+    const field of
+    [
+      "variant",
+      "alpha",
+      "targetRadiusXPx",
+      "targetRadiusYPx",
+      "rotation"
+    ]
+  ) {
+    if (
+      !Number.isFinite(
+        Number(
+          presentation[field]
+        )
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Ground asset for web "${webId}" has invalid ${field}.`
+      );
+    }
+  }
+
+  if (
+    !Number.isInteger(
+      Number(
+        presentation.variant
+      )
+    ) ||
+    Number(
+      presentation.variant
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) >
+      1 ||
+    Number(
+      presentation.targetRadiusXPx
+    ) <=
+      0 ||
+    Number(
+      presentation.targetRadiusYPx
+    ) <=
+      0
+  ) {
+    throw new Error(
+      `Dynamic Webs | Ground asset for web "${webId}" has invalid variant, alpha or radii.`
+    );
+  }
+
+  for (
+    const [
+      basisName,
+      basis
+    ] of
+    [
+      [
+        "source",
+        presentation.source
+      ],
+      [
+        "target",
+        presentation.target
+      ]
+    ]
+  ) {
+    if (
+      !basis ||
+      typeof basis !==
+        "object" ||
+      Array.isArray(
+        basis
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Ground asset ${basisName} basis for web "${webId}" must be an object.`
+      );
+    }
+
+    for (
+      const pointName of
+      [
+        "pivot",
+        "firstAnchor",
+        "secondAnchor"
+      ]
+    ) {
+      assertFinitePoint(
+        basis[pointName],
+        `${basisName} ${pointName} for ground asset on web "${webId}"`
+      );
+    }
+
+    const firstVector = {
+      x:
+        Number(
+          basis.firstAnchor.x
+        ) -
+        Number(
+          basis.pivot.x
+        ),
+      y:
+        Number(
+          basis.firstAnchor.y
+        ) -
+        Number(
+          basis.pivot.y
+        )
+    };
+
+    const secondVector = {
+      x:
+        Number(
+          basis.secondAnchor.x
+        ) -
+        Number(
+          basis.pivot.x
+        ),
+      y:
+        Number(
+          basis.secondAnchor.y
+        ) -
+        Number(
+          basis.pivot.y
+        )
+    };
+
+    const determinant =
+      firstVector.x *
+        secondVector.y -
+      firstVector.y *
+        secondVector.x;
+
+    if (
+      !Number.isFinite(
+        determinant
+      ) ||
+      Math.abs(
+        determinant
+      ) <
+        0.000000001
+    ) {
+      throw new Error(
+        `Dynamic Webs | Ground asset ${basisName} basis for web "${webId}" is degenerate.`
+      );
+    }
+  }
+
+  if (
+    !Object.isFrozen(
+      presentation
+    ) ||
+    !Object.isFrozen(
+      presentation.source
+    ) ||
+    !Object.isFrozen(
+      presentation.target
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Ground asset presentation for web "${webId}" is not deeply immutable.`
     );
   }
 }

@@ -1,12 +1,12 @@
 # Dynamic Webs procedural asset tools
 
 This folder contains development-only Python tooling for generating original,
-deterministic, transparent web-carpet patch assets.
+deterministic, transparent WebP assets for web carpets, wall corners, wall
+spans and ground webs.
 
-It does not run inside Foundry and does not change corner, span or ground web
-generation. Generated patch images are intended for a later lightweight
-web-carpet renderer that places, rotates, scales, flips and tints reusable
-components inside a Region mask.
+It does not run inside Foundry. Runtime generators retain immutable procedural
+strand geometry for spatial queries and fallbacks; the bundled WebPs replace
+only the normal visual presentation after their local textures load.
 
 ## Folder ownership
 
@@ -292,3 +292,28 @@ Regenerate and validate after applying this source update:
 .\.venv\Scripts\python.exe tools\asset_generation\generate_span_web_assets.py --clean --preview
 .\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
 ```
+
+## Ground-web radial assets
+
+Ground webs use twelve deterministic irregular radial-sheet variants. Each
+asset exposes one source pivot and two orthogonal source anchors. Runtime maps
+that basis onto the generated web centre, rotation and unequal X/Y radii with
+a single affine transform, so the asset follows the original procedural
+footprint without replacing strand geometry used by queries or interactions.
+
+Generate and validate the ground library locally:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_ground_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_ground_web_assets.py
+```
+
+Outputs are written to:
+
+```text
+assets/web-ground/generated/
+```
+
+The JavaScript renderer keeps procedural ground strands visible until the WebP
+loads and its affine transform is available. Ground assets use the same tint,
+alpha and discrete thickness-underlay treatment as corner and span assets.

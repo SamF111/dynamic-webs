@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "Dynamic Webs procedural ground-web asset generator",
+    "version": "1.0.0",
+    "masterSeed": "dynamic-webs:web-ground-assets:v1",
+    "generatedAt": "2026-07-23T10:20:48.320625+00:00",
+    "deterministicContent": true,
+    "authoredFibreStandard": "span-visibility-v1",
+    "topology": "irregular-radial-sheet"
+  },
+  "rendering": {
+    "format": "webp",
+    "colourMode": "transparent-white",
+    "sizePx": 512,
+    "supersample": 4
+  },
+  "assets": [
+    {
+      "id": "ground-01",
+      "variant": 1,
+      "file": "ground-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0d2b29f87bb0aba11e90fb1c42e3e7b6fce706d49e5d13fb06c0fbc9bd864d7d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-02",
+      "variant": 2,
+      "file": "ground-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "9ea15854cee134a4dc84771a8bafca3a49d9428adcaed22dd05e3c3cd1707285",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-03",
+      "variant": 3,
+      "file": "ground-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "37b5df9df6514852182b915111b6b15d3d82d984c8a61c72854b6591f9405560",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-04",
+      "variant": 4,
+      "file": "ground-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "7917055dfb92ad9515a4f4ec16697b55c05f73663f8b4357afae3f0e606d391d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-05",
+      "variant": 5,
+      "file": "ground-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f676eff38cb928ab372c6092decc63e7767842928f9aae6c77d709e3c25ac62c",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-06",
+      "variant": 6,
+      "file": "ground-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5796f2d05ef8e9306d37e810b3158eebda797f727006500c7c62019183227401",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-07",
+      "variant": 7,
+      "file": "ground-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "ec9fb2f3dbffd1f98a1e6c256a593491f720d64aa89027d57e3d2704890bf87d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-08",
+      "variant": 8,
+      "file": "ground-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4dd6f7ccfa59518362325893646d39d6ad3c49a323b723a376e41ee80dba07ab",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-09",
+      "variant": 9,
+      "file": "ground-09.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-09.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0b7d1820b53d35773a58af0c8f0cbff322baf886c0b7ced19099a7868a1a4753",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-10",
+      "variant": 10,
+      "file": "ground-10.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-10.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1b33514abb4a277ef241515be1e65b35fa3c852debf6418f42f46e6c27f184b4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-11",
+      "variant": 11,
+      "file": "ground-11.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-11.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "2cdc0eb60cfe4c761ebf11e599f6c43883e2b14dde6dd0bc20679583ef1605af",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "ground-12",
+      "variant": 12,
+      "file": "ground-12.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-ground/generated/ground-12.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "d23a2b9c273278e6a304f264cccfd4dc2a315153450589cec1a93bc5561ede5f",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.92,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    }
+  ]
+}

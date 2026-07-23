@@ -211,7 +211,8 @@ export function createWebBlueprint({
   bounds = null,
   carpet = null,
   cornerAsset = null,
-  spanAsset = null
+  spanAsset = null,
+  groundAsset = null
 }) {
   const webId =
     requireIdentifier(
@@ -524,6 +525,13 @@ export function createWebBlueprint({
         spanAsset
           ? {
               spanAsset
+            }
+          : {}
+      ),
+      ...(
+        groundAsset
+          ? {
+              groundAsset
             }
           : {}
       )
