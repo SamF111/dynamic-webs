@@ -210,7 +210,8 @@ export function createWebBlueprint({
   regionTags = [],
   bounds = null,
   carpet = null,
-  cornerAsset = null
+  cornerAsset = null,
+  spanAsset = null
 }) {
   const webId =
     requireIdentifier(
@@ -516,6 +517,13 @@ export function createWebBlueprint({
         cornerAsset
           ? {
               cornerAsset
+            }
+          : {}
+      ),
+      ...(
+        spanAsset
+          ? {
+              spanAsset
             }
           : {}
       )
@@ -976,3 +984,4 @@ function normaliseIdentifierList(value) {
       .filter(Boolean)
   )).sort((first, second) => first.localeCompare(second));
 }
+

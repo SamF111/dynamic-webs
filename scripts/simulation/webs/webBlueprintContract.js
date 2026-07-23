@@ -333,6 +333,32 @@ export function assertWebBlueprintIntegrity(
     );
   }
 
+  if (
+    kind ===
+      WEB_BLUEPRINT_KINDS.WALL_SPAN
+  ) {
+    if (
+      blueprint.spanAsset !==
+        undefined &&
+      blueprint.spanAsset !==
+        null
+    ) {
+      assertWebSpanAssetPresentation(
+        blueprint.spanAsset,
+        webId
+      );
+    }
+  } else if (
+    blueprint.spanAsset !==
+      undefined &&
+    blueprint.spanAsset !==
+      null
+  ) {
+    throw new Error(
+      `Dynamic Webs | Non-span web "${webId}" cannot contain span asset presentation data.`
+    );
+  }
+
   const expectedWebId =
     createStableWebId({
       sceneId,
@@ -530,6 +556,12 @@ export function assertWebBlueprintIntegrity(
       blueprint.cornerAsset &&
       !Object.isFrozen(
         blueprint.cornerAsset
+      )
+    ) ||
+    (
+      blueprint.spanAsset &&
+      !Object.isFrozen(
+        blueprint.spanAsset
       )
     )
   ) {
@@ -1063,6 +1095,266 @@ function assertWebCornerAssetPresentation(
       `Dynamic Webs | Corner asset presentation for web "${webId}" is not deeply immutable.`
     );
   }
+}
+
+function assertWebSpanAssetPresentation(
+  presentation,
+  webId
+) {
+  if (
+    !presentation ||
+    typeof presentation !==
+      "object" ||
+    Array.isArray(
+      presentation
+    )
+  ) {
+    throw new TypeError(
+      `Dynamic Webs | Span web "${webId}" requires a valid span asset presentation object.`
+    );
+  }
+
+  if (
+    presentation.schemaVersion !==
+      2
+  ) {
+    throw new Error(
+      `Dynamic Webs | Span asset presentation for web "${webId}" has an unsupported schema version.`
+    );
+  }
+
+  if (
+    presentation.warpMode !==
+      "piecewise-affine-quad"
+  ) {
+    throw new Error(
+      `Dynamic Webs | Span asset presentation for web "${webId}" must use the piecewise-affine-quad warp mode.`
+    );
+  }
+
+  requireIdentifier(
+    presentation.assetId,
+    `span asset ID for web "${webId}"`
+  );
+
+  const modulePath =
+    requireIdentifier(
+      presentation.modulePath,
+      `span asset path for web "${webId}"`
+    );
+
+  if (
+    !modulePath.toLowerCase().endsWith(
+      ".webp"
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Span asset for web "${webId}" must reference a WebP file.`
+    );
+  }
+
+  for (
+    const field of
+    [
+      "variant",
+      "alpha",
+      "targetLengthPx",
+      "targetSpanPx"
+    ]
+  ) {
+    if (
+      !Number.isFinite(
+        Number(
+          presentation[field]
+        )
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Span asset for web "${webId}" has invalid ${field}.`
+      );
+    }
+  }
+
+  if (
+    !Number.isInteger(
+      Number(
+        presentation.variant
+      )
+    ) ||
+    Number(
+      presentation.variant
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) <=
+      0 ||
+    Number(
+      presentation.alpha
+    ) >
+      1 ||
+    Number(
+      presentation.targetLengthPx
+    ) <=
+      0 ||
+    Number(
+      presentation.targetSpanPx
+    ) <=
+      0
+  ) {
+    throw new Error(
+      `Dynamic Webs | Span asset for web "${webId}" has invalid variant, alpha or dimensions.`
+    );
+  }
+
+  const pointNames =
+    [
+      "firstWallStart",
+      "firstWallEnd",
+      "secondWallStart",
+      "secondWallEnd"
+    ];
+
+  for (
+    const [
+      quadName,
+      quad
+    ] of
+    [
+      [
+        "source",
+        presentation.source
+      ],
+      [
+        "target",
+        presentation.target
+      ]
+    ]
+  ) {
+    if (
+      !quad ||
+      typeof quad !==
+        "object" ||
+      Array.isArray(
+        quad
+      )
+    ) {
+      throw new TypeError(
+        `Dynamic Webs | Span asset ${quadName} quadrilateral for web "${webId}" must be an object.`
+      );
+    }
+
+    for (
+      const pointName of
+      pointNames
+    ) {
+      assertFinitePoint(
+        quad[pointName],
+        `${quadName} ${pointName} for span asset on web "${webId}"`
+      );
+    }
+
+    const firstArea =
+      signedTriangleArea(
+        quad.firstWallStart,
+        quad.firstWallEnd,
+        quad.secondWallEnd
+      );
+
+    const secondArea =
+      signedTriangleArea(
+        quad.firstWallStart,
+        quad.secondWallEnd,
+        quad.secondWallStart
+      );
+
+    if (
+      Math.abs(
+        firstArea
+      ) <
+        0.000000001 ||
+      Math.abs(
+        secondArea
+      ) <
+        0.000000001 ||
+      firstArea *
+        secondArea <=
+        0
+    ) {
+      throw new Error(
+        `Dynamic Webs | Span asset ${quadName} quadrilateral for web "${webId}" is degenerate.`
+      );
+    }
+  }
+
+  if (
+    !Object.isFrozen(
+      presentation
+    ) ||
+    !Object.isFrozen(
+      presentation.source
+    ) ||
+    !Object.isFrozen(
+      presentation.target
+    ) ||
+    pointNames.some(
+      (
+        pointName
+      ) =>
+        !Object.isFrozen(
+          presentation.source[pointName]
+        ) ||
+        !Object.isFrozen(
+          presentation.target[pointName]
+        )
+    )
+  ) {
+    throw new Error(
+      `Dynamic Webs | Span asset presentation for web "${webId}" is not deeply immutable.`
+    );
+  }
+}
+
+function signedTriangleArea(
+  first,
+  second,
+  third
+) {
+  return (
+    (
+      Number(
+        second.x
+      ) -
+      Number(
+        first.x
+      )
+    ) *
+    (
+      Number(
+        third.y
+      ) -
+      Number(
+        first.y
+      )
+    ) -
+    (
+      Number(
+        second.y
+      ) -
+      Number(
+        first.y
+      )
+    ) *
+    (
+      Number(
+        third.x
+      ) -
+      Number(
+        first.x
+      )
+    )
+  ) /
+    2;
 }
 
 function assertWebCarpetPresentation(

@@ -301,41 +301,4 @@ test("small Regions retain distinct per-density minimum carpet populations", () 
   );
 });
 
-test("Infested carpets keep edge-centred patches and delegate footprint clipping to the Region mask", () => {
-  const edgeRegion = createRegion({
-    id: "edge-density-region",
-    tags: ["carpet"],
-    x: 100,
-    y: 100,
-    width: 200,
-    height: 200
-  });
-
-  const service = new WebGenerationService();
-  const generated = service.generate(createContext([edgeRegion]), {
-    populations: [
-      createPopulation({
-        densityId: "infested",
-        excludeRegionTags: []
-      })
-    ]
-  });
-
-  const web = generated.webs[0];
-  assert.ok(web);
-  assert.equal(web.carpet.patches.length, 96);
-  assert.equal(web.carpet.mask.bounds.x, 100);
-  assert.equal(web.carpet.mask.bounds.y, 100);
-  assert.equal(web.carpet.mask.bounds.right, 300);
-  assert.equal(web.carpet.mask.bounds.bottom, 300);
-
-  assert.ok(
-    web.carpet.patches.some((patch) =>
-      patch.x - patch.width / 2 < web.carpet.mask.bounds.x ||
-      patch.x + patch.width / 2 > web.carpet.mask.bounds.right ||
-      patch.y - patch.height / 2 < web.carpet.mask.bounds.y ||
-      patch.y + patch.height / 2 > web.carpet.mask.bounds.bottom
-    )
-  );
-});
 

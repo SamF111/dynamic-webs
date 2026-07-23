@@ -36,6 +36,14 @@ import {
   setPublicSceneWebPopulations
 } from "./api/populationApi.js";
 
+import {
+  destroyPublicWebs,
+  getPublicWebInteractionState,
+  queryPublicWebMovementIntersections,
+  resetPublicWebInteractionState,
+  restorePublicWeb
+} from "./api/interactionApi.js";
+
 /** Create the stable public Dynamic Webs API. */
 export function createPublicApi(
   runtime
@@ -129,6 +137,55 @@ export function createPublicApi(
           )
     });
 
+  const interactions =
+    Object.freeze({
+      queryMovement:
+        (
+          request
+        ) =>
+          queryPublicWebMovementIntersections(
+            runtime,
+            request
+          ),
+
+      destroyWebs:
+        (
+          webIds,
+          options = {}
+        ) =>
+          destroyPublicWebs(
+            runtime,
+            webIds,
+            options
+          ),
+
+      restoreWeb:
+        (
+          webId,
+          options = {}
+        ) =>
+          restorePublicWeb(
+            runtime,
+            webId,
+            options
+          ),
+
+      reset:
+        (
+          options = {}
+        ) =>
+          resetPublicWebInteractionState(
+            runtime,
+            options
+          ),
+
+      getState:
+        () =>
+          getPublicWebInteractionState(
+            runtime
+          )
+    });
+
   const diagnostics =
     Object.freeze({
       getBaselineReport:
@@ -163,7 +220,7 @@ export function createPublicApi(
                 MODULE_ID
               )
               ?.version ??
-            "0.6.0",
+            "0.7.0",
           webs:
             getPublicWebState(
               runtime
@@ -218,6 +275,7 @@ export function createPublicApi(
     colours,
     levels,
     spatial,
+    interactions,
     diagnostics
   });
 }

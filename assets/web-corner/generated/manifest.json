@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "generator": {
     "name": "Dynamic Webs procedural corner-web asset generator",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "masterSeed": "dynamic-webs:web-corner-assets:v3",
-    "generatedAt": "2026-07-22T18:06:48.077718+00:00",
+    "generatedAt": "2026-07-23T06:59:55.566419+00:00",
     "deterministicContent": true,
+    "authoredFibreStandard": "span-visibility-v1",
     "topology": "distributed-sheet"
   },
   "rendering": {
@@ -27,7 +28,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "0d49458c7399476afc3531cf1111efe896a037c022bb952606b0484e895e8a33",
+      "sha256": "9a4e6368349840ca0ca9d1f355d144a2c9aa2a3abdf2ac34df1fe63f0e853856",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -61,7 +62,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "be685a858bfa78869363c420baa144fee3ba1a0753df2072524f5aa9b1dcc353",
+      "sha256": "346aeed573e84874d06abb82249bfb72a47a16a4df489315e145f2dcea01086d",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -95,7 +96,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3dde314d3a381c0b5714e7d5d7e1895c1f2dec354972361b269aa47281e800db",
+      "sha256": "6b1093d4f1cad3ccc101375dbe497bdc9a3ce71e9a0711ac5cf2f9619f70f19f",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -129,7 +130,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "73d2dfa649fd892dab32faac1e14ef82c1b156c8dbe82d5492612495e0054253",
+      "sha256": "804767adfd4e137bb75494515b24d96e0d28bcb7bba0b8f696b7e47b9d0ef9a2",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -163,7 +164,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "2670e1457f08f322a508d2713cd101f1cffdfe252e91f8ff76585cb180357ac0",
+      "sha256": "0988ddcc940c3f28116acdc82d5cc8b7fb004e1a4af4f0cba6b38238a4db1d0a",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -197,7 +198,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b13500244e4cf36554fbc9fda0aec81ee35eb943c4333bba0d1bbd4b57271c89",
+      "sha256": "0c13c431e16804977e5d90d4f4ac898f5bf83da5f8a106f5b98229a7a8f712b2",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -231,7 +232,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "5ba75f1a527a30c13a7ad5da409076216dbe3d0f9cb84629d08ce144c6d2db98",
+      "sha256": "6e2e987ade13672986005f28e562913b906544c9177cb599fe9b423eb49452cb",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -265,7 +266,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e679dcdd41fac1209e75ef5706b2e5178c3db514b8600fea57a2185166930b24",
+      "sha256": "f7007ea9a76349245fe079de4db23da4470ddada10fc488965d1a125d39fd76d",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -299,7 +300,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "f6cb72cbba82247dd25dd96fdbfa10ddfa393124ea7a4b0c5c8affea52c3bb4e",
+      "sha256": "f1a01e020bcab422ca57073f08fb7a0927a9747c90e6d1778429785190417cf4",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -333,7 +334,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e8737d3095922005feeeae1b835c02f2d3515d677328dbd2e31c233052595718",
+      "sha256": "f754f063fc0fe139951e14fc49373f1e7b3f6d5977d521411d1c3862150b9db6",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -367,7 +368,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "68d4e2c4f5771f8430bb07ee517374afd7e91393bdc6392bf3cdf0e7177ba940",
+      "sha256": "dc88c81fab69cdce546c653c586d92db70f4ae98cab52c19fc598a2705c27b0b",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -401,7 +402,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "c51d5ac65d3c416ea603a6b74c7563b4466f4a57442447aa17d145a054b8ab35",
+      "sha256": "7cf03d582cbde7a62bebe9e5c068d24c1d8c4009281b1f38d1e9fd6f6997da1f",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -435,7 +436,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "fcb3c01b40488b87e62b420db562f67a7034bbbc9418be3633dfc5f2379b6f2c",
+      "sha256": "d03ee9c8c290caa42876dd7ad0752d4019ed19d4702ec416f39366f6a6b427c5",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -469,7 +470,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "8e23cc2b322d96d3ad936463e41239a94a8e200d52dc0dde6f05cfdf49e66bc9",
+      "sha256": "4762d51320804c0c321f16e26f386b276427a502fff2f5e136151d78f79a81cb",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -503,7 +504,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "92e25e6dd63506d8c90ffa617f8c09054d2ac9b46a510694390f6326e1401ecb",
+      "sha256": "bc8b538273110f1f22d738075eeb6bd9ae781cca560d77da96c8548779c115d5",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -537,7 +538,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "59cd83c6eb1c6bfc2b8d1a71c5097b3cd25a96f9682b6d8aade2359202a300da",
+      "sha256": "cfddaba785da8117a4197d54cd02f2dc957a3e6573efe80184cb4e5d14bceae7",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -571,7 +572,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "eaf749aeb663ccedbb912d71acb79db4277c99809ca8ab1e47a6bf9cd4fc9793",
+      "sha256": "acbd942415108c1c4452961c4e7a533058f55455fa00c1b27146c98198e71469",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -605,7 +606,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e038ce404c3ea68e65e2aea89915762950b4e316ae03acc420a5cdb9a27a7332",
+      "sha256": "a6137ebb24ce7db81c620275146316987bdc41f9218652751ecb5b31c2692ede",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -639,7 +640,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "db6cf3bae1bcc70f999201243c36e2323963b33da23355645ab2136454488330",
+      "sha256": "00b3246ca8abcfbf63b482346246b79b82becb83b0487df2c7a74ddea7703096",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -673,7 +674,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "5aeb65b3db7b586b126ab48b6b42420a09ec83cbe76b68988facac44726c9e95",
+      "sha256": "1cf435f265e6bb036be2b424bd817d0f8b79eb19d3556595c217fbb309fdcee3",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -707,7 +708,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3a8d8b3935d659262979951ef071c86ce9d44577dbfaec240ec51658d133106c",
+      "sha256": "f01ad3c8563a45d3841cfa5f5f51efb0ef62432b7c9adf4ef0e9473b65776d51",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -741,7 +742,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "51ed5a2de0aa96852cfa21fb9712cb936ec9a4239e9fc629fdd58a4ab3a08619",
+      "sha256": "54142882014b4947d6898efff01e60037550c985fc80381eaff339abceae726d",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -775,7 +776,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "10fe62c19df01f22e0d9c9a175735bedfc177a50c0b02429d80dfc747a6e0e15",
+      "sha256": "beedd7596a059fc3b3450a02b1126aa1063bfd59c926c3832bd69c48be80a564",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -809,7 +810,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "f8f6f4595a9011506e109d6257cd6bdc4df1516be315ed2b0c26c26b5c382be2",
+      "sha256": "cf9f1402c8e0f0a8d2c984b94851561c154ffe0ab08eaf6ffbf781ab998c57c5",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -843,7 +844,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "9b563c605bb659c3265c9e9512b9c06672fff9925d26867332dc82e19695c8d3",
+      "sha256": "b25cc6b2ca7df259762fa9da2fe472cfc608c8de5aa24ef2e7f9088289dbf3d7",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -877,7 +878,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "19fbcc29a1d4a67edeb417ed09b8b3735688d862d52d12d799a9ee3ea2b2c228",
+      "sha256": "4ed76d262e346e367c886ed51fe85e8773578cc514cd36facfa7760f27655ef7",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -911,7 +912,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "c157855a4007105a7045934ce665c3b2220bcfee2b184f3d280782de9768dcef",
+      "sha256": "b31dc6fb9606ce2f66d34767f266cbb7d44d5dac1c083a964dda697e57b87d3c",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -945,7 +946,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1d1ac4e2c847ac8de1708297a16d5672df6e38b1ac4440e1385a54a5628e3671",
+      "sha256": "5a5dbce7b2f6b74c504959f9a26e2c1ebb5588a8e9ea9abad0ff2e09864000b4",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -979,7 +980,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "13c9b66656980b6ae2e42ebbe0a4d364b08b7da2e8789a7a39fce986cda97564",
+      "sha256": "45c97846cd2a87e68c12c561b108ba4b49c85358beba7276d5aeadbf246655c4",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1013,7 +1014,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "9842fb7cdd1179d6f1bd9ac084cccf938fad34fbb082700a066a3d821073e22a",
+      "sha256": "9e547bacb6e0aca63158fb778cbc068bcb0a783928d5bac8c05022a88cd0f65d",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1047,7 +1048,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "bbfff8cb9c9e2aa4316376c51be4d8ea04be5c79fc17a4c44edce979b797b176",
+      "sha256": "110bf384422124a5b392a7f73317e3031d98f3e6c3492f89bb11fefc7b3ba0bf",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1081,7 +1082,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "cd0d8c487dd435e67361f70f0a06ec0d2e613d97d39c32b56ad0cc92c36f05a1",
+      "sha256": "cf06022328c5eb695a88468ee379abe093faa1123a56c67882a3445af2146695",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1115,7 +1116,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "4d0ba94a6c935f0f5c7a58448458de975b8abe49af2f7d88564f5c5445e78968",
+      "sha256": "af7313f2de3e6378b99be922dd2eda432c223608bbb048ba01faefe758888a50",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1149,7 +1150,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "c7540688c24e5c0bde8c5036bd55bb82540601f0d6e115e16c9f2a515756697b",
+      "sha256": "09e9bbd0be6446cfa14c5d2865a0e354fbfff1f19036eda24ede2182b1c4bf78",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1183,7 +1184,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "5b243ddd09e191b88c5fe50c62f5e7a0d85ddf9152c9549d380f55941ef7674e",
+      "sha256": "3621f66d70dd97921239a3e5ae52a687ac9462272243393867951a79ce9f0656",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1217,7 +1218,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "baba2768ce10ae7d8011272c22c18a06cff7c6f059cbbfe2f3fa62138712b0dd",
+      "sha256": "687089e8ec86bf3bb18acf363a58dfc2663967f6d2b0f4d52c0a17c1e8cc7250",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1251,7 +1252,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "fd55b8ce96305c1f52adfa615219f2b4dc5411fb8c316aa887993835e7057124",
+      "sha256": "e1935fa29e7616db722d840dbb8712f65ecb19fffd2a695522aba64b8c731682",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1285,7 +1286,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "8a4004a8169af542d1f8d0203e1cc679b43a6eeb5094c2c9173aaabfe9c885aa",
+      "sha256": "52a2b59a01dc733f3bbdae0ce80c34fa7aa122e292a22fdc6f008cd2d0de93da",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1319,7 +1320,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "9cbdf3c3f3e11e945a679d5db3f118eb0c6a04aa3e8b2595d6ee0121a34f20ff",
+      "sha256": "92ece9e918ce08159adce35dc96d3705d64d9c06bcef1f7f6c7ca91f9137d636",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1353,7 +1354,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "40fbdf5f1549faa7ac999894d9e944c8b6ae33ba8c89a84a0f0f9d216588364b",
+      "sha256": "f98ccd16a0128cc246d12fbdd7c50185756841e85abdc3bdc450398275842719",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1387,7 +1388,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "cba4e4545592f795b0e306a0264f6c11d15022849b19179fdec12e2114f286a3",
+      "sha256": "caf5661e7fb8f6c823a893014ebb1df18b31fa061d7f2180c247119746a8cc99",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1421,7 +1422,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e5f9512075e86db73bc476309033c5cec7b1f5a3c96f8fef7f0d89d3f270496b",
+      "sha256": "788c13d391fa9949aa7ea4e449bc2568033d91142b8bd7ae9a60ee5a28f1d324",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1455,7 +1456,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "aaff64272688c0daa7927725914f37ce74059fccfb9ec64ef9c343b796b6394f",
+      "sha256": "4ab9c9fb7d89a604f1a7d2df39d54ee9d9e04e4dd088be04e5c77f274bfea0a8",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1489,7 +1490,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1b56a4b1927eb2da9b50312d5f6d49f8aa32a2eb8e627d4fbee85b83dd9ff214",
+      "sha256": "cfad86642f2e8cb8d73a5a389ac386b2c5dc48756b1ca0bb81e4047d85653c2a",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1523,7 +1524,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "0afd9f5c56e2da4526e72c340bb0db9d80320925567f14444696c76e33b61d7f",
+      "sha256": "1b9194823c6a0e2e7af715f1ab73f2c44672cfe577989466fd999ef7907b795f",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1557,7 +1558,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b3f979b48735cb151ba856fdf4f07ddf67e1940a0d15d446f248d3f9609a6821",
+      "sha256": "f10a82d6e11e6b721c1932bf9a44ea1bf76ab9bcef0eaa6a5c036ce9f1d062ef",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1591,7 +1592,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "8961d78a8927c49cdee4c513cd194f172e793efe773748e7b5f1bd5e4abb3884",
+      "sha256": "75cd58d30cd3de68d77a39fb957dfabaa0d77ba24edbe1bc714bbc1fe56c5db9",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1625,7 +1626,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "ae824f57186fefe25d3b25d580cfbf2a5c4c1cec0f52df7e0675751e228b7104",
+      "sha256": "cd146572f1982ec11b03800f1f8633c2cd25720b39626e74f580f853383f53e1",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1659,7 +1660,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "413983a6170f81693ff679c4beb5453b91d1f7406cd13ea8cea38d4d7b70ce41",
+      "sha256": "a66da31f965584cc57ffe424dd2d21a0a441f5468624b1801d2bb655b7cefeb3",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1693,7 +1694,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "c52a53391599b3952b84af52a156348e231a6f084a14bae583d66b75afaacc07",
+      "sha256": "a32afa7279ed370b3285a5744b176bea1c469cec2c929637119b18be58ab9ca4",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1727,7 +1728,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "71cc35fbde96c2f72d499e6138bba368beeb855569487e9ff8f5dba460ecbe08",
+      "sha256": "5789cb09bdb95bfc8a4539d718c0f6ef85a86d2afd9d36b411de438b8fa3c76a",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1761,7 +1762,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b348d2dd52bd401419e7dec60018c600f4bc6a01616123f52d29edcc614ae6c1",
+      "sha256": "498dbf841cfa478538f18b5d338f0038d44d264b235bf5660afb0dc9ab6bebb1",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1795,7 +1796,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "2bd8b4b95ce5ca22da353f3a2c5a53797eb25126d721bfb2a92e288f6a2d98ae",
+      "sha256": "ff849f20e8b64dc004b7bbe0bfcf30473368143dc071a64a0e1b635f51204ade",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1829,7 +1830,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "6a5e6701a31412058ce859d5bd3048ae0013fe389070b33ccd0a2a8c9a5249c2",
+      "sha256": "f7ccdbb952c5e21a52750e1810d94c0bfdb8fd611b93f644e308a196f88a3680",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1863,7 +1864,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "76d31b364d6bb3828661882d774150a140ed6469b36d2444c3ce75f2c7fbe85d",
+      "sha256": "141e45dd1dc173e07909822844e0913c1f95d8cc608fa6ab00af68e58cc66fd5",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1897,7 +1898,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e7927d2c4de7f1bc5dd8b57eaddbdcf16982ef03f7a27adbe84ee00b92130c07",
+      "sha256": "96e7404c037ac5b1bf829048c8d5b0c567b696038efd5fbb3ef5d9f661e1734d",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1931,7 +1932,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e99d8ad1d945f9a7eda8648e9a894d41d948b36f128d194950e2d0a8545d1581",
+      "sha256": "dd74eb7f6156bebfa898a2c4d8635aa7a5ed0f643c2d952780d5a56e6d4994f2",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1965,7 +1966,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "fbb5ef0a1ec27a0424098c41e6c46be17b136fdca8599a89f62d542d60fd0184",
+      "sha256": "b46b13d32ff24455bdb7dc35aa8b0456ecf649983e68b432d2d2acd0009b9375",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -1999,7 +2000,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1e06c4678767bef91f504b12808a85ae5bb19594cd66ab33041f92b8ef4b3e8e",
+      "sha256": "eb20229a6a71a31db70f853c74bd1c16967185fed7370b0910bf2ff3fccba36a",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2033,7 +2034,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "43bff9e24f210ef1c35e576c9d2ec5e03c6bd1e8fd60bc98a071a0802b2901b4",
+      "sha256": "8e905fafbffebbe4ed586f5c62f6f483282300e616cea3114f31cd4fc9ed80e5",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2067,7 +2068,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "d044f9d849149e76322ade979c4fefb04d51074ffebf8dd50344eeef81cea1fb",
+      "sha256": "34ba07ffe1d226bc9bd451086935b81910675b945d5e55f25368281cb3b844d6",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2101,7 +2102,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "abbf12c98dc7c17bb4d50ef73ac8b99abe8c08382cb38beb9a48f52604533a23",
+      "sha256": "b505bfd83237e966a1a8c78f1638f1c6405910627c005317b126823b886dfbd3",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2135,7 +2136,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "91af7297d354c8b097eee0f270e065e86fdeb1b9e975feef59c31c99c3e87282",
+      "sha256": "92c0ffbbe7132e1177c157349ef790745476e04cb9079d3a279a5a1a828bd877",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2169,7 +2170,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "74dae6b60539e3732dc8685da3db87a03997ee4841a4aa4e9a983fc49ddf8d15",
+      "sha256": "1db5afbadde5f25f1b319c62ac013cc990df473d4b1de0caaf00a8e68eed65bc",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2203,7 +2204,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "a771f679a3c13a487a6c55519a83fb25dbc7ae8d4778db03e49da429eec994fd",
+      "sha256": "0814e92157452fc528a03624a904496287e65b2a00edc440b2b83f26e6107070",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2237,7 +2238,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "aa1c74de5517ad966ffe631df0cfacbbdf0a0f1068828d6a1c9774cc7183a76a",
+      "sha256": "1672d7191f939274bee59aa9ab8bdf1c55b816a894bf15829c1e27603350b16a",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2271,7 +2272,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "db285f4fe46280de9dc99f21d5f44822060ef890c1f042529f4f43c081eebe74",
+      "sha256": "9635e93d205bdced769e1bbaa069a9bc55fc871783ea2d078b3bb5f5378ee4c1",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2305,7 +2306,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "42a5972cacea834d8f9eb72c493f1a795d92320b7e16bc2697e82a42fb0d3347",
+      "sha256": "59e92eea562c64419c9e1773d8e3bd356b2816e30dffab627812d68afb80b406",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2339,7 +2340,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "fa6578571192e13f5b11a0160b95e90b011adb3852d8d6bad035054d90acf013",
+      "sha256": "5cbbcd1f314d2adc2b79ede2704817077c3471121d882b5ab66e5e6d0f52fbeb",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2373,7 +2374,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "98ff47de555ebda5485bb41590c5aaa1984bac411f6094ca8476ad46edc9ad1e",
+      "sha256": "3091be6046a2eaa34cc92bb06e04c2ac75f0d7dd5750a9b6f4fd80ca3a0c78a4",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2407,7 +2408,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "f5cab4df7c23ef5622d43e8228dc3da9f73c0306631240b06ee26fab5a07cbfe",
+      "sha256": "1e742eeb8c61c8a019dd34c8a369ce4a9e5ab702a5401da295c4f426d510e349",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,
@@ -2441,7 +2442,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "cab938ae8b30c001ef7bc23f3e289180e1121af73f2563dd1af63cc2d4f9e5c3",
+      "sha256": "b5d7e6d8ac5e16fdf1e7d943822bbb755e681692b0750df4bb0a8587e98142d0",
       "weight": 1.0,
       "recommendedAlpha": [
         0.88,

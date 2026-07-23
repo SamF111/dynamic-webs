@@ -1,9 +1,13 @@
 /**
- * PIXI-version-tolerant alpha dilation for corner-web asset underlays.
+ * PIXI-version-tolerant thickness underlay for corner and span WebP assets.
  *
- * The filter expands only the alpha fringe outside the source fibre. The crisp
- * source sprite remains separate above it, so thickness widens fibres without
- * offset ghost copies or Gaussian blur.
+ * The former implementation used a custom fragment shader. Foundry defers
+ * custom shader compilation until the first filtered display is rendered, so
+ * an otherwise successful module load could still fail later with PixiJS'
+ * generic "Could not initialize shader" error. This implementation uses only
+ * PIXI's built-in BlurFilter. A crisp unfiltered sprite or mesh remains above
+ * the softened underlay, producing a controlled bloom-like widening without
+ * directional offset copies or module-authored GLSL.
  */
 
 export const WEB_CORNER_ASSET_DILATION_LEVELS =
@@ -46,123 +50,7 @@ export const WEB_CORNER_ASSET_DILATION_LEVELS =
       })
   });
 
-const V8_VERTEX_SHADER = `
-in vec2 aPosition;
-out vec2 vTextureCoord;
-
-uniform vec4 uInputSize;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-vec4 filterVertexPosition(void)
-{
-    vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-    position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
-    position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
-    return vec4(position, 0.0, 1.0);
-}
-
-vec2 filterTextureCoord(void)
-{
-    return aPosition * (uOutputFrame.zw * uInputSize.zw);
-}
-
-void main(void)
-{
-    gl_Position = filterVertexPosition();
-    vTextureCoord = filterTextureCoord();
-}
-`;
-
-const V8_FRAGMENT_SHADER = `
-in vec2 vTextureCoord;
-
-uniform sampler2D uTexture;
-uniform vec4 uInputSize;
-uniform float uDilationRadius;
-uniform float uDilationStrength;
-
-vec4 chooseHigherAlpha(vec4 currentValue, vec4 candidate)
-{
-    return candidate.a > currentValue.a ? candidate : currentValue;
-}
-
-void main(void)
-{
-    vec4 centre = texture2D(uTexture, vTextureCoord);
-    vec4 best = centre;
-    vec2 fullStep = uInputSize.zw * uDilationRadius;
-    vec2 halfStep = fullStep * 0.5;
-
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( fullStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-fullStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(0.0,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(0.0, -fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( fullStep.x,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-fullStep.x,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( fullStep.x, -fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-fullStep.x, -fullStep.y)));
-
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( halfStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-halfStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(0.0,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(0.0, -halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( halfStep.x,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-halfStep.x,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2( halfStep.x, -halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uTexture, vTextureCoord + vec2(-halfStep.x, -halfStep.y)));
-
-    float fringeAlpha = max(0.0, best.a - centre.a) * uDilationStrength;
-    vec3 straightColour = best.a > 0.00001 ? best.rgb / best.a : vec3(0.0);
-    gl_FragColor = vec4(straightColour * fringeAlpha, fringeAlpha);
-}
-`;
-
-const V7_FRAGMENT_SHADER = `
-varying vec2 vTextureCoord;
-
-uniform sampler2D uSampler;
-uniform vec4 inputSize;
-uniform float uDilationRadius;
-uniform float uDilationStrength;
-
-vec4 chooseHigherAlpha(vec4 currentValue, vec4 candidate)
-{
-    return candidate.a > currentValue.a ? candidate : currentValue;
-}
-
-void main(void)
-{
-    vec4 centre = texture2D(uSampler, vTextureCoord);
-    vec4 best = centre;
-    vec2 fullStep = inputSize.zw * uDilationRadius;
-    vec2 halfStep = fullStep * 0.5;
-
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( fullStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-fullStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(0.0,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(0.0, -fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( fullStep.x,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-fullStep.x,  fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( fullStep.x, -fullStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-fullStep.x, -fullStep.y)));
-
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( halfStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-halfStep.x, 0.0)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(0.0,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(0.0, -halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( halfStep.x,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-halfStep.x,  halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2( halfStep.x, -halfStep.y)));
-    best = chooseHigherAlpha(best, texture2D(uSampler, vTextureCoord + vec2(-halfStep.x, -halfStep.y)));
-
-    float fringeAlpha = max(0.0, best.a - centre.a) * uDilationStrength;
-    vec3 straightColour = best.a > 0.00001 ? best.rgb / best.a : vec3(0.0);
-    gl_FragColor = vec4(straightColour * fringeAlpha, fringeAlpha);
-}
-`;
-
-/** Resolve one discrete 1-4 thickness into a dilation recipe. */
+/** Resolve one discrete 1-4 thickness into a bounded underlay recipe. */
 export function resolveWebCornerAssetDilation(
   thicknessMultiplier
 ) {
@@ -192,20 +80,24 @@ export function resolveWebCornerAssetDilation(
 }
 
 /**
- * Create one alpha-fringe dilation filter for PIXI v8 or the v7-compatible
- * constructor retained by unusual Foundry-compatible clients.
+ * Create a built-in PIXI blur filter for the thickness underlay.
+ *
+ * The export name is retained for compatibility with the existing corner and
+ * span texture services. No custom Filter, GlProgram, fragment source, or
+ * module-authored shader is created here.
  */
 export function createWebCornerAssetDilationFilter({
   pixi,
   radiusPx,
   strength
 }) {
-  const FilterClass =
-    pixi?.Filter ??
+  const BlurFilterClass =
+    pixi?.BlurFilter ??
+    pixi?.filters?.BlurFilter ??
     null;
 
   if (
-    typeof FilterClass !==
+    typeof BlurFilterClass !==
       "function"
   ) {
     return null;
@@ -236,159 +128,182 @@ export function createWebCornerAssetDilationFilter({
     return null;
   }
 
-  if (
-    typeof pixi?.GlProgram ===
-      "function"
-  ) {
-    const v8Filter =
-      createPixiV8DilationFilter({
-        pixi,
-        FilterClass,
-        radiusPx:
-          resolvedRadius,
-        strength:
-          resolvedStrength
-      });
+  const blurStrength =
+    Math.max(
+      0.5,
+      resolvedRadius *
+        1.35
+    );
 
-    return v8Filter
-      ? configureDilationFilter(
-          v8Filter,
-          resolvedRadius,
-          "pixi-v8-gl-program"
-        )
-      : null;
-  }
+  const quality =
+    resolvedRadius >=
+      1.25
+      ? 2
+      : 1;
 
-  const v7Filter =
-    createPixiV7DilationFilter({
-      FilterClass,
-      radiusPx:
-        resolvedRadius,
-      strength:
-        resolvedStrength
-    });
+  const pixiMajorVersion =
+    resolvePixiMajorVersion(
+      pixi
+    );
 
-  return v7Filter
-    ? configureDilationFilter(
-        v7Filter,
-        resolvedRadius,
-        "pixi-v7-filter-constructor"
-      )
-    : null;
-}
+  let filter =
+    null;
 
-function createPixiV8DilationFilter({
-  pixi,
-  FilterClass,
-  radiusPx,
-  strength
-}) {
-  const GlProgramClass =
-    pixi?.GlProgram ??
+  let implementation =
     null;
 
   if (
-    typeof GlProgramClass !==
-      "function"
+    pixiMajorVersion ===
+      null ||
+    pixiMajorVersion >=
+      8
   ) {
-    return null;
+    try {
+      filter =
+        new BlurFilterClass({
+          strength:
+            blurStrength,
+          quality,
+          kernelSize:
+            5
+        });
+
+      implementation =
+        "pixi-built-in-blur-v8";
+    } catch (_error) {
+      filter =
+        null;
+    }
   }
 
-  try {
-    const programOptions = {
-      vertex:
-        V8_VERTEX_SHADER,
-      fragment:
-        V8_FRAGMENT_SHADER
-    };
+  if (!filter) {
+    try {
+      filter =
+        new BlurFilterClass(
+          blurStrength,
+          quality
+        );
 
-    const glProgram =
-      typeof GlProgramClass.from ===
-        "function"
-        ? GlProgramClass.from(
-            programOptions
-          )
-        : new GlProgramClass(
-            programOptions
-          );
-
-    return new FilterClass({
-      glProgram,
-      resources: {
-        webCornerDilationUniforms: {
-          uDilationRadius: {
-            value:
-              radiusPx,
-            type:
-              "f32"
-          },
-          uDilationStrength: {
-            value:
-              strength,
-            type:
-              "f32"
-          }
-        }
-      }
-    });
-  } catch (_error) {
-    return null;
+      implementation =
+        "pixi-built-in-blur-v7";
+    } catch (_error) {
+      return null;
+    }
   }
+
+  return configureThicknessUnderlayFilter(
+    filter,
+    {
+      radiusPx:
+        resolvedRadius,
+      strength:
+        resolvedStrength,
+      blurStrength,
+      implementation
+    }
+  );
 }
 
-function createPixiV7DilationFilter({
-  FilterClass,
-  radiusPx,
+/**
+ * Resolve the alpha applied to the softened underlay display object.
+ *
+ * The crisp source remains at full presentation alpha. Keeping the underlay
+ * below half opacity prevents the built-in blur from whitening the fibre core
+ * while still increasing its apparent width.
+ */
+export function resolveWebAssetThicknessUnderlayAlpha(
   strength
-}) {
-  try {
-    return new FilterClass(
-      undefined,
-      V7_FRAGMENT_SHADER,
-      {
-        uDilationRadius:
-          radiusPx,
-        uDilationStrength:
-          strength
-      }
+) {
+  const numericStrength =
+    Number(
+      strength
     );
-  } catch (_error) {
-    return null;
+
+  if (
+    !Number.isFinite(
+      numericStrength
+    ) ||
+    numericStrength <=
+      0
+  ) {
+    return 0;
   }
+
+  return Math.max(
+    0.32,
+    Math.min(
+      0.5,
+      numericStrength *
+        0.55
+    )
+  );
 }
 
-function configureDilationFilter(
+function configureThicknessUnderlayFilter(
   filter,
-  radiusPx,
-  implementation
+  {
+    radiusPx,
+    strength,
+    blurStrength,
+    implementation
+  }
 ) {
   try {
     filter.padding =
       Math.ceil(
-        radiusPx
+        blurStrength *
+          2
       ) +
-      1;
+      2;
   } catch (_error) {
-    // Filter padding is an optimisation, not a correctness precondition.
-  }
-
-  try {
-    if (
-      "antialias" in
-      filter
-    ) {
-      filter.antialias =
-        "on";
-    }
-  } catch (_error) {
-    // Older compatible filters may expose a read-only antialias property.
+    // Padding is an optimisation rather than a correctness precondition.
   }
 
   filter.dynamicWebsDilationRadiusPx =
     radiusPx;
 
+  filter.dynamicWebsDilationStrength =
+    strength;
+
+  filter.dynamicWebsBloomStrength =
+    blurStrength;
+
   filter.dynamicWebsDilationImplementation =
     implementation;
 
+  filter.dynamicWebsUsesCustomShader =
+    false;
+
   return filter;
+}
+
+function resolvePixiMajorVersion(
+  pixi
+) {
+  const text =
+    String(
+      pixi?.VERSION ??
+      pixi?.version ??
+      ""
+    ).trim();
+
+  const match =
+    /^(\d+)/u.exec(
+      text
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const major =
+    Number(
+      match[1]
+    );
+
+  return Number.isInteger(
+    major
+  )
+    ? major
+    : null;
 }

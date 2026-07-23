@@ -19,6 +19,7 @@ from web_asset_config import (
 )
 from web_patch_geometry import create_asset_random
 from web_patch_renderer import render_patch
+from web_asset_visibility import AUTHORED_FIBRE_STANDARD_ID
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -136,6 +137,7 @@ def main() -> int:
             "masterSeed": arguments.seed,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "deterministicContent": True,
+            "authoredFibreStandard": AUTHORED_FIBRE_STANDARD_ID,
         },
         "rendering": {
             "format": "webp",

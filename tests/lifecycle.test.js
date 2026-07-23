@@ -129,7 +129,7 @@ test("lifecycle registration installs level-aware hooks and dispose removes them
     const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
     assert.equal(controller.registerHooks(), true);
     assert.equal(controller.registerHooks(), false);
-    assert.equal(environment.callbacks.size, 18);
+    assert.equal(environment.callbacks.size, 20);
     controller.dispose();
     assert.equal(environment.callbacks.size, 0);
     assert.deepEqual(environment.clearCalls, ["lifecycle-dispose"]);
@@ -236,3 +236,4 @@ test("Region geometry and tag changes schedule deterministic rebuilds", () => {
     assert.equal(controller.createDiagnosticSnapshot().pendingReason, "update-region");
   } finally { environment.restore(); }
 });
+

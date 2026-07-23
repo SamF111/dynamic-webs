@@ -39,6 +39,11 @@ import {
   getSceneWebLifecycleController
 } from "./lifecycle/sceneLifecycle.js";
 
+import {
+  disposeWebMutableStateSocket,
+  registerWebMutableStateSocket
+} from "./networking/webMutableStateSocket.js";
+
 let initialisationPromise =
   null;
 
@@ -66,6 +71,10 @@ globalThis.Hooks.once(
     try {
       const runtime =
         await requireInitialisedRuntime();
+
+      registerWebMutableStateSocket(
+        runtime
+      );
 
       registerOptionalGmHooks();
 
@@ -212,6 +221,7 @@ async function initialiseDynamicWebs() {
 
     return runtime;
   } catch (error) {
+    disposeWebMutableStateSocket();
     disposeLifecycleHooks();
 
     if (
@@ -318,6 +328,7 @@ function exposePublicNamespace(
 
 function handleClientUnload() {
   try {
+    disposeWebMutableStateSocket();
     disposeLifecycleHooks();
   } finally {
     if (

@@ -32,7 +32,7 @@
     "sampleSpacingGridUnits": 0.25,
     "endpointInsetGridUnits": 0.12,
     "minimumSpacingGridUnits": 1.25,
-    "maximumTangentDifferenceDeg": 35,
+    "maximumTangentDifferenceDeg": 70,
     "minimumLengthGridUnits": 0.8,
     "maximumLengthGridUnits": 1.6,
     "minimumLengthToSpanRatio": 0.9,

@@ -5,14 +5,14 @@ import { readFile } from "node:fs/promises";
 const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readJson = async (path) => JSON.parse(await readText(path));
 
-test("README locks the v0.6.0 reusable WebP carpet and spatial-query contract", async () => {
+test("README locks the v0.7.0 span assets, destruction and existing spatial contract", async () => {
   const [readme, manifest] = await Promise.all([
     readText("README.md"),
     readJson("module.json")
   ]);
 
   assert.ok(readme.includes("**Current version:** `" + manifest.version + "`"));
-  assert.match(readme, /Blueprint schema version:\*\* `6`/u);
+  assert.match(readme, /Blueprint schema version:\*\* `8`/u);
   assert.match(readme, /flags\.dynamic-webs\.webPopulations/u);
   assert.match(readme, /An empty population array means that the Scene generates no webs/u);
   assert.match(readme, /There is no implicit population/u);
@@ -55,7 +55,12 @@ test("README documents the modular public API", async () => {
     "dynamicWebs.api.queryStrands",
     "dynamicWebs.api.findCompatibleWebs",
     "dynamicWebs.api.findPerches",
-    "dynamicWebs.api.spatial.getDiagnostics()"
+    "dynamicWebs.api.spatial.getDiagnostics()",
+    "dynamicWebs.api.interactions.queryMovement",
+    "dynamicWebs.api.interactions.destroyWebs",
+    "dynamicWebs.api.interactions.restoreWeb",
+    "dynamicWebs.api.interactions.reset",
+    "dynamicWebs.api.interactions.getState"
   ]) {
     assert.ok(readme.includes(method));
   }
@@ -80,20 +85,22 @@ test("README lists all authored density states and colour profiles", async () =>
   for (const id of colours.profiles.map((entry) => entry.id)) assert.ok(readme.includes(id));
 });
 
-test("roadmap records v0.6.0 reusable WebP carpets after spatial indexing and retains later milestones", async () => {
+test("roadmap records v0.7.0 span assets after carpets and retains later milestones", async () => {
   const roadmap = await readText("roadmap.md");
-  assert.match(roadmap, /Current baseline — v0\.6\.0/u);
+  assert.match(roadmap, /Current baseline — v0\.7\.0/u);
   assert.match(roadmap, /Milestone 4 — Region-aware webs — complete/u);
   assert.match(roadmap, /Milestone 5 — Spatial index and read-only query API — complete/u);
-  assert.match(roadmap, /\*\*Delivered:\*\* v0\.6\.0/u);
+  assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
+  assert.match(roadmap, /Milestone 7 — Span assets and whole-span destruction — complete/u);
+  assert.match(roadmap, /\*\*Delivered:\*\* v0\.7\.0/u);
   assert.match(roadmap, /GM-only world settings for the default quantity or density/u);
   assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
   for (const phrase of [
     "Spatial index and read-only query API",
     "Web carpets",
-    "Mutable web state",
+    "Span assets and whole-span destruction",
     "Optional web barriers",
-    "Tokens destroying webs",
+    "Extended token and strand interactions",
     "Persistence and network state",
     "Generic trapping and occupancy",
     "Ambient Critters adapter and release hardening"
@@ -101,11 +108,26 @@ test("roadmap records v0.6.0 reusable WebP carpets after spatial indexing and re
 });
 
 
+test("README documents four-anchor cave fitting and critter-agnostic whole-span destruction", async () => {
+  const readme = await readText("README.md");
+  for (const phrase of [
+    "four authored wall-support anchors",
+    "two-triangle textured mesh",
+    "moderately skewed cave passages",
+    "swept centre path",
+    "whole span web",
+    "session-scoped mutable state",
+    "no critter-specific flags"
+  ]) assert.ok(readme.includes(phrase));
+  assert.doesNotMatch(readme, /walls must be parallel/iu);
+});
+
+
 test("README and roadmap document bundled WebP carpets without GM baking", async () => {
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
   const roadmap = await readFile(new URL("../roadmap.md", import.meta.url), "utf8");
 
-  assert.match(readme, /Current version:\*\* `0\.6\.0`/u);
+  assert.match(readme, /Current version:\*\* `0\.7\.0`/u);
   assert.match(readme, /lossless WebP/u);
   assert.match(readme, /Clear Web Carpet Texture Cache/u);
   assert.match(readme, /clearCarpetTextureCache/u);
@@ -114,5 +136,6 @@ test("README and roadmap document bundled WebP carpets without GM baking", async
 
   assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
   assert.match(roadmap, /No GM baking, upload, persistent storage/u);
-  assert.match(roadmap, /Corner, span and ground webs remain dynamic/u);
+  assert.match(roadmap, /At v0\.6\.0, corner, span and ground webs remained dynamic/u);
 });
+

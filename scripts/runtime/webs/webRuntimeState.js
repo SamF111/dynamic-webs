@@ -108,6 +108,10 @@ export function createWebRuntimeState(
       null,
     configuration:
       null,
+    mutableState:
+      normaliseOptionalObject(
+        values.mutableState
+      ),
     webs:
       Object.freeze([]),
     counts:
@@ -216,6 +220,9 @@ export function createWebRuntimeSnapshot(
       null,
     configuration:
       state?.configuration ??
+      null,
+    mutableState:
+      state?.mutableState ??
       null,
     counts:
       state?.counts ??

@@ -22,14 +22,18 @@ import {
   evaluateWebRegionRestrictionForStrands
 } from "../../spatial/webRegionRestrictionIndex.js";
 
+import {
+  createWebSpanAssetPresentation
+} from "../../data/webSpanAssetCatalog.js";
+
 /**
  * Generate deterministic wall-to-wall webs across narrow passages.
  *
  * Detection samples structural walls, casts both local wall normals, and
- * accepts the nearest approximately parallel opposing wall within the
- * configured span. Repeated samples for the same opposing wall pair are
- * grouped into one corridor candidate before spacing and count limits are
- * applied.
+ * accepts the nearest broadly compatible opposing wall within the configured
+ * span. Wall pairs may be parallel, converging, diverging or moderately
+ * skewed; only near-perpendicular pairs are excluded. Repeated samples for the
+ * same wall pair are grouped before spacing and count limits are applied.
  */
 export class WallSpanWebGenerator {
   generate({
@@ -128,7 +132,7 @@ function buildSpanCandidates({
     configuration.endpointInsetGridUnits *
     gridSize;
 
-  const minimumParallelDot =
+  const minimumTangentCompatibilityDot =
     Math.cos(
       configuration.maximumTangentDifferenceDeg *
       Math.PI /
@@ -200,7 +204,7 @@ function buildSpanCandidates({
             segments,
             minimumSpanPx,
             maximumSpanPx,
-            minimumParallelDot
+            minimumTangentCompatibilityDot
           });
 
         if (!hit) {
@@ -277,6 +281,8 @@ function buildSpanCandidates({
             rayDirection,
           width:
             hit.distance,
+          tangentDifferenceDeg:
+            hit.tangentDifferenceDeg,
           midpoint
         });
       }
@@ -309,7 +315,7 @@ function findNearestOpposingWall({
   segments,
   minimumSpanPx,
   maximumSpanPx,
-  minimumParallelDot
+  minimumTangentCompatibilityDot
 }) {
   let nearest =
     null;
@@ -322,7 +328,7 @@ function findNearestOpposingWall({
       continue;
     }
 
-    const parallelDot =
+    const tangentCompatibilityDot =
       Math.abs(
         dot(
           source.tangent,
@@ -331,8 +337,8 @@ function findNearestOpposingWall({
       );
 
     if (
-      parallelDot <
-      minimumParallelDot
+      tangentCompatibilityDot <
+      minimumTangentCompatibilityDot
     ) {
       continue;
     }
@@ -366,7 +372,17 @@ function findNearestOpposingWall({
     ) {
       nearest = {
         ...intersection,
-        target
+        target,
+        tangentDifferenceDeg:
+          Math.acos(
+            clamp(
+              tangentCompatibilityDot,
+              -1,
+              1
+            )
+          ) *
+          180 /
+          Math.PI
       };
     }
   }
@@ -1003,6 +1019,62 @@ function createSpanWeb({
     ]?.point ??
     candidate.targetAnchor;
 
+  const sourceAssetEdge =
+    createOrderedWallEdge({
+      segment:
+        candidate.source,
+      centreParameter:
+        candidate.sourceParameter,
+      corridorTangent:
+        tangent,
+      halfLength:
+        sourceHalfLength
+    });
+
+  const targetAssetEdge =
+    createOrderedWallEdge({
+      segment:
+        candidate.target,
+      centreParameter:
+        candidate.targetParameter,
+      corridorTangent:
+        tangent,
+      halfLength:
+        targetHalfLength
+    });
+
+  const spanAsset =
+    createWebSpanAssetPresentation({
+      selectionKey:
+        `${generationSeed}:${sourceKey}`,
+      firstWallStart:
+        sourceAssetEdge.start,
+      firstWallEnd:
+        sourceAssetEdge.end,
+      secondWallStart:
+        targetAssetEdge.start,
+      secondWallEnd:
+        targetAssetEdge.end,
+      targetLengthPx:
+        (
+          sourceAssetEdge.length +
+          targetAssetEdge.length
+        ) /
+        2,
+      targetSpanPx:
+        (
+          pointDistance(
+            sourceAssetEdge.start,
+            targetAssetEdge.start
+          ) +
+          pointDistance(
+            sourceAssetEdge.end,
+            targetAssetEdge.end
+          )
+        ) /
+        2
+    });
+
   return createWebBlueprint({
     id:
       createStableWebId({
@@ -1077,8 +1149,91 @@ function createSpanWeb({
         }
       ],
     supportingWallIds:
-      wallIds
+      wallIds,
+    spanAsset
   });
+}
+
+function createOrderedWallEdge({
+  segment,
+  centreParameter,
+  corridorTangent,
+  halfLength
+}) {
+  const orientation =
+    dot(
+      segment.tangent,
+      corridorTangent
+    ) <
+      0
+      ? -1
+      : 1;
+
+  const parameterOffset =
+    Math.max(
+      0,
+      Number(
+        halfLength
+      ) ||
+      0
+    ) /
+    segment.length;
+
+  const startParameter =
+    clamp(
+      centreParameter -
+      parameterOffset *
+      orientation,
+      0,
+      1
+    );
+
+  const endParameter =
+    clamp(
+      centreParameter +
+      parameterOffset *
+      orientation,
+      0,
+      1
+    );
+
+  const start =
+    lerpPoint(
+      segment.a,
+      segment.b,
+      startParameter
+    );
+
+  const end =
+    lerpPoint(
+      segment.a,
+      segment.b,
+      endParameter
+    );
+
+  return Object.freeze({
+    start:
+      Object.freeze(start),
+    end:
+      Object.freeze(end),
+    length:
+      pointDistance(
+        start,
+        end
+      )
+  });
+}
+
+function pointDistance(
+  first,
+  second
+) {
+  return Math.hypot(
+    second.x -
+      first.x,
+    second.y -
+      first.y
+  );
 }
 
 function createIrregularWallAnchors({

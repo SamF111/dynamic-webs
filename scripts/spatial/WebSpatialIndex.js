@@ -124,14 +124,51 @@ export class WebSpatialIndex {
     return Object.freeze(
       Array.from(this.webEntries.values())
         .sort((first, second) => first.id.localeCompare(second.id))
-        .map((entry) => entry.webSnapshot)
+        .map((entry) => createWebResult(entry, null))
     );
   }
 
   /** Return one immutable web snapshot or null. */
   getWeb(webId) {
     const id = normaliseOptionalIdentifier(webId);
-    return id ? this.webEntries.get(id)?.webSnapshot ?? null : null;
+    const entry = id ? this.webEntries.get(id) ?? null : null;
+    return entry ? createWebResult(entry, null) : null;
+  }
+
+  /** Update one web and all owned geometry records without rebuilding cells. */
+  setWebIntact(webId, intact) {
+    const id = normaliseOptionalIdentifier(webId);
+    const entry = id ? this.webEntries.get(id) ?? null : null;
+    if (!entry) return false;
+
+    const nextIntact = intact === true;
+    if (entry.intact === nextIntact) return false;
+
+    entry.intact = nextIntact;
+
+    for (const strandEntry of this.strandEntries.values()) {
+      if (strandEntry.webId === id) strandEntry.intact = nextIntact;
+    }
+
+    for (const perchEntry of this.perchEntries.values()) {
+      if (perchEntry.webId === id) perchEntry.intact = nextIntact;
+    }
+
+    this.snapshotRevision += 1;
+    return true;
+  }
+
+  /** Apply one complete destroyed-web ID set after state reconciliation. */
+  applyDestroyedWebIds(webIds) {
+    const destroyed = new Set(
+      (Array.isArray(webIds) ? webIds : []).map(String)
+    );
+
+    let changed = false;
+    for (const entry of this.webEntries.values()) {
+      changed = this.setWebIntact(entry.id, !destroyed.has(entry.id)) || changed;
+    }
+    return changed;
   }
 
   /** Find functional strand geometry near one point. */
@@ -225,10 +262,7 @@ export class WebSpatialIndex {
 
       if (distancePx !== null && distancePx > query.maximumDistancePx) continue;
 
-      results.push(Object.freeze({
-        ...entry.webSnapshot,
-        ...(distancePx === null ? {} : { distancePx })
-      }));
+      results.push(createWebResult(entry, distancePx));
     }
 
     results.sort(compareSpatialResults);
@@ -292,6 +326,8 @@ export class WebSpatialIndex {
       buildDurationMs: this.buildDurationMs,
       counts: {
         webs: this.webEntries.size,
+        intactWebs: Array.from(this.webEntries.values()).filter((entry) => entry.intact === true).length,
+        destroyedWebs: Array.from(this.webEntries.values()).filter((entry) => entry.intact !== true).length,
         strands: this.strandEntries.size,
         perches: this.perchEntries.size,
         webCells: this.webCells.size,
@@ -321,6 +357,7 @@ export class WebSpatialIndex {
       ...metadata,
       id,
       bounds,
+      intact: true,
       webSnapshot: cloneFrozenSpatialValue(web)
     };
 
@@ -437,6 +474,14 @@ function createWebMetadata(web) {
     regionIds: cloneFrozenSpatialValue(Array.isArray(web?.regionIds) ? web.regionIds : []),
     regionTags: cloneFrozenSpatialValue(Array.isArray(web?.regionTags) ? web.regionTags : [])
   };
+}
+
+function createWebResult(entry, distancePx) {
+  return cloneFrozenSpatialValue({
+    ...entry.webSnapshot,
+    intact: entry.intact === true,
+    ...(distancePx === null ? {} : { distancePx })
+  });
 }
 
 function createStrandResult(entry, distancePx) {

@@ -22,7 +22,7 @@ function createWeb({
 }) {
   const strandId = `${id}:strand-0`;
   return deepFreeze({
-    schemaVersion: 7,
+    schemaVersion: 8,
     id,
     sceneId: "scene",
     populationId,
@@ -45,7 +45,7 @@ function createWeb({
       bottom: y + 20
     },
     strands: [{
-      schemaVersion: 7,
+      schemaVersion: 8,
       id: strandId,
       localId: "strand-0",
       kind: strandKind,
@@ -243,3 +243,4 @@ function deepFreeze(value) {
   for (const child of Object.values(value)) deepFreeze(child);
   return Object.freeze(value);
 }
+

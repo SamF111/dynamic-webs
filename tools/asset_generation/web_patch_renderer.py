@@ -22,6 +22,10 @@ from web_patch_geometry import (
     quadratic_bezier,
 )
 from web_asset_config import AssetSpec
+from web_asset_visibility import (
+    SOFTENING_BLUR_RADIUS_PX,
+    resolve_fibre_style,
+)
 
 
 RGBA = tuple[int, int, int, int]
@@ -63,7 +67,11 @@ def render_patch(
     else:
         raise ValueError(f"Unsupported patch category: {spec.category}")
 
-    under = under.filter(ImageFilter.GaussianBlur(radius=0.45 * safe_supersample))
+    under = under.filter(
+        ImageFilter.GaussianBlur(
+            radius=SOFTENING_BLUR_RADIUS_PX * safe_supersample
+        )
+    )
     combined = Image.alpha_composite(under, crisp)
     combined = _apply_soft_edge_fade(combined, safe_supersample)
 
@@ -419,20 +427,22 @@ class _PatchRenderer:
             if len(pixel_points) < 2:
                 continue
 
-            core_width = max(1, round(width * self.supersample))
-            under_width = max(core_width + 1, round(width * 2.3 * self.supersample))
-            safe_alpha = max(1, min(255, int(alpha)))
+            style = resolve_fibre_style(
+                width_px=width,
+                alpha=alpha,
+                canvas_size_px=self.size,
+            )
 
             self.under_draw.line(
                 pixel_points,
-                fill=(255, 255, 255, max(1, round(safe_alpha * 0.18))),
-                width=under_width,
+                fill=(255, 255, 255, style.under_alpha),
+                width=style.under_width,
                 joint="curve",
             )
             self.crisp_draw.line(
                 pixel_points,
-                fill=(255, 255, 255, safe_alpha),
-                width=core_width,
+                fill=(255, 255, 255, style.core_alpha),
+                width=style.core_width,
                 joint="curve",
             )
 

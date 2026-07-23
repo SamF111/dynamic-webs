@@ -236,3 +236,59 @@ The JavaScript renderer deliberately retains the procedural corner geometry as
 a fallback. Until the local WebP loads successfully, the old line rendering
 remains visible. Generated WebPs and preview sheets are local build outputs and
 are not included in assistant-provided replacement archives.
+
+## Wall-span four-anchor assets
+
+Wall-span webs use a separate deterministic library of eight distributed-sheet
+variants. Each source WebP exposes four authored support anchors:
+
+```text
+firstWallStart   firstWallEnd
+secondWallStart  secondWallEnd
+```
+
+Runtime maps this source quadrilateral onto the exact two generated wall edges
+with two textured triangles. The target edges do not need to be parallel, so
+parallel, narrowing, widening and moderately skewed cave passages can share the
+same asset library without flattening the procedural wall geometry.
+
+Generate and validate the span library locally:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_span_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
+```
+
+Outputs are written to:
+
+```text
+assets/web-span/generated/
+```
+
+The JavaScript renderer keeps procedural span strands authoritative for spatial
+queries and destruction. The WebP is presentation only and remains behind a
+procedural fallback until its texture and mesh are available. Generated span
+WebPs and preview sheets are local build outputs and are not included in
+assistant-provided replacement archives.
+
+### Span asset visibility refinement
+
+Span generator 1.2 deliberately authors stronger source fibres than generator
+1.1. Span WebPs are commonly reduced from 512 px to roughly one grid square
+when fitted to a passage, so source-space hairlines and partial-alpha links can
+become too faint even when the runtime thickness underlay is set to `4×`.
+
+Generator 1.2 therefore:
+
+- increases crisp structural, cross-link and wall-support widths;
+- raises core alpha while retaining weaker loose threads;
+- reduces source blur so the crisp mesh remains readable after down-scaling;
+- requires full runtime presentation alpha for span assets; and
+- raises validator visibility floors so a faint library cannot pass again.
+
+Regenerate and validate after applying this source update:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_span_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
+```

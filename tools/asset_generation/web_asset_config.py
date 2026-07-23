@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Final
 
 
-GENERATOR_VERSION: Final[str] = "1.1.0"
+GENERATOR_VERSION: Final[str] = "1.2.0"
 DEFAULT_MASTER_SEED: Final[str] = "dynamic-webs:web-carpet-patches:v1"
 DEFAULT_SIZE_PX: Final[int] = 512
 DEFAULT_SUPERSAMPLE: Final[int] = 4

@@ -222,6 +222,10 @@ function createCanonicalWebProjection(
       Array.isArray(web?.regionIds) ? [...web.regionIds] : [],
     regionTags:
       Array.isArray(web?.regionTags) ? [...web.regionTags] : [],
+    spanAsset:
+      projectSpanAsset(
+        web?.spanAsset
+      ),
     hub:
       projectPoint(
         web?.hub
@@ -384,6 +388,83 @@ function createCanonicalWebProjection(
   };
 }
 
+function projectSpanAsset(
+  spanAsset
+) {
+  if (
+    !spanAsset ||
+    typeof spanAsset !==
+      "object"
+  ) {
+    return null;
+  }
+
+  const projectQuad =
+    quad => ({
+      firstWallStart:
+        projectPoint(
+          quad?.firstWallStart
+        ),
+      firstWallEnd:
+        projectPoint(
+          quad?.firstWallEnd
+        ),
+      secondWallStart:
+        projectPoint(
+          quad?.secondWallStart
+        ),
+      secondWallEnd:
+        projectPoint(
+          quad?.secondWallEnd
+        )
+    });
+
+  return {
+    schemaVersion:
+      spanAsset.schemaVersion ??
+      null,
+    warpMode:
+      String(
+        spanAsset.warpMode ??
+        ""
+      ),
+    assetId:
+      String(
+        spanAsset.assetId ??
+        ""
+      ),
+    modulePath:
+      String(
+        spanAsset.modulePath ??
+        ""
+      ),
+    variant:
+      Number(
+        spanAsset.variant
+      ),
+    alpha:
+      Number(
+        spanAsset.alpha
+      ),
+    targetLengthPx:
+      Number(
+        spanAsset.targetLengthPx
+      ),
+    targetSpanPx:
+      Number(
+        spanAsset.targetSpanPx
+      ),
+    source:
+      projectQuad(
+        spanAsset.source
+      ),
+    target:
+      projectQuad(
+        spanAsset.target
+      )
+  };
+}
+
 function projectPoint(
   point
 ) {
@@ -532,3 +613,4 @@ function deepFreeze(
         value
       );
 }
+

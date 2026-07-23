@@ -16,6 +16,7 @@ import {
 
 import {
   createWebCornerAssetDilationFilter,
+  resolveWebAssetThicknessUnderlayAlpha,
   resolveWebCornerAssetDilation
 } from "./webCornerAssetDilationFilter.js";
 
@@ -25,7 +26,7 @@ import {
  * The procedural Graphics display remains visible until the asset is loaded.
  * A failed or absent texture therefore preserves the existing visual rather
  * than leaving a generated web invisible. Discrete thickness levels retain one
- * crisp sprite and add at most one alpha-dilated fringe underlay; the previous
+ * crisp sprite and add at most one built-in softened underlay; the previous
  * directional offset-copy blur is deliberately not used.
  */
 export class WebCornerAssetTextureService {
@@ -184,6 +185,11 @@ export class WebCornerAssetTextureService {
               dilationFilter
           });
 
+        underlay.alpha =
+          resolveWebAssetThicknessUnderlayAlpha(
+            dilation.strength
+          );
+
         assetLayers.addChild(
           underlay
         );
@@ -217,7 +223,7 @@ export class WebCornerAssetTextureService {
                 )
               ),
             reason:
-              "PIXI custom-filter support is unavailable; the crisp asset remains visible without dilation."
+              "PIXI built-in BlurFilter support is unavailable; the crisp asset remains visible without the thickness underlay."
           });
       }
     }
@@ -849,4 +855,5 @@ function clamp(
     )
   );
 }
+
 

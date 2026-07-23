@@ -350,7 +350,7 @@ test(
 
     assert.equal(
       population.thicknessMultiplier,
-      1.75
+      2
     );
 
     assert.equal(
@@ -365,3 +365,4 @@ test(
     );
   }
 );
+

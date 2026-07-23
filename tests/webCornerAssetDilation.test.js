@@ -7,6 +7,7 @@ import {
 
 import {
   createWebCornerAssetDilationFilter,
+  resolveWebAssetThicknessUnderlayAlpha,
   resolveWebCornerAssetDilation
 } from "../scripts/rendering/webs/webCornerAssetDilationFilter.js";
 
@@ -59,32 +60,20 @@ class MockMatrix {
   }
 }
 
-class MockGlProgram {
+class MockBlurFilter {
   constructor(options) {
     this.options = options;
-  }
-
-  static from(options) {
-    return new MockGlProgram(options);
-  }
-}
-
-class MockFilter {
-  constructor(options) {
-    this.options = options;
-    this.resources = options?.resources ?? null;
     this.padding = 0;
-    this.antialias = null;
   }
 }
 
 function createPixi() {
   return {
+    VERSION: "8.6.6",
     Container: MockContainer,
     Sprite: MockSprite,
     Matrix: MockMatrix,
-    Filter: MockFilter,
-    GlProgram: MockGlProgram,
+    BlurFilter: MockBlurFilter,
     Texture: {
       EMPTY: { id: "empty" }
     }
@@ -109,7 +98,7 @@ function createPresentation() {
   };
 }
 
-test("discrete corner thickness resolves to bounded dilation recipes", () => {
+test("discrete corner thickness resolves to bounded underlay recipes", () => {
   assert.deepEqual(resolveWebCornerAssetDilation(1), {
     enabled: false,
     radiusPx: 0,
@@ -128,7 +117,7 @@ test("discrete corner thickness resolves to bounded dilation recipes", () => {
   assert.equal(resolveWebCornerAssetDilation(99), resolveWebCornerAssetDilation(4));
 });
 
-test("PIXI v8 dilation filter expands only the alpha fringe", () => {
+test("PIXI v8 thickness underlay uses only the built-in BlurFilter", () => {
   const filter = createWebCornerAssetDilationFilter({
     pixi: createPixi(),
     radiusPx: 2,
@@ -136,42 +125,51 @@ test("PIXI v8 dilation filter expands only the alpha fringe", () => {
   });
 
   assert.ok(filter);
-  assert.equal(filter.padding, 3);
+  assert.deepEqual(filter.options, {
+    strength: 2.7,
+    quality: 2,
+    kernelSize: 5
+  });
+  assert.equal(filter.padding, 8);
   assert.equal(filter.dynamicWebsDilationRadiusPx, 2);
-  assert.equal(filter.dynamicWebsDilationImplementation, "pixi-v8-gl-program");
-  assert.equal(
-    filter.resources.webCornerDilationUniforms.uDilationRadius.value,
-    2
-  );
-  assert.match(
-    filter.options.glProgram.options.fragment,
-    /best\.a - centre\.a/u
-  );
+  assert.equal(filter.dynamicWebsDilationStrength, 0.9);
+  assert.equal(filter.dynamicWebsBloomStrength, 2.7);
+  assert.equal(filter.dynamicWebsDilationImplementation, "pixi-built-in-blur-v8");
+  assert.equal(filter.dynamicWebsUsesCustomShader, false);
 });
 
-test("PIXI v7-compatible filter constructor remains supported", () => {
-  class MockV7Filter {
-    constructor(vertex, fragment, uniforms) {
-      this.vertex = vertex;
-      this.fragment = fragment;
-      this.uniforms = uniforms;
+test("PIXI v7-compatible built-in BlurFilter constructor remains supported", () => {
+  class MockV7BlurFilter {
+    constructor(strength, quality) {
+      this.strength = strength;
+      this.quality = quality;
       this.padding = 0;
     }
   }
 
   const filter = createWebCornerAssetDilationFilter({
-    pixi: { Filter: MockV7Filter },
+    pixi: {
+      VERSION: "7.4.2",
+      BlurFilter: MockV7BlurFilter
+    },
     radiusPx: 1.35,
     strength: 0.82
   });
 
   assert.ok(filter);
-  assert.equal(filter.dynamicWebsDilationImplementation, "pixi-v7-filter-constructor");
-  assert.equal(filter.uniforms.uDilationRadius, 1.35);
-  assert.match(filter.fragment, /best\.a - centre\.a/u);
+  assert.equal(filter.dynamicWebsDilationImplementation, "pixi-built-in-blur-v7");
+  assert.equal(filter.strength, 1.8225000000000002);
+  assert.equal(filter.quality, 2);
+  assert.equal(filter.dynamicWebsUsesCustomShader, false);
 });
 
-test("corner asset thickness four uses one filtered underlay and one crisp sprite", () => {
+test("softened underlay alpha remains below the crisp fibre alpha", () => {
+  assert.equal(resolveWebAssetThicknessUnderlayAlpha(0), 0);
+  assert.equal(resolveWebAssetThicknessUnderlayAlpha(0.72), 0.396);
+  assert.equal(resolveWebAssetThicknessUnderlayAlpha(0.9), 0.49500000000000005);
+});
+
+test("corner asset thickness four uses one softened underlay and one crisp sprite", () => {
   const texture = { id: "cached" };
   const service = new WebCornerAssetTextureService({
     getTexture: () => texture
@@ -194,6 +192,8 @@ test("corner asset thickness four uses one filtered underlay and one crisp sprit
   assert.match(crisp.name, /\.crisp$/u);
   assert.deepEqual([underlay.x, underlay.y, crisp.x, crisp.y], [0, 0, 0, 0]);
   assert.equal(underlay.filters.length, 1);
+  assert.equal(underlay.alpha, 0.49500000000000005);
+  assert.equal(underlay.filters[0].dynamicWebsUsesCustomShader, false);
   assert.equal(crisp.filters, undefined);
   assert.equal(fallback.visible, false);
 
@@ -203,10 +203,9 @@ test("corner asset thickness four uses one filtered underlay and one crisp sprit
   assert.equal(diagnostics.dilationFallbackCount, 0);
 });
 
-test("missing filter support preserves a single crisp asset without offset copies", () => {
+test("missing built-in BlurFilter support preserves one crisp asset", () => {
   const pixi = createPixi();
-  delete pixi.Filter;
-  delete pixi.GlProgram;
+  delete pixi.BlurFilter;
 
   const service = new WebCornerAssetTextureService({
     getTexture: () => ({ id: "cached" })

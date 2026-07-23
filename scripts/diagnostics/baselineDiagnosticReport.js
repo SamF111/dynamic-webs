@@ -85,7 +85,7 @@ export function createBaselineDiagnosticReport({
       version:
         moduleRecord?.version ??
         moduleRecord?.manifest?.version ??
-        "0.6.0",
+        "0.7.0",
       publicApiVersion:
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
@@ -227,6 +227,9 @@ export function createBaselineDiagnosticReport({
     },
     rendering:
       state.rendering,
+    interactions:
+      state.mutableState ??
+      null,
     spatial:
       state.spatial ??
       null,
@@ -618,3 +621,4 @@ function deepFreeze(
         value
       );
 }
+

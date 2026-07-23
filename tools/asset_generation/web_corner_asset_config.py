@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Final
 
 
-GENERATOR_VERSION: Final[str] = "1.3.0"
+GENERATOR_VERSION: Final[str] = "1.4.0"
 DEFAULT_MASTER_SEED: Final[str] = "dynamic-webs:web-corner-assets:v3"
 DEFAULT_SIZE_PX: Final[int] = 512
 DEFAULT_SUPERSAMPLE: Final[int] = 4
@@ -14,33 +14,20 @@ VARIANTS_PER_ANGLE: Final[int] = 6
 SOURCE_PIVOT: Final[tuple[float, float]] = (0.5, 0.5)
 SOURCE_ANCHOR_RADIUS: Final[float] = 0.42
 
-# Fibre widths are authored at the 512 px source size and are subsequently
-# reduced by the runtime affine fit. The values preserve the visibility gains
-# from generator 1.2 while allowing the distributed sheet network to remain
-# lighter than the old radial hub-and-spoke construction.
+# Fibre widths remain family-specific, while the renderer enforces the shared
+# minimum authored-fibre standard from web_asset_visibility.py. These
+# multipliers preserve the distributed-sheet hierarchy above that baseline.
 WALL_SUPPORT_WIDTH_MULTIPLIER: Final[float] = 3.0
 SECONDARY_SUPPORT_WIDTH_MULTIPLIER: Final[float] = 2.5
 STRUCTURAL_WIDTH_MULTIPLIER: Final[float] = 2.75
 CAPTURE_WIDTH_MULTIPLIER: Final[float] = 2.55
 LOOSE_THREAD_WIDTH_MULTIPLIER: Final[float] = 2.35
-UNDER_FIBRE_WIDTH_ADDITION_PX: Final[float] = 1.9
-UNDER_FIBRE_ALPHA_FRACTION: Final[float] = 0.30
-SOFTENING_BLUR_RADIUS_PX: Final[float] = 0.65
 
-# Local validation guardrails. These are intentionally low enough for 5°
-# assets while rejecting hairline rendering that becomes illegible after the
-# runtime affine fit.
-MINIMUM_MEAN_ALPHA: Final[float] = 1.7
-MINIMUM_ALPHA_64_COVERAGE: Final[float] = 0.009
-MINIMUM_ALPHA_128_COVERAGE: Final[float] = 0.007
-
-# Acute corner assets occupy a much smaller fraction of the square source
-# canvas than broad corner assets. Visibility validation therefore scales the
-# whole-canvas density floors modestly below this reference angle, while
-# preserving the full authored thresholds for ordinary and obtuse corners.
-VISIBILITY_FULL_STRENGTH_ANGLE_DEG: Final[float] = 20.0
-MINIMUM_NARROW_ANGLE_VISIBILITY_FACTOR: Final[float] = 0.8
-
+# Acute corners occupy less of the square source canvas, so only aggregate
+# coverage validation is scaled. The per-fibre width and alpha floor is never
+# reduced for acute families.
+VISIBILITY_FULL_STRENGTH_ANGLE_DEG: Final[float] = 30.0
+MINIMUM_NARROW_ANGLE_VISIBILITY_FACTOR: Final[float] = 0.52
 
 @dataclass(frozen=True, slots=True)
 class CornerAssetSpec:

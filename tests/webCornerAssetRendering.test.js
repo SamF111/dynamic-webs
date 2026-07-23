@@ -179,39 +179,15 @@ class MockGraphics extends MockDisplayObject {
 }
 
 
-class MockGlProgram {
+class MockBlurFilter {
   constructor(
     options
   ) {
     this.options =
       options;
-  }
-
-  static from(
-    options
-  ) {
-    return new MockGlProgram(
-      options
-    );
-  }
-}
-
-class MockFilter {
-  constructor(
-    options
-  ) {
-    this.options =
-      options;
-
-    this.resources =
-      options?.resources ??
-      null;
 
     this.padding =
       0;
-
-    this.antialias =
-      null;
   }
 }
 class MockMatrix {
@@ -247,10 +223,10 @@ function createPixi() {
       MockGraphics,
     Matrix:
       MockMatrix,
-    Filter:
-      MockFilter,
-    GlProgram:
-      MockGlProgram,
+    VERSION:
+      "8.6.6",
+    BlurFilter:
+      MockBlurFilter,
     Texture: {
       EMPTY: {
         id:
@@ -493,7 +469,7 @@ test(
 
     assert.equal(
       underlay.filters[0].padding,
-      3
+      8
     );
 
     assert.equal(
@@ -513,7 +489,7 @@ test(
         strength:
           0.9,
         implementation:
-          "pixi-v8-gl-program"
+          "pixi-built-in-blur-v8"
       }
     );
 
@@ -538,13 +514,12 @@ test(
 );
 
 test(
-  "missing custom-filter support keeps one crisp corner sprite without ghost copies",
+  "missing built-in BlurFilter support keeps one crisp corner sprite without ghost copies",
   () => {
     const pixi =
       createPixi();
 
-    delete pixi.Filter;
-    delete pixi.GlProgram;
+    delete pixi.BlurFilter;
 
     const service =
       new WebCornerAssetTextureService({
@@ -868,4 +843,5 @@ test(
     }
   }
 );
+
 

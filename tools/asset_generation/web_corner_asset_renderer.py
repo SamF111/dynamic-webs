@@ -12,14 +12,15 @@ from web_corner_asset_config import (
     CAPTURE_WIDTH_MULTIPLIER,
     LOOSE_THREAD_WIDTH_MULTIPLIER,
     SECONDARY_SUPPORT_WIDTH_MULTIPLIER,
-    SOFTENING_BLUR_RADIUS_PX,
     STRUCTURAL_WIDTH_MULTIPLIER,
-    UNDER_FIBRE_ALPHA_FRACTION,
-    UNDER_FIBRE_WIDTH_ADDITION_PX,
     WALL_SUPPORT_WIDTH_MULTIPLIER,
     CornerAssetSpec,
     SOURCE_ANCHOR_RADIUS,
     SOURCE_PIVOT,
+)
+from web_asset_visibility import (
+    SOFTENING_BLUR_RADIUS_PX,
+    resolve_fibre_style,
 )
 from web_patch_geometry import (
     Point,
@@ -398,21 +399,21 @@ class _CornerRenderer:
         for segment in segments:
             if len(segment) < 2:
                 continue
-            crisp_width = max(1, round(width * self.supersample))
-            under_width = max(
-                crisp_width + 1,
-                round((width + UNDER_FIBRE_WIDTH_ADDITION_PX) * self.supersample),
+            style = resolve_fibre_style(
+                width_px=width,
+                alpha=alpha,
+                canvas_size_px=self.size,
             )
             self.under_draw.line(
                 segment,
-                fill=(255, 255, 255, max(12, round(alpha * UNDER_FIBRE_ALPHA_FRACTION))),
-                width=under_width,
+                fill=(255, 255, 255, style.under_alpha),
+                width=style.under_width,
                 joint="curve",
             )
             self.crisp_draw.line(
                 segment,
-                fill=(255, 255, 255, max(1, min(255, alpha))),
-                width=crisp_width,
+                fill=(255, 255, 255, style.core_alpha),
+                width=style.core_width,
                 joint="curve",
             )
 

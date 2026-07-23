@@ -13,6 +13,10 @@ function createEnvironment() {
     generate: [],
     clear: [],
     clearCarpetTextureCache: [],
+    queryMovementIntersections: [],
+    destroyWebs: [],
+    restoreWeb: [],
+    resetMutableState: [],
     setFlag: []
   };
 
@@ -114,6 +118,43 @@ function createEnvironment() {
           perches: 1
         })
       });
+    },
+
+    queryMovementIntersections(request) {
+      calls.queryMovementIntersections.push(request);
+      return Object.freeze([
+        Object.freeze({
+          webId: "web-a",
+          strandIds: Object.freeze(["strand-a"])
+        })
+      ]);
+    },
+
+    destroyWebs(webIds, options) {
+      calls.destroyWebs.push({ webIds, options });
+      return Object.freeze({
+        changed: true,
+        destroyedWebIds: Object.freeze([...webIds]),
+        state: Object.freeze({ destroyedWebIds: Object.freeze([...webIds]) })
+      });
+    },
+
+    restoreWeb(webId, options) {
+      calls.restoreWeb.push({ webId, options });
+      return Object.freeze({ changed: true, webId, state: Object.freeze({}) });
+    },
+
+    resetMutableState(options) {
+      calls.resetMutableState.push(options);
+      return Object.freeze({ changed: true, state: Object.freeze({ destroyedWebIds: Object.freeze([]) }) });
+    },
+
+    getMutableState() {
+      return Object.freeze({
+        sceneId: "scene",
+        revision: 1,
+        destroyedWebIds: Object.freeze([])
+      });
     }
   };
 
@@ -161,6 +202,7 @@ function createEnvironment() {
     },
     version: "13",
     user: {
+      id: "gm",
       isGM: true
     },
     settings: {
@@ -203,6 +245,7 @@ test("public API and namespaces are frozen and expose only modular Scene configu
     assert.equal(Object.isFrozen(api.diagnostics), true);
     assert.equal(Object.isFrozen(api.colours), true);
     assert.equal(Object.isFrozen(api.spatial), true);
+    assert.equal(Object.isFrozen(api.interactions), true);
     assert.deepEqual(
       Object.keys(api.scene).sort(),
       ["getPopulation", "getPopulations", "setPopulations"]
@@ -337,6 +380,41 @@ test("public spatial operations expose immutable read-only query results", () =>
   }
 });
 
+test("public interaction API exposes generic movement queries and GM-only whole-web mutations", () => {
+  const environment = createEnvironment();
+
+  try {
+    const api = createPublicApi(environment.runtime);
+    const request = {
+      from: { x: 0, y: 0 },
+      to: { x: 100, y: 0 },
+      levelId: "base",
+      collisionRadiusPx: 25
+    };
+
+    assert.equal(api.interactions.queryMovement(request)[0].webId, "web-a");
+    assert.deepEqual(environment.calls.queryMovementIntersections, [request]);
+
+    const destroyed = api.interactions.destroyWebs(["web-a"], {
+      cause: "test-entity",
+      entityId: "entity-a"
+    });
+    assert.deepEqual(destroyed.destroyedWebIds, ["web-a"]);
+    assert.equal(environment.calls.destroyWebs[0].options.cause, "test-entity");
+    assert.equal(environment.calls.destroyWebs[0].options.entityId, "entity-a");
+    assert.equal(environment.calls.destroyWebs[0].options.userId, "gm");
+
+    assert.equal(api.interactions.restoreWeb("web-a").changed, true);
+    assert.equal(environment.calls.restoreWeb[0].webId, "web-a");
+    assert.equal(api.interactions.reset().changed, true);
+    assert.equal(environment.calls.resetMutableState.length, 1);
+    assert.equal(api.interactions.getState().sceneId, "scene");
+    assert.equal(Object.isFrozen(api.interactions.getState()), true);
+  } finally {
+    environment.restore();
+  }
+});
+
 test("public colour operations expose frozen authored profiles", () => {
   const environment = createEnvironment();
 
@@ -360,6 +438,10 @@ test("GM-only modular operations reject non-GM callers", async () => {
 
     assert.throws(() => api.webs.generate(), /only be performed by a GM/u);
     assert.throws(() => api.webs.clear(), /only be performed by a GM/u);
+    assert.throws(() => api.interactions.destroyWebs(["web-a"]), /only be performed by a GM/u);
+    assert.throws(() => api.interactions.restoreWeb("web-a"), /only be performed by a GM/u);
+    assert.throws(() => api.interactions.reset(), /only be performed by a GM/u);
+    assert.equal(api.interactions.queryMovement({ from: { x: 0, y: 0 }, to: { x: 1, y: 1 } }).length, 1);
     await assert.rejects(
       () => api.scene.setPopulations([]),
       /only be performed by a GM/u
@@ -368,3 +450,4 @@ test("GM-only modular operations reject non-GM callers", async () => {
     environment.restore();
   }
 });
+

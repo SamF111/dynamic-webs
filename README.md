@@ -8,9 +8,9 @@ The module owns web generation, immutable geometry, rendering, modular Scene con
 
 - **Module ID:** `dynamic-webs`
 - **Runtime namespace:** `dynamicWebs`
-- **Current version:** `0.6.0`
+- **Current version:** `0.7.0`
 - **Public API version:** `1`
-- **Blueprint schema version:** `6`
+- **Blueprint schema version:** `8`
 - **Diagnostic schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
@@ -53,7 +53,7 @@ Each population independently stores:
     "web-carpet": "standard"
   },
   colourProfileId: "blood-red",
-  thicknessMultiplier: 1.5
+  thicknessMultiplier: 1
 }
 ```
 
@@ -157,7 +157,7 @@ Changing one population does not reshuffle another population. Changing one cate
 
 ## Blueprint contract
 
-Every web and strand uses blueprint schema version `5`.
+Every web and strand uses blueprint schema version `8`.
 
 Web IDs are Scene-, population- and level-qualified:
 
@@ -213,7 +213,8 @@ On `canvasReady` Dynamic Webs:
 4. Skips populations with unavailable levels or no implemented active category.
 5. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
 6. Stores all immutable blueprints.
-7. Loads bundled WebP patch textures as needed and renders the level-compatible subset.
+7. Reconciles session-scoped destroyed span IDs against stable deterministic web IDs.
+8. Loads bundled WebP assets as needed and renders only the intact level-compatible subset.
 
 Population-array changes perform one deterministic regeneration. Scene geometry, structural wall, Region geometry/tag/elevation, and level-document changes also regenerate. Viewed-level changes only refresh visibility.
 
@@ -263,7 +264,7 @@ Indexed records include:
 - Region identifiers and tags
 - Functional `collisionWidthPx` as `interactionWidthPx`
 - Immutable perch points
-- A provisional `intact: true` field reserved for the later mutable-state milestone
+- A live `intact` field reflecting session-scoped whole-span destruction state
 
 The public read-only API is:
 
@@ -353,9 +354,25 @@ dynamicWebs.api.webs.clear();
 dynamicWebs.api.webs.clearCarpetTextureCache();
 dynamicWebs.api.levels.getState();
 dynamicWebs.api.spatial.getDiagnostics();
+
+dynamicWebs.api.interactions.queryMovement({
+  from: { x: 800, y: 500 },
+  to: { x: 1000, y: 500 },
+  levelId: "level-0",
+  collisionRadiusPx: 25
+});
+
+dynamicWebs.api.interactions.destroyWebs(["<wall-span-web-id>"], {
+  cause: "external-entity-movement",
+  entityId: "<stable-entity-id>"
+});
+
+dynamicWebs.api.interactions.restoreWeb("<wall-span-web-id>");
+dynamicWebs.api.interactions.reset();
+dynamicWebs.api.interactions.getState();
 ```
 
-`generate()`, `clear()` and `clearCarpetTextureCache()` are GM-only. Normal operation should use Scene Configuration and lifecycle synchronisation.
+`generate()`, `clear()`, `clearCarpetTextureCache()` and interaction mutations are GM-only. Movement intersection queries are read-only and available to optional consumers.
 
 ### Colour profile lookup
 
@@ -389,13 +406,17 @@ The copyable report includes:
 - Identifier uniqueness
 - Same-level wall-support checks
 - Population and Region ownership and immutability checks
+- Mutable destroyed-span revision and IDs
+- Token span-interaction lifecycle telemetry
 - Non-destructive determinism hashes
 
 ## Architectural boundary
 
-Dynamic Webs remains critter-agnostic. It owns environmental web geometry and generic state only. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
+Dynamic Webs remains critter-agnostic. It owns environmental web geometry, generic movement intersection and generic mutable state only. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
 
-Web carpets, mutable strand state, barriers, token destruction, persistence, trapping and occupancy must build on stable population-qualified identifiers.
+Dynamic Webs exposes no critter-interaction setting. A consumer decides which of its entities may request span destruction. Token movement is handled internally and is GM-authoritative.
+
+Web carpets, later strand-level damage, barriers, persistence, trapping and occupancy must build on stable population-qualified identifiers.
 
 ## Validation
 
@@ -421,15 +442,29 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Spatial queries with explicit level, category, Region, distance, strand-role and result-limit filters
 - Querying a stored but currently unrendered level without changing visibility or generation identity
 - Repeated Scene saves without duplicate rendering
+- Token swept movement crossing an intact wall-span web
+- Destroyed span disappearance on every connected client and state reset through the public API
 - Baseline diagnostics and deterministic hashes
 
 ## Hybrid corner-web presentation
 
-Corner webs retain deterministic procedural strand geometry for spatial
-queries, interactions and future mutable strand state, but may render through
-locally generated transparent-white WebP assets. Ten discrete angle families
-(15–150 degrees) provide six variants each. The selected asset is affinely
-fitted from its authored pivot and two edge anchors onto the exact generated
-wall corner, allowing small corrections such as fitting a 15-degree asset to a
-17-degree corner. Missing assets fail safely to the existing procedural line
-rendering.
+Corner webs retain deterministic procedural strand geometry for spatial queries and interactions while rendering through locally generated transparent-white WebP assets when available. Twelve angle families from 5–150 degrees provide six deterministic variants each. Their distributed-sheet topology has no compulsory off-corner hub. Each asset is affinely fitted from its authored pivot and two edge anchors onto the exact generated wall corner. Missing or failed assets leave the procedural fallback visible.
+
+## Hybrid span-web presentation
+
+Wall-span webs retain their complete deterministic procedural strand geometry but render through one of eight locally generated distributed-sheet WebP variants when available. Each asset has four authored wall-support anchors. Runtime maps those anchors onto the exact two generated wall edges with a two-triangle textured mesh, allowing parallel, converging, diverging and moderately skewed cave passages rather than requiring parallel walls. Thickness uses the same crisp mesh plus alpha-dilation underlay as corner assets. Missing mesh or texture support leaves the procedural fallback visible, and no generated WebPs are created at runtime.
+
+Generate and validate the authored span atlas with:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_span_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
+```
+
+## Whole-span destruction
+
+A committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
+
+Destroyed IDs are session-scoped mutable state separate from immutable blueprints. Compatible IDs survive deterministic regeneration of the same Scene, but state is not written to Scene flags. The GM commits mutations and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
+
+Generic consumers use `dynamicWebs.api.interactions` and own their own eligibility policy. Dynamic Webs contains no critter-specific flags, UI fields or internal imports.

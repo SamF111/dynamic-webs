@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "generator": {
     "name": "Dynamic Webs procedural web-patch generator",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "masterSeed": "dynamic-webs:web-carpet-patches:v1",
-    "generatedAt": "2026-07-22T15:19:04.901103+00:00",
-    "deterministicContent": true
+    "generatedAt": "2026-07-23T07:00:20.939780+00:00",
+    "deterministicContent": true,
+    "authoredFibreStandard": "span-visibility-v1"
   },
   "rendering": {
     "format": "webp",
@@ -22,7 +23,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "5d479230aacf435a6052a6dae755d905f3fe7b17ce9a3e486b824b54dd12d792",
+      "sha256": "f79bee72e4d50d0a09eb2723c140ecd15d45d6d581d2edf974188012394d43b5",
       "weight": 1.0,
       "recommendedScale": [
         0.65,
@@ -45,7 +46,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1722bab6a313ef6e109fa4345fc9f34bab949e7ca46d9eafab52f969b6c4bcef",
+      "sha256": "938f5a24df15249ee168b2143232bd583a8eff5e75514bd4bef11091eea4dc44",
       "weight": 1.0,
       "recommendedScale": [
         0.6,
@@ -68,7 +69,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "df62904f5d033050399a5ccaacd83043b3e7e99d6b6c1e059cacc258283091ba",
+      "sha256": "ae90481009e954814a678bf7a56d89e96a7e40c9774fa4b7ae5c279722f78194",
       "weight": 0.9,
       "recommendedScale": [
         0.7,
@@ -91,7 +92,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "adbbcf8cedb39f5b1bbfa19d1c6746d010ddf4f62483e5463010737595d5b0ba",
+      "sha256": "7ed8135cf42f7023df2e0661cbe9fd28f089e26c6211f33e89b5530df747429a",
       "weight": 0.8,
       "recommendedScale": [
         0.58,
@@ -114,7 +115,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "8440484b36dd45390868f3aa283bf6131979c5a24994b8fab9ff41622ef953df",
+      "sha256": "7f5ccd088689aee7eb102790c1667cc1ee27b4b62cd8c10deb30cb46f6a0d611",
       "weight": 0.9,
       "recommendedScale": [
         0.75,
@@ -137,7 +138,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "81226fad2383e1604f7e9719c6540726adfb8f189476194ee1d06d90a27ea531",
+      "sha256": "531b6357ffe333fa11534162a0f120114d742383992b00968b64c9ea5dd530e3",
       "weight": 0.9,
       "recommendedScale": [
         0.7,
@@ -160,7 +161,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "72974a8b7f44ec3132e4e20a28c3be57b91721c64fc4672a737f840ded50b971",
+      "sha256": "a7dfaffc48b82bb4906f3c94e1302a1b18cf24826248cd2eccf676abb72bc412",
       "weight": 0.8,
       "recommendedScale": [
         0.8,
@@ -183,7 +184,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "66d08626aa712fe58e62fe5e44213e12305143746d080320da0efe2dcf2e3dd9",
+      "sha256": "7a50e1f9ae55d569f817a12edca0fbd3fd661df2b11db91b58721b7a84a5a68e",
       "weight": 0.8,
       "recommendedScale": [
         0.7,
@@ -206,7 +207,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "67824f459b979965cfb91098a9e9f93ba2733408d6d66aeda8f8426514b26ff1",
+      "sha256": "edd239dc30fbf552b978d8bb4f3e5816cc8f0d96fde1b49bae0aa0f3c41d30cb",
       "weight": 0.8,
       "recommendedScale": [
         0.55,
@@ -229,7 +230,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3b0c75e8b3fcfe171bfea0de823e5fb06588b5c27e7661e12331aa0f3a84a073",
+      "sha256": "cb33644257fe98609760435208df5a1c16715586885e0258a0fce05889164db1",
       "weight": 0.7,
       "recommendedScale": [
         0.5,
@@ -252,7 +253,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "4d514691b8e77279f3560a9ffe8d6a3cbf29fc541294bee1c5393b36bd9d58c6",
+      "sha256": "1d972eb4e189c7e7e0ee4c3d3d6927fbfbdd17bd0b2980944f2f1aa60c87528d",
       "weight": 0.7,
       "recommendedScale": [
         0.58,
@@ -275,7 +276,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3e9b29caad5bb468d7db40eb5193f9ffef8495603b31fc51dd56862910061691",
+      "sha256": "1eb8227f74118ff73bb9029eb459b069b0b741964da4977e698d1634f50e4fd3",
       "weight": 0.8,
       "recommendedScale": [
         0.55,
@@ -298,7 +299,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "f817e444ce66b512db92a97f681f3adee0df91d9a066457be316c855f3396175",
+      "sha256": "c186f4c4f21788da9cc36b56333fb01b4cde10e7183868455e42ec24551864a1",
       "weight": 0.8,
       "recommendedScale": [
         0.5,
@@ -321,7 +322,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "208885634117f4ec2e3e7e1df973ce145aecb6b5e3084cd317410fcc444e4afe",
+      "sha256": "a7a5920e5277ce80aecc9bf9ce6a62e5eb9512e4010fe5e0cb2f8625374a70e8",
       "weight": 0.7,
       "recommendedScale": [
         0.6,
@@ -344,7 +345,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-01.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b968e6672c307b9a2e42552dff597c514def3ad76ef0640697ad9d89ce5eef97",
+      "sha256": "95dba2df7ca91c9bd8e2e505aa1df94cd5dfd78b72f627224572befb1b32e773",
       "weight": 0.55,
       "recommendedScale": [
         0.85,
@@ -367,7 +368,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-02.webp",
       "width": 512,
       "height": 512,
-      "sha256": "54922ca682cd3eb1c842b62a192b0ac1957a1f0bbb6b395041ffd5c0bc92d701",
+      "sha256": "9f4b429c089af1c08ae1540cb73a02ff42ea5d17c8e008f2dcd82bd9c54be869",
       "weight": 0.5,
       "recommendedScale": [
         0.8,
@@ -390,7 +391,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "6a17391c19062ca823bb73e052c10759e24487deb78b06859da7bb9fcb6cad09",
+      "sha256": "47aacb683cd66b077ad699340e4fc482dce181930688844088f0a102c30bb003",
       "weight": 1.0,
       "recommendedScale": [
         0.62,
@@ -413,7 +414,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3129a25d37f62a6573c642cb78a7dc60f4a4870a8808523ed2a7719b17590f2e",
+      "sha256": "d04a19ebde56a4dd3b9f8b9d0cb2e0594caaac73870b43bcfdbe5238e58cd28e",
       "weight": 0.95,
       "recommendedScale": [
         0.72,
@@ -436,7 +437,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-07.webp",
       "width": 512,
       "height": 512,
-      "sha256": "4d2675905216028227b31e71a49f1b2c5b48453f6537ebadb0410c5b548efb0f",
+      "sha256": "de467b1100782dded45d55fcbae00ce2396caac8a8c9d7fb30e4010494473527",
       "weight": 0.9,
       "recommendedScale": [
         0.55,
@@ -459,7 +460,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-08.webp",
       "width": 512,
       "height": 512,
-      "sha256": "7938038c39ac63d892ae7e52f4563bc6665bdd6f97cabf484e2b583a6aba5d76",
+      "sha256": "955c7835aa8468b60ea7fc42b14e1a0e968b00961fb69fca2a68dec80a3a4b06",
       "weight": 0.9,
       "recommendedScale": [
         0.68,
@@ -482,7 +483,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-09.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1f1ba84b7c019af058eb53f8d543d1b9222e120f992371a2c83317c9eebe0c6c",
+      "sha256": "c63ad770a81358fa0aaf476db3bdb32d1f2924d48d8f0faf4c9f289b76800ecf",
       "weight": 0.85,
       "recommendedScale": [
         0.6,
@@ -505,7 +506,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-10.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3308c3e6965f721c19bd2c708ba617169d42f5aba1f372e7f572965e0c847bbc",
+      "sha256": "657ce587021b5c4f474510985054eac629f28d228e198af36609787ca1f144d1",
       "weight": 0.85,
       "recommendedScale": [
         0.74,
@@ -528,7 +529,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-11.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b37e09e1203389a59a14e5db6705503d824f8be10ea7dc6f06e1f4d41ebc621b",
+      "sha256": "24ae94a858e538f9e9d0ed0a224a5ce9618060a7b03068c7c2a1523ec85016c4",
       "weight": 0.8,
       "recommendedScale": [
         0.52,
@@ -551,7 +552,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/loose-network-12.webp",
       "width": 512,
       "height": 512,
-      "sha256": "198fc1595db688b269751b51a0fad798ef48b76c1dd1ecbb9ba9917164297713",
+      "sha256": "bc6daca81aae8af07ca6f9751daf96ccf78a68ba249d97acaf4f7674898ccfdf",
       "weight": 0.8,
       "recommendedScale": [
         0.66,
@@ -574,7 +575,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "98fdb9b83ef6728c9c8241ab93dd260b4f4ea38ec9a453f248e449bb03875c9f",
+      "sha256": "543e9dbda557ad860c2efe631d49a3f13816751e934aedf89f4f6e14798e79b7",
       "weight": 0.9,
       "recommendedScale": [
         0.72,
@@ -597,7 +598,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3ee170433e46c4f4725ef6657aa5d765ecc29a9b06cde60977e22004aba2bb6b",
+      "sha256": "02f6d7648ef7d639e18ed2e6f38ac83da292f7a715571bee5f003489b7b9f22d",
       "weight": 0.85,
       "recommendedScale": [
         0.68,
@@ -620,7 +621,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-07.webp",
       "width": 512,
       "height": 512,
-      "sha256": "b2f4212926503f4b93b5529a25c70c9ddaccfdbd969374695394b305c217f767",
+      "sha256": "52e2830d52d11c412531acd6a3e7b7ee5f3667bd46d3ead33fc2913fd97f0265",
       "weight": 0.85,
       "recommendedScale": [
         0.82,
@@ -643,7 +644,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-08.webp",
       "width": 512,
       "height": 512,
-      "sha256": "2b434beeed7c44b8056170c28032c2999c5e675db88642069793ab6746bb354f",
+      "sha256": "36d27e5c3afef9617f9f5e815b78305f5ea25f5ca81699415da3f716fb14c8e1",
       "weight": 0.8,
       "recommendedScale": [
         0.66,
@@ -666,7 +667,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-09.webp",
       "width": 512,
       "height": 512,
-      "sha256": "2716387eddc1b9ee3c6937cd9d480304c8801d380cc83e0e8954ffbd36b7db6f",
+      "sha256": "028826e30a4d62610edf565662aed3365744accb2f172dfac138defa90298a1e",
       "weight": 0.8,
       "recommendedScale": [
         0.76,
@@ -689,7 +690,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/support-arc-10.webp",
       "width": 512,
       "height": 512,
-      "sha256": "068f3d4d93ca745f4605c37e513b87b9775094a3fca85100cf9cf437d82f624f",
+      "sha256": "f552adf4d6d4082592da242a0e65c6a12f5c146f1a8253412b4ba6112f5e1a92",
       "weight": 0.75,
       "recommendedScale": [
         0.7,
@@ -712,7 +713,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1a153e44ceab099f7dad444d3f66e4cc97ed675780f856fbf17ef8879669517c",
+      "sha256": "85767c9970c906df4b750cd293b59a920538e0d10c8652558671b36aa4e6b4ce",
       "weight": 0.75,
       "recommendedScale": [
         0.52,
@@ -735,7 +736,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "43f9bc1c72fca568349334ae98684b6e3a4af6dfe0c4752d61eee8012bf69851",
+      "sha256": "e93927c5ed8edf5ad2f89003e650533641fd7a287854c1e1e3150dd85c772f86",
       "weight": 0.75,
       "recommendedScale": [
         0.48,
@@ -758,7 +759,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "dab71b6e07319628f0b47d19e0bae7f3774fe8a8ec80234cba9c519bc2e7eb28",
+      "sha256": "bc5812c38737a4b013931bb9d083679666808ef0bce2c82eefd0346a6717ac40",
       "weight": 0.7,
       "recommendedScale": [
         0.6,
@@ -781,7 +782,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-07.webp",
       "width": 512,
       "height": 512,
-      "sha256": "63c2c739665995dc9e52a7c99dfc3605eb2e839263d20ad05fe134dcee1cbc16",
+      "sha256": "17af3348f6c1f23b26edf50b95fbba16760c63a7cd175ee47ffcffcc339dd11a",
       "weight": 0.7,
       "recommendedScale": [
         0.46,
@@ -804,7 +805,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-08.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e6e6365a81d7bcfd16d884dc123b36579ffcae138abd94184b53d43a37a9189f",
+      "sha256": "9d9bc79bc031c7e8620a5ab126b248a2f6ba4cec3d5d184cb624318208df22dd",
       "weight": 0.65,
       "recommendedScale": [
         0.56,
@@ -827,7 +828,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-09.webp",
       "width": 512,
       "height": 512,
-      "sha256": "29f2f70a72bf6594e7ed05fda7ff2eaaa43a7a657040b581445a9295e1f7329e",
+      "sha256": "89dc35cad70d0bc382dffa9aa8fd40578231e4e52f1230f46b99d738826430dd",
       "weight": 0.65,
       "recommendedScale": [
         0.5,
@@ -850,7 +851,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/dense-knot-10.webp",
       "width": 512,
       "height": 512,
-      "sha256": "9e46302f7e6389182aa1d77fde9aee90c49af3d1778545ca1b7db2f741c78e11",
+      "sha256": "51cac452daa2562e69b977b57b4264d6ed89a81241185c2c82897440290454ee",
       "weight": 0.6,
       "recommendedScale": [
         0.62,
@@ -873,7 +874,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "537b1edbd22e17df9cfa8a4336cdfc969240abb2cbf85754481b123572a2dc01",
+      "sha256": "5fdae49c57975f8cc26446af533b99ab5643979412357878b6f5eb8301e949d6",
       "weight": 0.75,
       "recommendedScale": [
         0.52,
@@ -896,7 +897,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "1ff7f384d2f378a8e25c28d558554234f862632cae55550300f7a42b21cd7abb",
+      "sha256": "f4310b86466b0a18bb616b4f48ba0521d8e1cb388b1c1c29f5126cc06b9a7be5",
       "weight": 0.75,
       "recommendedScale": [
         0.58,
@@ -919,7 +920,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "0456d891fdb500b376e12856769f8cd676b4e63b19b06c8408c9d181709cdb43",
+      "sha256": "3aae6e0d4f1511f0e00d1252c376b8a760ff4ed47d365737a89578bace0a8a1e",
       "weight": 0.7,
       "recommendedScale": [
         0.48,
@@ -942,7 +943,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-07.webp",
       "width": 512,
       "height": 512,
-      "sha256": "5722c0daf8b989598ec190a077474e21f9e6b029c6a5a4a5b3756d0e9ad02f3a",
+      "sha256": "e680294ade6e45268d5761ba98b3d3fc792bef82be7cdc19b06409292e0a6291",
       "weight": 0.7,
       "recommendedScale": [
         0.64,
@@ -965,7 +966,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-08.webp",
       "width": 512,
       "height": 512,
-      "sha256": "0b57bf8c533fd5444e95f62026681c462954f72c56e35e65cf64b77aa20c88ed",
+      "sha256": "e813eb28542dca08f02937c9369cb57068b206a8dc7350c6592fa4335b3b662d",
       "weight": 0.65,
       "recommendedScale": [
         0.5,
@@ -988,7 +989,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-09.webp",
       "width": 512,
       "height": 512,
-      "sha256": "c37c949ffa90929d75510b6f7615f6d9cfaf1755afc18c4624101f024f71e35a",
+      "sha256": "f3e484d6ee0fc86e5df22552fc751773a0bd97168cd31bdde06579b665bace14",
       "weight": 0.65,
       "recommendedScale": [
         0.6,
@@ -1011,7 +1012,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/fray-10.webp",
       "width": 512,
       "height": 512,
-      "sha256": "e05e0c160da2a5b93772af669c3cedf1301c480a862a7d9bc0fc61849cb759a9",
+      "sha256": "dfa936930959dca2693b27770985e2f806501a8fe97789c55232f2a79a3a17ae",
       "weight": 0.6,
       "recommendedScale": [
         0.46,
@@ -1034,7 +1035,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-03.webp",
       "width": 512,
       "height": 512,
-      "sha256": "4252bb544d48402ce72794f323e077dfcb1afa440197c2f6d807ab7e936a4b7d",
+      "sha256": "c34e01144fe0ac2860235370efd13d9235b571b0ec06f50d770beca645ecb240",
       "weight": 0.5,
       "recommendedScale": [
         0.88,
@@ -1057,7 +1058,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-04.webp",
       "width": 512,
       "height": 512,
-      "sha256": "f6271a86e472ca38a3bd735d6683e896829f82d31b6b015fc0d188c9759b4f6f",
+      "sha256": "ce68259d0b02f1999d609b730c173fc9fda5df9cc68555672f4d6ff72e1458f8",
       "weight": 0.48,
       "recommendedScale": [
         0.76,
@@ -1080,7 +1081,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-05.webp",
       "width": 512,
       "height": 512,
-      "sha256": "3bf3d03717bcf72dc448c4090ab9e01a5f3a167f79e978b7fdcc41e9ed255945",
+      "sha256": "318fc6c613674d18fa184512d5d075f40bab711e48f84fd97c91220d41ae42e7",
       "weight": 0.46,
       "recommendedScale": [
         0.92,
@@ -1103,7 +1104,7 @@
       "modulePath": "modules/dynamic-webs/assets/web-carpet/generated/faint-sheet-06.webp",
       "width": 512,
       "height": 512,
-      "sha256": "01e007cef45ae23c907abf18b7f5e39434651f614697109ba860732e7c0ff878",
+      "sha256": "a0d5f89da191adabc79e4586b8cfbd4bedfd2bec8610241f0314fb6e3717ac38",
       "weight": 0.44,
       "recommendedScale": [
         0.72,

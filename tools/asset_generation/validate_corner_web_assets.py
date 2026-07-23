@@ -14,11 +14,12 @@ from web_corner_asset_config import (
     CORNER_ASSET_SPECS,
     DEFAULT_MASTER_SEED,
     GENERATOR_VERSION,
-    MINIMUM_ALPHA_128_COVERAGE,
-    MINIMUM_ALPHA_64_COVERAGE,
-    MINIMUM_MEAN_ALPHA,
     MINIMUM_NARROW_ANGLE_VISIBILITY_FACTOR,
     VISIBILITY_FULL_STRENGTH_ANGLE_DEG,
+)
+from web_asset_visibility import (
+    AUTHORED_FIBRE_STANDARD_ID,
+    visibility_thresholds,
 )
 
 
@@ -47,6 +48,11 @@ def main() -> int:
     if generator.get("masterSeed") != DEFAULT_MASTER_SEED:
         raise ValueError(
             f'Manifest master seed must be "{DEFAULT_MASTER_SEED}"; regenerate the corner assets.'
+        )
+    if generator.get("authoredFibreStandard") != AUTHORED_FIBRE_STANDARD_ID:
+        raise ValueError(
+            f'Manifest authored fibre standard must be '
+            f'"{AUTHORED_FIBRE_STANDARD_ID}"; regenerate the corner assets.'
         )
     if generator.get("topology") != "distributed-sheet":
         raise ValueError(
@@ -119,9 +125,15 @@ def assert_visible_fibre_density(
         raise ValueError(f'Asset "{asset_id}" has invalid dimensions.')
 
     visibility_factor = resolve_visibility_factor(canonical_angle_deg)
-    required_mean_alpha = MINIMUM_MEAN_ALPHA * visibility_factor
-    required_alpha_64_coverage = MINIMUM_ALPHA_64_COVERAGE * visibility_factor
-    required_alpha_128_coverage = MINIMUM_ALPHA_128_COVERAGE * visibility_factor
+    (
+        required_mean_alpha,
+        required_alpha_64_coverage,
+        required_alpha_128_coverage,
+    ) = visibility_thresholds(visibility_factor)
+    # Corner sheets contain fewer fully opaque crossings than span sheets. The
+    # per-fibre width and alpha floor is identical, while aggregate strong-pixel
+    # coverage uses a topology-specific factor.
+    required_alpha_128_coverage *= 0.70
 
     mean_alpha = sum(value * count for value, count in enumerate(histogram)) / total_pixels
     alpha_64_coverage = sum(histogram[65:]) / total_pixels

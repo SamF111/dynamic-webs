@@ -84,6 +84,8 @@ export function webEntryMatchesSpatialQuery(entry, options) {
   if (options.elevationBand &&
       !spatialElevationBandsOverlap(entry.elevationBand, options.elevationBand)) return false;
 
+  if (options.intactOnly === true && entry.intact !== true) return false;
+
   return true;
 }
 
@@ -91,14 +93,12 @@ export function webEntryMatchesSpatialQuery(entry, options) {
 export function strandEntryMatchesSpatialQuery(entry, options) {
   return webEntryMatchesSpatialQuery(entry, options) &&
     (options.strandKinds.size === 0 || options.strandKinds.has(entry.strandKind)) &&
-    entry.interactionWidthPx >= options.minimumInteractionWidthPx &&
-    (options.intactOnly !== true || entry.intact === true);
+    entry.interactionWidthPx >= options.minimumInteractionWidthPx;
 }
 
 /** Return whether one indexed perch matches shared query filters. */
 export function perchEntryMatchesSpatialQuery(entry, options) {
-  return webEntryMatchesSpatialQuery(entry, options) &&
-    (options.intactOnly !== true || entry.intact === true);
+  return webEntryMatchesSpatialQuery(entry, options);
 }
 
 /** Stable sort by distance then opaque identifiers. */
@@ -187,3 +187,4 @@ function normaliseElevationBand(value) {
 function hasAny(values, expected) {
   return (Array.isArray(values) ? values : []).some((value) => expected.has(String(value)));
 }
+

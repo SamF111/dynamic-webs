@@ -21,6 +21,7 @@ from web_corner_asset_config import (
 )
 from web_corner_asset_renderer import render_corner_asset
 from web_patch_geometry import create_asset_random
+from web_asset_visibility import AUTHORED_FIBRE_STANDARD_ID
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -121,6 +122,7 @@ def main() -> int:
             "masterSeed": arguments.seed,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "deterministicContent": True,
+            "authoredFibreStandard": AUTHORED_FIBRE_STANDARD_ID,
             "topology": "distributed-sheet",
         },
         "rendering": {

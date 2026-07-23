@@ -152,6 +152,17 @@ test(
             childCount:
               1
           }),
+        mutableState:
+          Object.freeze({
+            sceneId:
+              "scene",
+            revision:
+              2,
+            destroyedWebIds:
+              Object.freeze([
+                "wall-span:scene:one"
+              ])
+          }),
         spatial:
           Object.freeze({
             active:
@@ -224,7 +235,7 @@ test(
         get:
           () => ({
             version:
-              "0.6.0"
+              "0.7.0"
           })
       }
     };
@@ -287,6 +298,18 @@ test(
         1
       );
 
+      assert.deepEqual(
+        report.interactions.destroyedWebIds,
+        [
+          "wall-span:scene:one"
+        ]
+      );
+
+      assert.equal(
+        Object.isFrozen(report.interactions),
+        true
+      );
+
       assert.equal(
         Object.isFrozen(report.spatial),
         true
@@ -332,3 +355,4 @@ test(
     }
   }
 );
+

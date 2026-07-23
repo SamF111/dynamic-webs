@@ -56,7 +56,7 @@ function createEnvironment({
   const web =
     Object.freeze({
       schemaVersion:
-        7,
+        8,
       id:
         "ground:scene:default:base:index-0",
       kind:
@@ -112,7 +112,7 @@ function createEnvironment({
         Object.freeze([
           Object.freeze({
             schemaVersion:
-              7,
+              8,
             id:
               "ground:scene:default:base:index-0:structural-0",
             localId:
@@ -953,3 +953,4 @@ test(
     }
   }
 );
+

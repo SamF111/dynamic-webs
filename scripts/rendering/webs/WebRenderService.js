@@ -23,6 +23,10 @@ import {
 } from "./WebCornerAssetTextureService.js";
 
 import {
+  WebSpanAssetTextureService
+} from "./WebSpanAssetTextureService.js";
+
+import {
   WebCarpetRegionMaskService,
   applyWebCarpetRegionMask,
   destroyWebCarpetRegionMaskResource
@@ -88,6 +92,12 @@ export class WebRenderService {
         ? options.cornerTextureService
         : new WebCornerAssetTextureService();
 
+    this.spanTextureService =
+      options.spanTextureService instanceof
+        WebSpanAssetTextureService
+        ? options.spanTextureService
+        : new WebSpanAssetTextureService();
+
     this.carpetMaskResources =
       new Map();
 
@@ -104,6 +114,9 @@ export class WebRenderService {
       0;
 
     this.lastRenderedCornerAssetCount =
+      0;
+
+    this.lastRenderedSpanAssetCount =
       0;
 
     this.renderRevision =
@@ -241,7 +254,9 @@ export class WebRenderService {
             carpetMaskService:
               this.carpetMaskService,
             cornerTextureService:
-              this.cornerTextureService
+              this.cornerTextureService,
+            spanTextureService:
+              this.spanTextureService
           });
         }
       }
@@ -363,6 +378,16 @@ export class WebRenderService {
           web?.cornerAsset
       ).length;
 
+    this.lastRenderedSpanAssetCount =
+      visibleWebs.filter(
+        (
+          web
+        ) =>
+          web?.kind ===
+            "wall-span" &&
+          web?.spanAsset
+      ).length;
+
     return this.container;
   }
 
@@ -481,6 +506,10 @@ export class WebRenderService {
 
   clearCornerTextureCache() {
     return this.cornerTextureService.clear();
+  }
+
+  clearSpanTextureCache() {
+    return this.spanTextureService.clear();
   }
 
   createDiagnosticSnapshot() {
@@ -638,6 +667,8 @@ export class WebRenderService {
         this.lastRenderedCarpetPatchCount,
       renderedCornerAssetCount:
         this.lastRenderedCornerAssetCount,
+      renderedSpanAssetCount:
+        this.lastRenderedSpanAssetCount,
       carpetMaskCount:
         this.carpetMaskResources.size,
       carpetTextures:
@@ -646,6 +677,8 @@ export class WebRenderService {
         this.carpetMaskService.createDiagnosticSnapshot(),
       cornerTextures:
         this.cornerTextureService.createDiagnosticSnapshot(),
+      spanTextures:
+        this.spanTextureService.createDiagnosticSnapshot(),
       renderRevision:
         this.renderRevision,
       lastRenderedAt:
@@ -666,7 +699,8 @@ function renderWebGraphic({
   carpetTextureService,
   carpetMaskResources,
   carpetMaskService,
-  cornerTextureService
+  cornerTextureService,
+  spanTextureService
 }) {
   if (
     web?.kind ===
@@ -712,6 +746,29 @@ function renderWebGraphic({
           webThicknessMultiplier,
         graphicsByWebId,
         cornerTextureService
+      });
+
+    if (rendered) {
+      return;
+    }
+  }
+
+  if (
+    web?.kind ===
+      "wall-span" &&
+    web?.spanAsset &&
+    spanTextureService
+  ) {
+    const rendered =
+      renderWallSpanAssetGraphic({
+        pixi,
+        container,
+        web,
+        configuration,
+        thicknessMultiplier:
+          webThicknessMultiplier,
+        graphicsByWebId,
+        spanTextureService
       });
 
     if (rendered) {
@@ -850,6 +907,122 @@ function renderWallCornerAssetGraphic({
       "setup-failed";
 
     display.dynamicWebsCornerAssetSetupError =
+      Object.freeze({
+        name:
+          String(
+            error?.name ??
+            "Error"
+          ),
+        message:
+          String(
+            error?.message ??
+            error
+          )
+      });
+  }
+
+  return true;
+}
+
+function renderWallSpanAssetGraphic({
+  pixi,
+  container,
+  web,
+  configuration,
+  thicknessMultiplier,
+  graphicsByWebId,
+  spanTextureService
+}) {
+  const fallback =
+    createProceduralWebGraphics({
+      pixi,
+      web,
+      configuration,
+      thicknessMultiplier
+    });
+
+  fallback.name =
+    `${MODULE_ID}.web-span-fallback.${web.id}`;
+
+  fallback.zIndex =
+    0;
+
+  const display =
+    new pixi.Container();
+
+  configureWebDisplayObject(
+    display
+  );
+
+  display.name =
+    `${MODULE_ID}.web-span.${web.id}`;
+
+  display.sortableChildren =
+    true;
+
+  display.elevation =
+    resolveWebElevation(
+      web,
+      container.elevation
+    );
+
+  display.zIndex =
+    -10;
+
+  display.addChild(
+    fallback
+  );
+
+  container.addChild(
+    display
+  );
+
+  graphicsByWebId.set(
+    web.id,
+    display
+  );
+
+  const profile =
+    getWebColourProfile(
+      web.colourProfileId
+    );
+
+  try {
+    const assetDisplay =
+      spanTextureService.createSpanDisplay({
+        pixi,
+        presentation:
+          web.spanAsset,
+        fallbackDisplay:
+          fallback,
+        tint:
+          profile.configuration.captureColour,
+        alphaMultiplier:
+          profile.configuration.alphaMultiplier,
+        thicknessMultiplier
+      });
+
+    if (
+      assetDisplay
+    ) {
+      assetDisplay.zIndex =
+        1;
+
+      display.addChild(
+        assetDisplay
+      );
+
+      display.dynamicWebsSpanAssetSetupState =
+        "pending-or-loaded";
+    } else {
+      display.dynamicWebsSpanAssetSetupState =
+        "asset-display-unavailable";
+    }
+  } catch (error) {
+    display.dynamicWebsSpanAssetSetupState =
+      "setup-failed";
+
+    display.dynamicWebsSpanAssetSetupError =
       Object.freeze({
         name:
           String(

@@ -27,6 +27,10 @@ import {
   doesRegionUpdateAffectWebs
 } from "../config/regionTagConfiguration.js";
 
+import {
+  TokenSpanWebInteractionController
+} from "../interactions/TokenSpanWebInteractionController.js";
+
 /**
  * Own Foundry hooks and debounced Scene web regeneration.
  */
@@ -83,6 +87,12 @@ export class SceneWebLifecycleController {
 
     this.synchronisationCount =
       0;
+
+    this.tokenSpanWebInteractionController =
+      new TokenSpanWebInteractionController({
+        runtime:
+          this.runtime
+      });
   }
 
   /**
@@ -240,9 +250,18 @@ export class SceneWebLifecycleController {
     this.#register(
       "updateToken",
       (
-        _tokenDocument,
-        changed
+        tokenDocument,
+        changed,
+        options,
+        userId
       ) => {
+        this.tokenSpanWebInteractionController.handleTokenUpdated(
+          tokenDocument,
+          changed,
+          options,
+          userId
+        );
+
         if (
           doesTokenUpdateAffectViewedWebLevel(
             changed
@@ -253,6 +272,22 @@ export class SceneWebLifecycleController {
           );
         }
       }
+    );
+
+    this.#register(
+      "createToken",
+      () =>
+        this.tokenSpanWebInteractionController.prime(
+          globalThis.canvas?.scene
+        )
+    );
+
+    this.#register(
+      "deleteToken",
+      () =>
+        this.tokenSpanWebInteractionController.prime(
+          globalThis.canvas?.scene
+        )
     );
 
     this.registered =
@@ -296,6 +331,8 @@ export class SceneWebLifecycleController {
     this.registered =
       false;
 
+    this.tokenSpanWebInteractionController.clear();
+
     this.runtime
       .getWebRuntimeService()
       .clear(
@@ -315,6 +352,8 @@ export class SceneWebLifecycleController {
   /** Clear local rendering before the active canvas is destroyed. */
   handleCanvasTearDown() {
     this.clearPendingRebuild();
+
+    this.tokenSpanWebInteractionController.clear();
 
     this.runtime
       .getWebRuntimeService()
@@ -681,6 +720,10 @@ export class SceneWebLifecycleController {
 
       this.synchronisationCount +=
         1;
+
+      this.tokenSpanWebInteractionController.prime(
+        scene
+      );
     }
 
     return snapshot;
@@ -819,7 +862,9 @@ export class SceneWebLifecycleController {
       lastCompletedAt:
         this.lastCompletedAt,
       synchronisationCount:
-        this.synchronisationCount
+        this.synchronisationCount,
+      tokenSpanWebInteractions:
+        this.tokenSpanWebInteractionController.createDiagnosticSnapshot()
     });
   }
 

@@ -46,6 +46,18 @@ import {
   WebSpatialIndex
 } from "../../spatial/WebSpatialIndex.js";
 
+import {
+  WebMutableStateService
+} from "../../interactions/WebMutableStateService.js";
+
+import {
+  WebMovementInteractionService
+} from "../../interactions/WebMovementInteractionService.js";
+
+import {
+  MODULE_ID
+} from "../../module/moduleConstants.js";
+
 /** Own deterministic all-level web blueprints and transient visible rendering. */
 export class WebRuntimeService {
   constructor(
@@ -84,6 +96,21 @@ export class WebRuntimeService {
         WebSpatialIndex
         ? options.spatialIndex
         : new WebSpatialIndex();
+
+    this.mutableStateService =
+      options.mutableStateService instanceof
+        WebMutableStateService
+        ? options.mutableStateService
+        : new WebMutableStateService();
+
+    this.movementInteractionService =
+      options.movementInteractionService instanceof
+        WebMovementInteractionService
+        ? options.movementInteractionService
+        : new WebMovementInteractionService({
+            webRuntimeService:
+              this
+          });
 
     this.state =
       createWebRuntimeState();
@@ -162,12 +189,6 @@ export class WebRuntimeService {
           generated.levels
       });
 
-    const visibleWebs =
-      filterWebsForVisibleLevels(
-        generated.webs,
-        levelVisibility.visibleLevelIds
-      );
-
     const nextSpatialIndex =
       new WebSpatialIndex({
         cellSizePx:
@@ -186,6 +207,32 @@ export class WebRuntimeService {
       }
     );
 
+    const previousMutableState =
+      this.mutableStateService.createSnapshot();
+
+    const mutableState =
+      this.mutableStateService.reconcile({
+        sceneId:
+          generated.sceneId,
+        generationId:
+          nextGenerationId,
+        webs:
+          generated.webs
+      });
+
+    nextSpatialIndex.applyDestroyedWebIds(
+      mutableState.destroyedWebIds
+    );
+
+    const visibleWebs =
+      filterIntactWebs(
+        filterWebsForVisibleLevels(
+          generated.webs,
+          levelVisibility.visibleLevelIds
+        ),
+        this.mutableStateService
+      );
+
     try {
       this.renderService.render(
         visibleWebs,
@@ -195,6 +242,10 @@ export class WebRuntimeService {
         )
       );
     } catch (error) {
+      this.mutableStateService.applySnapshot(
+        previousMutableState
+      );
+
       this.spatialIndex.clear();
 
       this.state =
@@ -278,6 +329,7 @@ export class WebRuntimeService {
         ),
       configuration:
         generated.configuration,
+      mutableState,
       webs:
         generated.webs,
       counts:
@@ -345,9 +397,12 @@ export class WebRuntimeService {
       });
 
     const visibleWebs =
-      filterWebsForVisibleLevels(
-        webs,
-        levelVisibility.visibleLevelIds
+      filterIntactWebs(
+        filterWebsForVisibleLevels(
+          webs,
+          levelVisibility.visibleLevelIds
+        ),
+        this.mutableStateService
       );
 
     try {
@@ -449,9 +504,12 @@ export class WebRuntimeService {
     }
 
     const visibleWebs =
-      filterWebsForVisibleLevels(
-        previousState.webs,
-        levelVisibility.visibleLevelIds
+      filterIntactWebs(
+        filterWebsForVisibleLevels(
+          previousState.webs,
+          levelVisibility.visibleLevelIds
+        ),
+        this.mutableStateService
       );
 
     try {
@@ -545,10 +603,13 @@ export class WebRuntimeService {
         true
     ) {
       const visibleWebs =
-        filterWebsForVisibleLevels(
-          this.state.webs,
-          this.state.levelVisibility?.visibleLevelIds ??
-          []
+        filterIntactWebs(
+          filterWebsForVisibleLevels(
+            this.state.webs,
+            this.state.levelVisibility?.visibleLevelIds ??
+            []
+          ),
+          this.mutableStateService
         );
 
       this.renderService.render(
@@ -603,6 +664,9 @@ export class WebRuntimeService {
     const clearedSpatialIndex =
       this.spatialIndex.clear();
 
+    const clearedMutableState =
+      this.mutableStateService.clear();
+
     this.state =
       createWebRuntimeState({
         generationId:
@@ -624,7 +688,324 @@ export class WebRuntimeService {
 
     return wasActive ||
       clearedRendering ||
-      clearedSpatialIndex;
+      clearedSpatialIndex ||
+      clearedMutableState;
+  }
+
+  /** Return the current immutable session-state snapshot. */
+  getMutableState() {
+    return this.mutableStateService.createSnapshot();
+  }
+
+  /** Query intact span webs intersected by one swept entity movement. */
+  queryMovementIntersections(
+    request
+  ) {
+    return this.movementInteractionService.queryMovement(
+      request
+    );
+  }
+
+  /** Destroy intact wall-span webs without changing immutable geometry. */
+  destroyWebs(
+    webIds,
+    metadata = {}
+  ) {
+    const requestedIds =
+      Array.from(
+        new Set(
+          (
+            Array.isArray(
+              webIds
+            )
+              ? webIds
+              : [
+                  webIds
+                ]
+          )
+            .map(
+              (
+                value
+              ) =>
+                String(
+                  value ??
+                  ""
+                ).trim()
+            )
+            .filter(
+              Boolean
+            )
+        )
+      ).sort();
+
+    const eligibleIds =
+      requestedIds.filter(
+        (
+          webId
+        ) =>
+          this.spatialIndex.getWeb(
+            webId
+          )?.webKind ===
+            "wall-span" ||
+          this.spatialIndex.getWeb(
+            webId
+          )?.kind ===
+            "wall-span"
+      );
+
+    const previousMutableState =
+      this.getMutableState();
+
+    const destroyedWebIds =
+      this.mutableStateService.destroyWebs(
+        eligibleIds,
+        metadata
+      );
+
+    if (
+      destroyedWebIds.length ===
+        0
+    ) {
+      return Object.freeze({
+        changed:
+          false,
+        destroyedWebIds,
+        state:
+          this.getMutableState()
+      });
+    }
+
+    for (
+      const webId of
+      destroyedWebIds
+    ) {
+      this.spatialIndex.setWebIntact(
+        webId,
+        false
+      );
+    }
+
+    try {
+      this.#refreshAfterMutableStateChange(
+        metadata?.cause ??
+        "destroy-webs"
+      );
+    } catch (error) {
+      this.#rollbackMutableState(
+        previousMutableState,
+        "destroy-webs-rollback"
+      );
+
+      throw error;
+    }
+
+    const state =
+      this.getMutableState();
+
+    globalThis.Hooks?.callAll?.(
+      `${MODULE_ID}.mutableStateChanged`,
+      state,
+      {
+        reason:
+          metadata?.cause ??
+          "destroy-webs",
+        destroyedWebIds,
+        remote:
+          false
+      }
+    );
+
+    globalThis.Hooks?.callAll?.(
+      `${MODULE_ID}.webDestroyed`,
+      Object.freeze({
+        webIds:
+          destroyedWebIds,
+        cause:
+          metadata?.cause ??
+          "destroy-webs",
+        entityId:
+          metadata?.entityId ??
+          null,
+        state
+      })
+    );
+
+    return Object.freeze({
+      changed:
+        true,
+      destroyedWebIds,
+      state
+    });
+  }
+
+  restoreWeb(
+    webId,
+    metadata = {}
+  ) {
+    const previousMutableState =
+      this.getMutableState();
+
+    const changed =
+      this.mutableStateService.restoreWeb(
+        webId,
+        metadata
+      );
+
+    if (!changed) {
+      return Object.freeze({
+        changed:
+          false,
+        webId:
+          String(
+            webId ??
+            ""
+          ),
+        state:
+          this.getMutableState()
+      });
+    }
+
+    this.spatialIndex.setWebIntact(
+      webId,
+      true
+    );
+
+    try {
+      this.#refreshAfterMutableStateChange(
+        metadata?.cause ??
+        "restore-web"
+      );
+    } catch (error) {
+      this.#rollbackMutableState(
+        previousMutableState,
+        "restore-web-rollback"
+      );
+
+      throw error;
+    }
+
+    const state =
+      this.getMutableState();
+
+    globalThis.Hooks?.callAll?.(
+      `${MODULE_ID}.mutableStateChanged`,
+      state,
+      {
+        reason:
+          metadata?.cause ??
+          "restore-web",
+        remote:
+          false
+      }
+    );
+
+    return Object.freeze({
+      changed:
+        true,
+      webId:
+        String(
+          webId
+        ),
+      state
+    });
+  }
+
+  resetMutableState(
+    metadata = {}
+  ) {
+    const previousMutableState =
+      this.getMutableState();
+
+    const changed =
+      this.mutableStateService.reset(
+        metadata
+      );
+
+    if (
+      changed
+    ) {
+      this.spatialIndex.applyDestroyedWebIds(
+        []
+      );
+
+      try {
+        this.#refreshAfterMutableStateChange(
+          metadata?.cause ??
+          "reset-web-state"
+        );
+      } catch (error) {
+        this.#rollbackMutableState(
+          previousMutableState,
+          "reset-web-state-rollback"
+        );
+
+        throw error;
+      }
+
+      globalThis.Hooks?.callAll?.(
+        `${MODULE_ID}.mutableStateChanged`,
+        this.getMutableState(),
+        {
+          reason:
+            metadata?.cause ??
+            "reset-web-state",
+          remote:
+            false
+        }
+      );
+    }
+
+    return Object.freeze({
+      changed,
+      state:
+        this.getMutableState()
+    });
+  }
+
+  applyMutableStateSnapshot(
+    snapshot,
+    {
+      reason =
+        "remote-web-state"
+    } = {}
+  ) {
+    const previousMutableState =
+      this.getMutableState();
+
+    const changed =
+      this.mutableStateService.applySnapshot(
+        snapshot,
+        {
+          expectedSceneId:
+            this.state.sceneId
+        }
+      );
+
+    if (!changed) {
+      return false;
+    }
+
+    const state =
+      this.getMutableState();
+
+    this.spatialIndex.applyDestroyedWebIds(
+      state.destroyedWebIds
+    );
+
+    try {
+      this.#refreshAfterMutableStateChange(
+        reason
+      );
+    } catch (error) {
+      this.#rollbackMutableState(
+        previousMutableState,
+        "remote-web-state-rollback"
+      );
+
+      throw error;
+    }
+
+    return true;
   }
 
   /** Return all immutable stored web snapshots in stable ID order. */
@@ -800,6 +1181,74 @@ export class WebRuntimeService {
     );
   }
 
+  #rollbackMutableState(
+    snapshot,
+    reason
+  ) {
+    this.mutableStateService.applySnapshot(
+      snapshot
+    );
+
+    this.spatialIndex.applyDestroyedWebIds(
+      snapshot?.destroyedWebIds ??
+      []
+    );
+
+    if (
+      this.state.active ===
+        true
+    ) {
+      this.#refreshAfterMutableStateChange(
+        reason
+      );
+    }
+  }
+
+  #refreshAfterMutableStateChange(
+    reason
+  ) {
+    if (
+      this.state.active !==
+        true
+    ) {
+      return;
+    }
+
+    const visibleWebs =
+      filterIntactWebs(
+        filterWebsForVisibleLevels(
+          this.state.webs,
+          this.state.levelVisibility?.visibleLevelIds ??
+          []
+        ),
+        this.mutableStateService
+      );
+
+    this.renderService.render(
+      visibleWebs,
+      createRenderingConfiguration(
+        this.state.configuration.rendering,
+        this.state.thicknessMultiplier
+      )
+    );
+
+    this.state = {
+      ...this.state,
+      presentationRevision:
+        this.state.presentationRevision +
+        1,
+      lastOperationReason:
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "mutable-web-state",
+      lastOperationAt:
+        Date.now(),
+      mutableState:
+        this.getMutableState()
+    };
+  }
+
   #restorePreviousRendering({
     previousState,
     operationReason,
@@ -808,16 +1257,19 @@ export class WebRuntimeService {
   }) {
     try {
       const previousVisibleWebs =
-        filterWebsForVisibleLevels(
-          previousState.webs,
-          previousState.levelVisibility?.visibleLevelIds ??
-          previousState.levels?.map(
-            (
-              level
-            ) =>
-              level.id
-          ) ??
-          []
+        filterIntactWebs(
+          filterWebsForVisibleLevels(
+            previousState.webs,
+            previousState.levelVisibility?.visibleLevelIds ??
+            previousState.levels?.map(
+              (
+                level
+              ) =>
+                level.id
+            ) ??
+            []
+          ),
+          this.mutableStateService
         );
 
       this.renderService.render(
@@ -870,6 +1322,28 @@ export class WebRuntimeService {
       }
     }
   }
+}
+
+function filterIntactWebs(
+  webs,
+  mutableStateService
+) {
+  return Object.freeze(
+    (
+      Array.isArray(
+        webs
+      )
+        ? webs
+        : []
+    ).filter(
+      (
+        web
+      ) =>
+        mutableStateService.isWebIntact(
+          web?.id
+        )
+    )
+  );
 }
 
 function createRenderingConfiguration(
