@@ -248,6 +248,22 @@ export class SceneWebLifecycleController {
     );
 
     this.#register(
+      "preUpdateToken",
+      (
+        tokenDocument,
+        changed,
+        options,
+        userId
+      ) =>
+        this.tokenSpanWebInteractionController.handleTokenPreUpdated(
+          tokenDocument,
+          changed,
+          options,
+          userId
+        )
+    );
+
+    this.#register(
       "updateToken",
       (
         tokenDocument,
@@ -284,9 +300,11 @@ export class SceneWebLifecycleController {
 
     this.#register(
       "deleteToken",
-      () =>
-        this.tokenSpanWebInteractionController.prime(
-          globalThis.canvas?.scene
+      (
+        tokenDocument
+      ) =>
+        this.tokenSpanWebInteractionController.handleTokenDeleted(
+          tokenDocument
         )
     );
 
@@ -933,3 +951,4 @@ function normaliseReason(
     ? text
     : "scene-lifecycle";
 }
+

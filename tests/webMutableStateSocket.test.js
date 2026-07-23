@@ -17,9 +17,65 @@ function createEnvironment({ isGM }) {
   const hookHandlers = new Map();
   const emitted = [];
   const applied = [];
+  const movementQueries = [];
+  const destroyed = [];
   let hookId = 0;
 
+  const tokenDocument = {
+    id: "token-a",
+    x: 200,
+    y: 0,
+    width: 1,
+    height: 1,
+    elevation: 0,
+    parent: {
+      id: "scene-a"
+    },
+    testUserPermission(user, permission) {
+      return user?.id === "player-a" &&
+        permission === "OWNER";
+    }
+  };
+
   const service = {
+    getState() {
+      return {
+        active: true,
+        sceneId: "scene-a",
+        levels: [
+          {
+            id: "level-0",
+            elevationBand: {
+              bottom: 0,
+              top: 9
+            }
+          }
+        ]
+      };
+    },
+    queryMovementIntersections(request) {
+      movementQueries.push(request);
+
+      return Object.freeze([
+        Object.freeze({
+          webId: "span-a"
+        })
+      ]);
+    },
+    destroyWebs(webIds, metadata) {
+      destroyed.push({
+        webIds,
+        metadata
+      });
+
+      return Object.freeze({
+        changed: true,
+        destroyedWebIds: Object.freeze([
+          ...webIds
+        ]),
+        state: this.getMutableState()
+      });
+    },
     getMutableState() {
       return Object.freeze({
         sceneId: "scene-a",
@@ -34,11 +90,32 @@ function createEnvironment({ isGM }) {
     }
   };
 
+  const users = [
+    {
+      id: "gm-a",
+      isGM: true,
+      active: true
+    },
+    {
+      id: "player-a",
+      isGM: false,
+      active: true
+    }
+  ];
+
+  users.get = id =>
+    users.find(
+      user =>
+        user.id === id
+    ) ??
+    null;
+
   globalThis.game = {
     user: {
       id: isGM ? "gm-a" : "player-a",
       isGM
     },
+    users,
     socket: {
       on(channel, callback) {
         socketHandlers.set(channel, callback);
@@ -54,7 +131,31 @@ function createEnvironment({ isGM }) {
 
   globalThis.canvas = {
     ready: true,
-    scene: { id: "scene-a" }
+    dimensions: {
+      size: 100
+    },
+    scene: {
+      id: "scene-a",
+      grid: {
+        size: 100
+      },
+      tokens: [
+        tokenDocument
+      ]
+    },
+    tokens: {
+      placeables: [
+        {
+          id: tokenDocument.id,
+          document: tokenDocument
+        }
+      ],
+      get(id) {
+        return id === tokenDocument.id
+          ? this.placeables[0]
+          : null;
+      }
+    }
   };
 
   globalThis.Hooks = {
@@ -74,6 +175,9 @@ function createEnvironment({ isGM }) {
     },
     emitted,
     applied,
+    movementQueries,
+    destroyed,
+    tokenDocument,
     socketHandlers,
     hookHandlers,
     getHook(event) {
@@ -157,6 +261,214 @@ test("the GM broadcasts local mutations and answers targeted state requests", ()
     assert.equal(environment.emitted.length, 2);
     assert.equal(environment.emitted[1].message.targetUserId, "player-a");
     assert.deepEqual(environment.emitted[1].message.snapshot.destroyedWebIds, ["span-a"]);
+  } finally {
+    environment.restore();
+  }
+});
+
+
+
+test("the responsible GM accepts the player's first movement request before its TokenDocument reaches the destination", () => {
+  const environment =
+    createEnvironment({
+      isGM: true
+    });
+
+  try {
+    assert.equal(
+      registerWebMutableStateSocket(
+        environment.runtime
+      ),
+      true
+    );
+
+    const handler =
+      environment.socketHandlers.get(
+        "module.dynamic-webs"
+      );
+
+    // Reproduce real cross-client ordering: the socket request reaches the GM
+    // while its authoritative TokenDocument still contains the movement origin.
+    environment.tokenDocument.x =
+      0;
+
+    const movementRequest = {
+      type:
+        "token-span-movement-request",
+      requestId:
+        "player-a:token-a:1000:1",
+      requesterUserId:
+        "player-a",
+      sceneId:
+        "scene-a",
+      tokenId:
+        "token-a",
+      movementFrom:
+        {
+          x: 50,
+          y: 50
+        },
+      movementTo:
+        {
+          x: 250,
+          y: 50
+        },
+      segmentFrom:
+        {
+          x: 100,
+          y: 50
+        },
+      segmentTo:
+        {
+          x: 150,
+          y: 50
+        },
+      animate:
+        true,
+      sentAt:
+        Date.now()
+    };
+
+    handler(
+      movementRequest
+    );
+
+    assert.equal(
+      environment.movementQueries.length,
+      1
+    );
+
+    assert.deepEqual(
+      environment.movementQueries[0],
+      {
+        from: {
+          x: 100,
+          y: 50
+        },
+        to: {
+          x: 150,
+          y: 50
+        },
+        levelId:
+          "level-0",
+        elevation:
+          0,
+        collisionRadiusPx:
+          50,
+        categories: [
+          "wall-span"
+        ]
+      }
+    );
+
+    assert.equal(
+      environment.destroyed.length,
+      1
+    );
+
+    assert.deepEqual(
+      environment.destroyed[0].webIds,
+      [
+        "span-a"
+      ]
+    );
+
+    assert.equal(
+      environment.destroyed[0].metadata.cause,
+      "token-movement"
+    );
+
+    assert.equal(
+      environment.destroyed[0].metadata.entityId,
+      "token-a"
+    );
+
+    assert.equal(
+      environment.destroyed[0].metadata.userId,
+      "player-a"
+    );
+
+    handler(
+      movementRequest
+    );
+
+    assert.equal(
+      environment.movementQueries.length,
+      1
+    );
+
+    assert.equal(
+      environment.destroyed.length,
+      1
+    );
+  } finally {
+    environment.restore();
+  }
+});
+
+test("the GM rejects movement requests whose declared path is unrelated to the authoritative TokenDocument", () => {
+  const environment =
+    createEnvironment({
+      isGM: true
+    });
+
+  try {
+    registerWebMutableStateSocket(
+      environment.runtime
+    );
+
+    const handler =
+      environment.socketHandlers.get(
+        "module.dynamic-webs"
+      );
+
+    environment.tokenDocument.y =
+      500;
+
+    handler({
+      type:
+        "token-span-movement-request",
+      requestId:
+        "player-a:token-a:invalid:1",
+      requesterUserId:
+        "player-a",
+      sceneId:
+        "scene-a",
+      tokenId:
+        "token-a",
+      movementFrom:
+        {
+          x: 50,
+          y: 50
+        },
+      movementTo:
+        {
+          x: 250,
+          y: 50
+        },
+      segmentFrom:
+        {
+          x: 100,
+          y: 50
+        },
+      segmentTo:
+        {
+          x: 150,
+          y: 50
+        },
+      sentAt:
+        Date.now()
+    });
+
+    assert.equal(
+      environment.movementQueries.length,
+      0
+    );
+
+    assert.equal(
+      environment.destroyed.length,
+      0
+    );
   } finally {
     environment.restore();
   }
