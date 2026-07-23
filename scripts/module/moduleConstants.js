@@ -25,6 +25,10 @@ export const WEB_BLUEPRINT_SCHEMA_VERSION =
 export const BASELINE_DIAGNOSTIC_SCHEMA_VERSION =
   1;
 
+/** Schema version for compact Scene-owned destroyed-span state. */
+export const WEB_MUTABLE_STATE_SCHEMA_VERSION =
+  1;
+
 /**
  * Generic Foundry canvas placement modes supported by generated webs.
  */

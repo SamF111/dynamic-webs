@@ -19,14 +19,40 @@ import {
 
 function createEnvironment({
   renderFailure =
-    null
+    null,
+  webKind =
+    "ground",
+  persistedMutableState =
+    undefined
 } = {}) {
   const previousCanvas =
     globalThis.canvas;
 
+  const previousGame =
+    globalThis.game;
+
+  const setFlagCalls =
+    [];
+
   const scene = {
     id:
-      "scene"
+      "scene",
+    flags: {
+      "dynamic-webs": {
+        ...(persistedMutableState === undefined
+          ? {}
+          : { mutableState: persistedMutableState })
+      }
+    },
+    getFlag(namespace, key) {
+      return this.flags?.[namespace]?.[key];
+    },
+    async setFlag(namespace, key, value) {
+      this.flags[namespace] ??= {};
+      this.flags[namespace][key] = value;
+      setFlagCalls.push({ namespace, key, value });
+      return this;
+    }
   };
 
   globalThis.canvas = {
@@ -53,14 +79,36 @@ function createEnvironment({
     }
   };
 
+  globalThis.game = {
+    user: {
+      id:
+        "gm",
+      isGM:
+        true
+    },
+    scenes: {
+      get(id) {
+        return id === scene.id
+          ? scene
+          : null;
+      }
+    }
+  };
+
+  const webId =
+    webKind ===
+      "wall-span"
+      ? "wall-span:scene:default:base:index-0"
+      : "ground:scene:default:base:index-0";
+
   const web =
     Object.freeze({
       schemaVersion:
         8,
       id:
-        "ground:scene:default:base:index-0",
+        webId,
       kind:
-        "ground",
+        webKind,
       sceneId:
         "scene",
       populationId:
@@ -114,7 +162,7 @@ function createEnvironment({
             schemaVersion:
               8,
             id:
-              "ground:scene:default:base:index-0:structural-0",
+              `${webId}:structural-0`,
             localId:
               "structural-0",
             kind:
@@ -240,9 +288,9 @@ function createEnvironment({
           corner:
             0,
           span:
-            0,
+            webKind === "wall-span" ? 1 : 0,
           ground:
-            1,
+            webKind === "ground" ? 1 : 0,
           strands:
             1,
           byWebKind:
@@ -250,9 +298,9 @@ function createEnvironment({
               "wall-corner":
                 0,
               "wall-span":
-                0,
+                webKind === "wall-span" ? 1 : 0,
               ground:
-                1
+                webKind === "ground" ? 1 : 0
             }),
           byStrandKind:
             Object.freeze({
@@ -340,9 +388,13 @@ function createEnvironment({
     service,
     renderCalls,
     clearCalls,
+    setFlagCalls,
+    webId,
     restore() {
       globalThis.canvas =
         previousCanvas;
+      globalThis.game =
+        previousGame;
     }
   };
 }
@@ -954,3 +1006,266 @@ test(
   }
 );
 
+test(
+  "runtime loads, persists and reloads Scene-owned destroyed span state",
+  async () => {
+    const spanId =
+      "wall-span:scene:default:base:index-0";
+
+    const environment =
+      createEnvironment({
+        webKind:
+          "wall-span",
+        persistedMutableState: {
+          schemaVersion:
+            1,
+          revision:
+            4,
+          destroyedWebIds:
+            [
+              spanId
+            ]
+        }
+      });
+
+    try {
+      const generated =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          reason:
+            "runtime-persistence-load"
+        });
+
+      assert.deepEqual(
+        generated.mutableState.destroyedWebIds,
+        [
+          spanId
+        ]
+      );
+
+      assert.equal(
+        environment.renderCalls.at(-1).webs.length,
+        0
+      );
+
+      const reset =
+        environment.service.resetMutableState({
+          cause:
+            "test-reset"
+        });
+
+      assert.equal(
+        reset.changed,
+        true
+      );
+
+      await environment.service.flushMutableStatePersistence();
+
+      assert.deepEqual(
+        environment.setFlagCalls.at(-1),
+        {
+          namespace:
+            "dynamic-webs",
+          key:
+            "mutableState",
+          value: {
+            schemaVersion:
+              1,
+            revision:
+              5,
+            destroyedWebIds:
+              []
+          }
+        }
+      );
+
+      const destroyed =
+        environment.service.destroyWebs(
+          [
+            spanId
+          ],
+          {
+            cause:
+              "test-destroy"
+          }
+        );
+
+      assert.deepEqual(
+        destroyed.destroyedWebIds,
+        [
+          spanId
+        ]
+      );
+
+      await environment.service.flushMutableStatePersistence();
+
+      assert.deepEqual(
+        environment.scene.flags["dynamic-webs"].mutableState,
+        {
+          schemaVersion:
+            1,
+          revision:
+            6,
+          destroyedWebIds:
+            [
+              spanId
+            ]
+        }
+      );
+
+      environment.service.clear(
+        "persistence-reload"
+      );
+
+      const reloaded =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          reason:
+            "runtime-persistence-reload"
+        });
+
+      assert.deepEqual(
+        reloaded.mutableState.destroyedWebIds,
+        [
+          spanId
+        ]
+      );
+
+      assert.equal(
+        reloaded.mutableStatePersistence.lastPersistedRevision,
+        6
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "runtime prunes stale persisted span IDs and repairs the Scene flag",
+  async () => {
+    const environment =
+      createEnvironment({
+        webKind:
+          "wall-span",
+        persistedMutableState: {
+          schemaVersion:
+            1,
+          revision:
+            9,
+          destroyedWebIds:
+            [
+              "missing-span"
+            ]
+        }
+      });
+
+    try {
+      const generated =
+        environment.service.generateForActiveScene({
+          scene:
+            environment.scene,
+          reason:
+            "runtime-persistence-prune"
+        });
+
+      assert.deepEqual(
+        generated.mutableState.destroyedWebIds,
+        []
+      );
+
+      assert.equal(
+        generated.mutableState.revision,
+        10
+      );
+
+      assert.deepEqual(
+        generated.mutableState.lastReconciliation.prunedWebIds,
+        [
+          "missing-span"
+        ]
+      );
+
+      await environment.service.flushMutableStatePersistence();
+
+      assert.deepEqual(
+        environment.scene.flags["dynamic-webs"].mutableState,
+        {
+          schemaVersion:
+            1,
+          revision:
+            10,
+          destroyedWebIds:
+            []
+        }
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);
+
+test(
+  "failed mutable-state redraw rolls back revision, intact state and persistence",
+  () => {
+    const environment =
+      createEnvironment({
+        webKind:
+          "wall-span"
+      });
+
+    try {
+      environment.service.generateForActiveScene({
+        scene:
+          environment.scene,
+        reason:
+          "runtime-mutable-rollback"
+      });
+
+      environment.service.renderService.render =
+        () => {
+          throw new Error(
+            "mutable redraw failed"
+          );
+        };
+
+      assert.throws(
+        () =>
+          environment.service.destroyWebs(
+            [
+              environment.webId
+            ],
+            {
+              cause:
+                "test-mutable-failure"
+            }
+          ),
+        /mutable redraw failed/u
+      );
+
+      assert.equal(
+        environment.service.getMutableState().revision,
+        0
+      );
+
+      assert.deepEqual(
+        environment.service.getMutableState().destroyedWebIds,
+        []
+      );
+
+      assert.equal(
+        environment.service.getWeb(environment.webId).intact,
+        true
+      );
+
+      assert.equal(
+        environment.setFlagCalls.length,
+        0
+      );
+    } finally {
+      environment.restore();
+    }
+  }
+);

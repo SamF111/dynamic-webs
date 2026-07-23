@@ -154,6 +154,8 @@ test(
           }),
         mutableState:
           Object.freeze({
+            schemaVersion:
+              1,
             sceneId:
               "scene",
             revision:
@@ -162,6 +164,17 @@ test(
               Object.freeze([
                 "wall-span:scene:one"
               ])
+          }),
+        mutableStatePersistence:
+          Object.freeze({
+            flagPath:
+              "flags.dynamic-webs.mutableState",
+            loadedRevision:
+              2,
+            lastPersistedRevision:
+              2,
+            pending:
+              false
           }),
         spatial:
           Object.freeze({
@@ -311,6 +324,21 @@ test(
       );
 
       assert.equal(
+        report.module.mutableStateSchemaVersion,
+        1
+      );
+
+      assert.equal(
+        report.interactions.persistence.flagPath,
+        "flags.dynamic-webs.mutableState"
+      );
+
+      assert.equal(
+        Object.isFrozen(report.interactions.persistence),
+        true
+      );
+
+      assert.equal(
         Object.isFrozen(report.spatial),
         true
       );
@@ -355,4 +383,3 @@ test(
     }
   }
 );
-

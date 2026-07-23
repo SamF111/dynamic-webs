@@ -25,7 +25,9 @@ export const SCENE_WEB_FLAG_KEYS =
     CARPET_WEB_DENSITY:
       "carpetWebDensity",
     WEB_POPULATIONS:
-      "webPopulations"
+      "webPopulations",
+    MUTABLE_STATE:
+      "mutableState"
   });
 
 
@@ -36,6 +38,16 @@ export function doesSceneUpdateAffectWebPopulations(
   return doesSceneUpdateAffectFlag(
     changed,
     SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
+  );
+}
+
+/** Determine whether a Scene differential carries persistent destroyed-span state. */
+export function doesSceneUpdateAffectWebMutableState(
+  changed
+) {
+  return doesSceneUpdateAffectFlag(
+    changed,
+    SCENE_WEB_FLAG_KEYS.MUTABLE_STATE
   );
 }
 

@@ -92,6 +92,7 @@ test("roadmap records v0.7.0 span assets after carpets and retains later milesto
   assert.match(roadmap, /Milestone 5 — Spatial index and read-only query API — complete/u);
   assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
   assert.match(roadmap, /Milestone 7 — Span assets and whole-span destruction — complete/u);
+  assert.match(roadmap, /Milestone 7\.1 — Persistent span-destruction hardening — complete/u);
   assert.match(roadmap, /\*\*Delivered:\*\* v0\.7\.0/u);
   assert.match(roadmap, /GM-only world settings for the default quantity or density/u);
   assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
@@ -101,7 +102,7 @@ test("roadmap records v0.7.0 span assets after carpets and retains later milesto
     "Span assets and whole-span destruction",
     "Optional web barriers",
     "Extended token and strand interactions",
-    "Persistence and network state",
+    "Extended persistence and network state",
     "Generic trapping and occupancy",
     "Ambient Critters adapter and release hardening"
   ]) assert.ok(roadmap.includes(phrase));
@@ -116,7 +117,8 @@ test("README documents four-anchor cave fitting and critter-agnostic whole-span 
     "moderately skewed cave passages",
     "swept centre path",
     "whole span web",
-    "session-scoped mutable state",
+    "Scene-owned mutable state",
+    'flags["dynamic-webs"].mutableState',
     "no critter-specific flags"
   ]) assert.ok(readme.includes(phrase));
   assert.doesNotMatch(readme, /walls must be parallel/iu);

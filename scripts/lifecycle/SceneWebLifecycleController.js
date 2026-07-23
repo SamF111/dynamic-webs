@@ -5,6 +5,7 @@ import {
 
 import {
   doesSceneUpdateAffectWebGeometry,
+  doesSceneUpdateAffectWebMutableState,
   doesSceneUpdateAffectWebPopulations
 } from "../config/sceneWebFlagPaths.js";
 
@@ -13,6 +14,7 @@ import {
 } from "./sceneLifecycle/sceneLifecycleWallUpdates.js";
 
 import {
+  synchroniseSceneWebMutableState,
   synchroniseSceneWebPresentation,
   synchroniseSceneWebVisibility,
   synchroniseSceneWebs
@@ -407,6 +409,20 @@ export class SceneWebLifecycleController {
 
       this.synchroniseActiveScene(
         "scene-web-populations-update"
+      );
+
+      return;
+    }
+
+    if (
+      doesSceneUpdateAffectWebMutableState(
+        changed
+      )
+    ) {
+      this.clearPendingRebuild();
+
+      this.synchroniseActiveSceneMutableState(
+        "scene-mutable-state-update"
       );
 
       return;
@@ -847,6 +863,56 @@ export class SceneWebLifecycleController {
     return snapshot;
   }
 
+  /** Apply persisted destroyed-span state without regenerating geometry. */
+  synchroniseActiveSceneMutableState(
+    reason
+  ) {
+    const normalisedReason =
+      normaliseReason(
+        reason
+      );
+
+    this.lastRequestedReason =
+      normalisedReason;
+
+    this.lastRequestedAt =
+      Date.now();
+
+    const scene =
+      globalThis.canvas?.scene ??
+      null;
+
+    if (
+      !scene ||
+      globalThis.canvas?.ready !==
+        true
+    ) {
+      return null;
+    }
+
+    const snapshot =
+      synchroniseSceneWebMutableState({
+        runtime:
+          this.runtime,
+        scene,
+        reason:
+          normalisedReason
+      });
+
+    if (snapshot) {
+      this.lastCompletedReason =
+        normalisedReason;
+
+      this.lastCompletedAt =
+        Date.now();
+
+      this.synchronisationCount +=
+        1;
+    }
+
+    return snapshot;
+  }
+
   /** Preserve the v0.2 colour-only lifecycle method as an alias. */
   synchroniseActiveSceneColour(
     reason
@@ -951,4 +1017,3 @@ function normaliseReason(
     ? text
     : "scene-lifecycle";
 }
-

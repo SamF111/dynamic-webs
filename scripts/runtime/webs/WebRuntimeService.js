@@ -58,6 +58,16 @@ import {
   MODULE_ID
 } from "../../module/moduleConstants.js";
 
+import {
+  SCENE_WEB_MUTABLE_STATE_FLAG_PATH,
+  getSceneWebMutableStateConfiguration,
+  persistSceneWebMutableState
+} from "../../config/sceneWebMutableStateConfiguration.js";
+
+import {
+  reportDiagnostic
+} from "../../diagnostics/diagnosticReporter.js";
+
 /** Own deterministic all-level web blueprints and transient visible rendering. */
 export class WebRuntimeService {
   constructor(
@@ -114,6 +124,15 @@ export class WebRuntimeService {
 
     this.state =
       createWebRuntimeState();
+
+    this.pendingMutableStatePersistenceJob =
+      null;
+
+    this.mutableStatePersistencePromise =
+      null;
+
+    this.mutableStatePersistenceDiagnostics =
+      createEmptyMutableStatePersistenceDiagnostics();
   }
 
   /** Generate all level populations and render the locally visible subset. */
@@ -207,8 +226,17 @@ export class WebRuntimeService {
       }
     );
 
+    const persistedMutableState =
+      getSceneWebMutableStateConfiguration(
+        scene
+      );
+
     const previousMutableState =
       this.mutableStateService.createSnapshot();
+
+    const enteringScene =
+      previousMutableState.sceneId !==
+        generated.sceneId;
 
     const mutableState =
       this.mutableStateService.reconcile({
@@ -217,7 +245,11 @@ export class WebRuntimeService {
         generationId:
           nextGenerationId,
         webs:
-          generated.webs
+          generated.webs,
+        persistedState:
+          enteringScene
+            ? persistedMutableState
+            : null
       });
 
     nextSpatialIndex.applyDestroyedWebIds(
@@ -243,7 +275,11 @@ export class WebRuntimeService {
       );
     } catch (error) {
       this.mutableStateService.applySnapshot(
-        previousMutableState
+        previousMutableState,
+        {
+          allowRevisionRollback:
+            true
+        }
       );
 
       this.spatialIndex.clear();
@@ -335,6 +371,33 @@ export class WebRuntimeService {
       counts:
         generated.counts
     };
+
+    this.#recordMutableStatePersistenceLoad({
+      sceneId:
+        generated.sceneId,
+      configuration:
+        persistedMutableState
+    });
+
+    if (
+      persistedMutableState.valid !==
+        true ||
+      !mutableStateMatchesPersistentState(
+        mutableState,
+        persistedMutableState
+      )
+    ) {
+      this.#queueMutableStatePersistence({
+        scene,
+        snapshot:
+          mutableState,
+        reason:
+          mutableState.lastMutation?.action ===
+            "reconcile-prune"
+            ? "reconcile-prune"
+            : "scene-state-reconciliation"
+      });
+    }
 
     return this.createDiagnosticSnapshot();
   }
@@ -692,9 +755,128 @@ export class WebRuntimeService {
       clearedMutableState;
   }
 
-  /** Return the current immutable session-state snapshot. */
+  /** Return the current immutable whole-span state snapshot. */
   getMutableState() {
     return this.mutableStateService.createSnapshot();
+  }
+
+  /** Return Scene-flag persistence telemetry without exposing pending jobs. */
+  getMutableStatePersistence() {
+    return deepFreezeClone(
+      this.mutableStatePersistenceDiagnostics
+    );
+  }
+
+  /** Wait for any queued Scene-flag write, primarily for tests and tooling. */
+  async flushMutableStatePersistence() {
+    while (
+      this.mutableStatePersistencePromise ||
+      this.pendingMutableStatePersistenceJob
+    ) {
+      this.#ensureMutableStatePersistenceDrain();
+
+      if (
+        this.mutableStatePersistencePromise
+      ) {
+        await this.mutableStatePersistencePromise;
+      }
+    }
+
+    return this.getMutableStatePersistence();
+  }
+
+  /** Apply a Scene flag update without regenerating immutable geometry. */
+  applyPersistedMutableState({
+    scene =
+      globalThis.canvas?.scene,
+    reason =
+      "scene-mutable-state-update"
+  } = {}) {
+    if (
+      this.state.active !==
+        true ||
+      !scene ||
+      String(
+        scene.id ??
+        ""
+      ) !==
+        String(
+          this.state.sceneId ??
+          ""
+        )
+    ) {
+      return false;
+    }
+
+    const configuration =
+      getSceneWebMutableStateConfiguration(
+        scene
+      );
+
+    this.#recordMutableStatePersistenceLoad({
+      sceneId:
+        this.state.sceneId,
+      configuration
+    });
+
+    const previousMutableState =
+      this.getMutableState();
+
+    const changed =
+      this.mutableStateService.applySnapshot(
+        {
+          ...configuration,
+          sceneId:
+            this.state.sceneId,
+          generationId:
+            this.state.generationId
+        },
+        {
+          expectedSceneId:
+            this.state.sceneId
+        }
+      );
+
+    if (
+      !changed
+    ) {
+      if (
+        configuration.valid !==
+          true
+      ) {
+        this.#queueMutableStatePersistence({
+          scene,
+          snapshot:
+            this.getMutableState(),
+          reason:
+            "repair-invalid-scene-state"
+        });
+      }
+
+      return false;
+    }
+
+    const state =
+      this.getMutableState();
+
+    this.spatialIndex.applyDestroyedWebIds(
+      state.destroyedWebIds
+    );
+
+    try {
+      this.#refreshAfterMutableStateChange(
+        reason
+      );
+    } catch (error) {
+      this.#rollbackMutableState(
+        previousMutableState,
+        "scene-mutable-state-rollback"
+      );
+
+      throw error;
+    }
+
+    return this.createDiagnosticSnapshot();
   }
 
   /** Query intact span webs intersected by one swept entity movement. */
@@ -802,6 +984,11 @@ export class WebRuntimeService {
     const state =
       this.getMutableState();
 
+    this.#queueCurrentMutableStatePersistence(
+      metadata?.cause ??
+      "destroy-webs"
+    );
+
     globalThis.Hooks?.callAll?.(
       `${MODULE_ID}.mutableStateChanged`,
       state,
@@ -887,6 +1074,11 @@ export class WebRuntimeService {
     const state =
       this.getMutableState();
 
+    this.#queueCurrentMutableStatePersistence(
+      metadata?.cause ??
+      "restore-web"
+    );
+
     globalThis.Hooks?.callAll?.(
       `${MODULE_ID}.mutableStateChanged`,
       state,
@@ -941,6 +1133,11 @@ export class WebRuntimeService {
 
         throw error;
       }
+
+      this.#queueCurrentMutableStatePersistence(
+        metadata?.cause ??
+        "reset-web-state"
+      );
 
       globalThis.Hooks?.callAll?.(
         `${MODULE_ID}.mutableStateChanged`,
@@ -1162,7 +1359,9 @@ export class WebRuntimeService {
       this.renderService.createDiagnosticSnapshot(),
       {
         spatialDiagnostics:
-          this.spatialIndex.createDiagnosticSnapshot()
+          this.spatialIndex.createDiagnosticSnapshot(),
+        mutableStatePersistence:
+          this.getMutableStatePersistence()
       }
     );
   }
@@ -1176,9 +1375,272 @@ export class WebRuntimeService {
         includeWebs:
           false,
         spatialDiagnostics:
-          this.spatialIndex.createDiagnosticSnapshot()
+          this.spatialIndex.createDiagnosticSnapshot(),
+        mutableStatePersistence:
+          this.getMutableStatePersistence()
       }
     );
+  }
+
+  #recordMutableStatePersistenceLoad({
+    sceneId,
+    configuration
+  }) {
+    this.mutableStatePersistenceDiagnostics = {
+      ...this.mutableStatePersistenceDiagnostics,
+      flagPath:
+        SCENE_WEB_MUTABLE_STATE_FLAG_PATH,
+      sceneId:
+        normaliseOptionalIdentifier(
+          sceneId
+        ),
+      source:
+        configuration?.source ??
+        "missing",
+      valid:
+        configuration?.valid ===
+          true,
+      loadedRevision:
+        Number.isInteger(
+          Number(
+            configuration?.revision
+          )
+        )
+          ? Number(
+              configuration.revision
+            )
+          : 0,
+      loadedDestroyedWebIds:
+        Object.freeze([
+          ...(
+            Array.isArray(
+              configuration?.destroyedWebIds
+            )
+              ? configuration.destroyedWebIds
+              : []
+          )
+        ]),
+      loadError:
+        configuration?.error ??
+        null
+    };
+  }
+
+  #queueCurrentMutableStatePersistence(
+    reason
+  ) {
+    const snapshot =
+      this.getMutableState();
+
+    const scene =
+      resolveSceneDocument(
+        snapshot.sceneId
+      );
+
+    return this.#queueMutableStatePersistence({
+      scene,
+      snapshot,
+      reason
+    });
+  }
+
+  #queueMutableStatePersistence({
+    scene,
+    snapshot,
+    reason
+  }) {
+    if (
+      globalThis.game?.user?.isGM !==
+        true ||
+      !scene ||
+      typeof scene.setFlag !==
+        "function" ||
+      !snapshot?.sceneId ||
+      String(
+        scene.id ??
+        ""
+      ) !==
+        String(
+          snapshot.sceneId
+        )
+    ) {
+      return false;
+    }
+
+    this.pendingMutableStatePersistenceJob = {
+      scene,
+      sceneId:
+        String(
+          snapshot.sceneId
+        ),
+      snapshot,
+      reason:
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "mutable-state-change"
+    };
+
+    this.mutableStatePersistenceDiagnostics = {
+      ...this.mutableStatePersistenceDiagnostics,
+      flagPath:
+        SCENE_WEB_MUTABLE_STATE_FLAG_PATH,
+      sceneId:
+        String(
+          snapshot.sceneId
+        ),
+      pending:
+        true,
+      lastQueuedRevision:
+        Number(
+          snapshot.revision
+        ) ||
+        0,
+      lastQueuedAt:
+        Date.now(),
+      lastReason:
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "mutable-state-change"
+    };
+
+    this.#ensureMutableStatePersistenceDrain();
+
+    return true;
+  }
+
+  #ensureMutableStatePersistenceDrain() {
+    if (
+      this.mutableStatePersistencePromise
+    ) {
+      return;
+    }
+
+    this.mutableStatePersistencePromise =
+      this.#drainMutableStatePersistenceQueue()
+        .finally(
+          () => {
+            this.mutableStatePersistencePromise =
+              null;
+
+            this.mutableStatePersistenceDiagnostics = {
+              ...this.mutableStatePersistenceDiagnostics,
+              pending:
+                this.pendingMutableStatePersistenceJob !==
+                  null
+            };
+
+            if (
+              this.pendingMutableStatePersistenceJob
+            ) {
+              this.#ensureMutableStatePersistenceDrain();
+            }
+          }
+        );
+  }
+
+  async #drainMutableStatePersistenceQueue() {
+    while (
+      this.pendingMutableStatePersistenceJob
+    ) {
+      const job =
+        this.pendingMutableStatePersistenceJob;
+
+      this.pendingMutableStatePersistenceJob =
+        null;
+
+      try {
+        const persisted =
+          await persistSceneWebMutableState(
+            job.scene,
+            job.snapshot
+          );
+
+        this.mutableStatePersistenceDiagnostics = {
+          ...this.mutableStatePersistenceDiagnostics,
+          sceneId:
+            job.sceneId,
+          pending:
+            this.pendingMutableStatePersistenceJob !==
+              null,
+          source:
+            "scene-flag",
+          valid:
+            true,
+          loadedRevision:
+            persisted.revision,
+          loadedDestroyedWebIds:
+            persisted.destroyedWebIds,
+          loadError:
+            null,
+          lastPersistedRevision:
+            persisted.revision,
+          lastPersistedAt:
+            Date.now(),
+          lastReason:
+            job.reason,
+          lastError:
+            null
+        };
+
+        globalThis.Hooks?.callAll?.(
+          `${MODULE_ID}.mutableStatePersisted`,
+          persisted,
+          {
+            sceneId:
+              job.sceneId,
+            reason:
+              job.reason
+          }
+        );
+      } catch (error) {
+        this.mutableStatePersistenceDiagnostics = {
+          ...this.mutableStatePersistenceDiagnostics,
+          sceneId:
+            job.sceneId,
+          pending:
+            this.pendingMutableStatePersistenceJob !==
+              null,
+          lastReason:
+            job.reason,
+          lastError:
+            Object.freeze({
+              name:
+                String(
+                  error?.name ??
+                  "Error"
+                ),
+              message:
+                String(
+                  error?.message ??
+                  error
+                )
+            })
+        };
+
+        reportDiagnostic({
+          code:
+            "webs.mutable-state-persistence-failed",
+          severity:
+            "warn",
+          message:
+            "Destroyed wall-span state could not be persisted to the Scene.",
+          context: {
+            sceneId:
+              job.sceneId,
+            reason:
+              job.reason,
+            revision:
+              job.snapshot?.revision ??
+              null
+          },
+          nextAction:
+            "Check Scene update permissions and retry the interaction reset or mutation.",
+          error
+        });
+      }
+    }
   }
 
   #rollbackMutableState(
@@ -1186,7 +1648,11 @@ export class WebRuntimeService {
     reason
   ) {
     this.mutableStateService.applySnapshot(
-      snapshot
+      snapshot,
+      {
+        allowRevisionRollback:
+          true
+      }
     );
 
     this.spatialIndex.applyDestroyedWebIds(
@@ -1583,4 +2049,154 @@ function normaliseOptionalIdentifier(
     0
     ? identifier
     : null;
+}
+
+function createEmptyMutableStatePersistenceDiagnostics() {
+  return {
+    flagPath:
+      SCENE_WEB_MUTABLE_STATE_FLAG_PATH,
+    sceneId:
+      null,
+    source:
+      "missing",
+    valid:
+      true,
+    loadedRevision:
+      0,
+    loadedDestroyedWebIds:
+      Object.freeze([]),
+    loadError:
+      null,
+    pending:
+      false,
+    lastQueuedRevision:
+      null,
+    lastQueuedAt:
+      null,
+    lastPersistedRevision:
+      null,
+    lastPersistedAt:
+      null,
+    lastReason:
+      null,
+    lastError:
+      null
+  };
+}
+
+function mutableStateMatchesPersistentState(
+  mutableState,
+  persistedState
+) {
+  if (
+    Number(
+      mutableState?.revision
+    ) !==
+      Number(
+        persistedState?.revision
+      )
+  ) {
+    return false;
+  }
+
+  const currentIds =
+    Array.isArray(
+      mutableState?.destroyedWebIds
+    )
+      ? mutableState.destroyedWebIds
+      : [];
+
+  const persistedIds =
+    Array.isArray(
+      persistedState?.destroyedWebIds
+    )
+      ? persistedState.destroyedWebIds
+      : [];
+
+  return currentIds.length ===
+    persistedIds.length &&
+    currentIds.every(
+      (
+        webId,
+        index
+      ) =>
+        webId ===
+        persistedIds[index]
+    );
+}
+
+function resolveSceneDocument(
+  sceneId
+) {
+  const identifier =
+    normaliseOptionalIdentifier(
+      sceneId
+    );
+
+  if (!identifier) {
+    return null;
+  }
+
+  if (
+    String(
+      globalThis.canvas?.scene?.id ??
+      ""
+    ) ===
+      identifier
+  ) {
+    return globalThis.canvas.scene;
+  }
+
+  return globalThis.game
+    ?.scenes
+    ?.get?.(
+      identifier
+    ) ??
+    null;
+}
+
+function deepFreezeClone(
+  value
+) {
+  if (
+    value ===
+      null ||
+    typeof value !==
+      "object"
+  ) {
+    return value;
+  }
+
+  if (
+    Array.isArray(
+      value
+    )
+  ) {
+    return Object.freeze(
+      value.map(
+        deepFreezeClone
+      )
+    );
+  }
+
+  const clone =
+    {};
+
+  for (
+    const [
+      key,
+      entry
+    ] of Object.entries(
+      value
+    )
+  ) {
+    clone[key] =
+      deepFreezeClone(
+        entry
+      );
+  }
+
+  return Object.freeze(
+    clone
+  );
 }

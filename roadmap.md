@@ -66,8 +66,9 @@ Completed:
 - Eight deterministic distributed-sheet wall-span WebP variants with four-anchor, two-triangle passage fitting
 - Parallel, converging, diverging and moderately skewed cave-wall span support
 - Procedural span geometry retained as the authoritative interaction and fallback representation
-- Session-scoped whole-span mutable state separate from immutable blueprints
-- GM-authoritative swept token movement destruction with client socket synchronisation
+- Scene-owned whole-span mutable state separate from immutable blueprints
+- Compact `flags.dynamic-webs.mutableState` persistence with schema and monotonic revision
+- GM-authoritative swept token movement destruction with client socket and Scene-update synchronisation
 - Destroyed spans filtered from rendering and intact-only spatial queries without geometry regeneration
 - Generic public movement-query and web-destruction API with no critter-specific setting
 
@@ -75,6 +76,7 @@ Current Scene flags:
 
 ```text
 flags.dynamic-webs.webPopulations
+flags.dynamic-webs.mutableState
 ```
 
 Current density values:
@@ -632,9 +634,11 @@ Carpet blueprints are indexed as Region-bounded webs. Decorative WebP fibres are
 
 ### Delivered mutable state
 
-- Session-scoped destroyed whole-web IDs stored separately from immutable blueprints
+- Scene-owned destroyed whole-web IDs stored separately from immutable blueprints
+- Compact schema-versioned persistence containing only revision and stable wall-span IDs
 - Reconciliation against stable IDs after deterministic regeneration
-- Scene replacement and canvas teardown cleanup
+- Obsolete-ID pruning and GM repair of the persisted Scene flag
+- Canvas teardown cleanup followed by state restoration on Scene reopening
 - Immutable public state snapshots and stable revisions
 - Renderer and spatial index intact-state refresh without deterministic regeneration
 - GM-only restore and reset operations
@@ -648,6 +652,7 @@ Carpet blueprints are indexed as Region-bounded webs. Decorative WebP fibres are
 - Idempotent duplicate updates
 - GM-authoritative mutation
 - Full immutable state snapshot broadcast over `module.dynamic-webs`
+- Scene `updateScene` convergence after persistent writes
 - Read-only generic movement queries for optional consumers
 - No Dynamic Webs critter settings or Ambient Critters imports
 
@@ -664,7 +669,6 @@ dynamicWebs.api.interactions.getState();
 ### Deferred
 
 - Individual strand breakage and restoration
-- Scene-persistent destroyed state
 - Token-size policy controls
 - Teleport-specific policies
 - Trapping, occupancy and web integrity thresholds
@@ -675,9 +679,36 @@ dynamicWebs.api.interactions.getState();
 - Missing assets preserve procedural rendering.
 - Ordinary committed token movement destroys intersected whole span webs.
 - Destroyed spans disappear from rendering and intact-only queries.
-- Compatible destruction state survives same-Scene deterministic regeneration.
-- Connected clients converge on the GM-authoritative session snapshot.
+- Compatible destruction state survives deterministic regeneration, Scene reopening and server restart.
+- Connected clients converge through the GM-authoritative socket snapshot and persisted Scene update.
 - Dynamic Webs exposes no critter-specific interaction configuration.
+
+---
+
+## Milestone 7.1 — Persistent span-destruction hardening — complete
+
+Destroyed wall-span state is now a compact Scene-owned deviation from deterministic geometry:
+
+```javascript
+{
+  schemaVersion: 1,
+  revision: 7,
+  destroyedWebIds: ["<stable-wall-span-web-id>"]
+}
+```
+
+The runtime loads this flag before first rendering, filters it to generated wall spans, preserves compatible IDs across regeneration and writes pruned state back through the GM. Mutations remain synchronous for interaction callers while Scene persistence is serialised through a coalescing asynchronous queue. Persistence failures are diagnostic and do not corrupt immutable geometry or the current authoritative runtime state.
+
+Corner, ground and carpet webs remain ineligible for token destruction and cannot enter the persisted ID set.
+
+### Exit criteria — met
+
+- Destroyed spans remain absent after Scene reopening and server restart.
+- Persistence stores no geometry, texture, population or PIXI data.
+- Reset and restoration advance the revision and persist an empty or reduced ID list.
+- Missing IDs are pruned after wall, Region or population changes.
+- Scene flag updates redraw mutable state without regenerating geometry.
+- Player clients converge through both socket snapshots and Foundry Scene updates.
 
 ---
 
@@ -847,26 +878,22 @@ Hooks.callAll("dynamicWebs.entityIntersectedStrand", payload);
 
 ---
 
-## Milestone 10 — Persistence and network state
+## Milestone 10 — Extended persistence and network state
 
 **Target:** v0.10.0
 
-Once local destruction is reliable, make mutable state survive reloads and synchronise across clients.
+Whole-span Scene persistence and socket convergence were delivered in Milestone 7.1. This later milestone applies the same compact, revisioned model to future individual-strand damage, integrity thresholds, trapping and occupancy once those state types exist.
 
 ### Implement
 
-- Scene-owned persistent mutable state
-- Compact persistence containing only deterministic geometry deviations
-- Socket transport
-- GM-authoritative mutation handling
-- Revision checking
-- Conflict handling
-- State pruning for missing web or strand identifiers
-- Schema versioning
-- Migration support
-- Reset damaged webs operation
-- Optional regeneration policy
-- Multi-client diagnostics
+- Per-web broken-strand records in addition to the existing destroyed-span ID list
+- Revision checks across multiple mutable state types
+- Explicit equal-revision conflict handling for multiple active GMs
+- State pruning for missing web and strand identifiers
+- Schema migrations beyond mutable-state schema version 1
+- Reset damaged strands separately from destroyed whole spans
+- Optional integrity-collapse regeneration policy
+- Multi-client diagnostics covering spans, strands, trapping and occupancy
 
 ### Persistence principle
 
@@ -891,11 +918,11 @@ Persist only deviations such as:
 
 ### Exit criteria
 
-- Broken strands survive reloads.
-- All clients converge on the GM-authoritative state.
-- Stale or conflicting revisions are handled predictably.
-- Invalid references are pruned safely.
-- Persistence remains compact.
+- Broken strands and later occupancy state survive reloads alongside destroyed spans.
+- All mutable state types converge on the GM-authoritative revision.
+- Equal-revision conflicts from multiple active GMs are handled predictably.
+- Invalid strand and entity references are pruned safely.
+- Persistence remains compact and stores no generated geometry.
 
 ---
 
@@ -1031,11 +1058,12 @@ Test:
 7. Spatial index and read-only query API — complete in v0.5.0
 8. Web carpets — complete in v0.6.0
 9. Span assets and whole-span destruction — complete in v0.7.0
-10. Optional web barriers
-11. Extended token and strand interactions
-12. Persistence and network state
-13. Generic trapping and occupancy
-14. Ambient Critters adapter and release hardening
+10. Persistent span-destruction hardening — complete after v0.7.0
+11. Optional web barriers
+12. Extended token and strand interactions
+13. Extended persistence and network state
+14. Generic trapping and occupancy
+15. Ambient Critters adapter and release hardening
 
 ## Critical dependency chain
 
@@ -1055,6 +1083,8 @@ Spatial indexing
 Web carpets
     ↓
 Whole-span mutable state and token destruction
+    ↓
+Persistent span-destruction hardening
     ↓
 Optional web barriers
     ↓

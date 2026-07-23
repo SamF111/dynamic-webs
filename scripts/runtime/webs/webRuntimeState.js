@@ -125,7 +125,8 @@ export function createWebRuntimeSnapshot(
   renderDiagnostics = null,
   {
     includeWebs = true,
-    spatialDiagnostics = null
+    spatialDiagnostics = null,
+    mutableStatePersistence = null
   } = {}
 ) {
   return deepFreeze({
@@ -224,6 +225,7 @@ export function createWebRuntimeSnapshot(
     mutableState:
       state?.mutableState ??
       null,
+    mutableStatePersistence,
     counts:
       state?.counts ??
       createEmptyCounts(),

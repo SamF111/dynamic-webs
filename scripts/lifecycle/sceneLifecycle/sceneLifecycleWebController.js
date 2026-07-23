@@ -92,6 +92,49 @@ export function synchroniseSceneWebColour(options) {
   return synchroniseSceneWebs(options);
 }
 
+/** Apply persistent destroyed-span state without regenerating geometry. */
+export function synchroniseSceneWebMutableState({ runtime, scene, reason }) {
+  const service = runtime?.getWebRuntimeService?.();
+  if (!service || !scene) return null;
+
+  const normalisedReason = String(reason ?? "scene-mutable-state-update");
+
+  try {
+    const state = service.getState?.();
+
+    if (state?.active !== true || state?.sceneId !== scene.id) {
+      return synchroniseSceneWebs({
+        runtime,
+        scene,
+        reason: normalisedReason
+      });
+    }
+
+    const snapshot = service.applyPersistedMutableState?.({
+      scene,
+      reason: normalisedReason
+    });
+
+    return snapshot
+      ? emitStateChanged(snapshot, normalisedReason)
+      : service.createDiagnosticSnapshot?.() ?? null;
+  } catch (error) {
+    reportDiagnostic({
+      code: "webs.scene-mutable-state-synchronisation-failed",
+      severity: "warn",
+      message: "Persisted destroyed wall-span state could not be applied.",
+      context: {
+        sceneId: scene?.id ?? null,
+        reason: normalisedReason
+      },
+      nextAction: "Check the Scene mutableState flag and reload the Scene.",
+      error
+    });
+
+    return null;
+  }
+}
+
 function emitStateChanged(snapshot, reason) {
   globalThis.Hooks?.callAll?.(`${MODULE_ID}.stateChanged`, snapshot, { reason });
   return snapshot;

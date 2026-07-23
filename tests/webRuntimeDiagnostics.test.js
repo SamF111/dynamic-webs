@@ -44,6 +44,15 @@ test(
                   webs:
                     0
                 })
+            }),
+          mutableStatePersistence:
+            Object.freeze({
+              flagPath:
+                "flags.dynamic-webs.mutableState",
+              pending:
+                false,
+              loadedRevision:
+                0
             })
         }
       );
@@ -134,6 +143,18 @@ test(
     assert.equal(
       Object.isFrozen(
         snapshot.spatial
+      ),
+      true
+    );
+
+    assert.equal(
+      snapshot.mutableStatePersistence.flagPath,
+      "flags.dynamic-webs.mutableState"
+    );
+
+    assert.equal(
+      Object.isFrozen(
+        snapshot.mutableStatePersistence
       ),
       true
     );

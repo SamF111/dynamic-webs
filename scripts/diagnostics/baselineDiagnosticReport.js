@@ -7,7 +7,8 @@ import {
   BASELINE_DIAGNOSTIC_SCHEMA_VERSION,
   MODULE_ID,
   PUBLIC_API_VERSION,
-  WEB_BLUEPRINT_SCHEMA_VERSION
+  WEB_BLUEPRINT_SCHEMA_VERSION,
+  WEB_MUTABLE_STATE_SCHEMA_VERSION
 } from "../module/moduleConstants.js";
 
 /**
@@ -90,6 +91,8 @@ export function createBaselineDiagnosticReport({
         PUBLIC_API_VERSION,
       blueprintSchemaVersion:
         WEB_BLUEPRINT_SCHEMA_VERSION,
+      mutableStateSchemaVersion:
+        WEB_MUTABLE_STATE_SCHEMA_VERSION,
       runtimeReady:
         runtime.ready ===
           true
@@ -228,8 +231,14 @@ export function createBaselineDiagnosticReport({
     rendering:
       state.rendering,
     interactions:
-      state.mutableState ??
-      null,
+      state.mutableState
+        ? {
+            ...state.mutableState,
+            persistence:
+              state.mutableStatePersistence ??
+              null
+          }
+        : null,
     spatial:
       state.spatial ??
       null,
@@ -621,4 +630,3 @@ function deepFreeze(
         value
       );
 }
-

@@ -51,6 +51,11 @@ export function readRawSceneWebConfiguration(
         scene.getFlag(
           SCENE_WEB_FLAG_NAMESPACE,
           SCENE_WEB_FLAG_KEYS.WEB_POPULATIONS
+        ),
+      [SCENE_WEB_FLAG_KEYS.MUTABLE_STATE]:
+        scene.getFlag(
+          SCENE_WEB_FLAG_NAMESPACE,
+          SCENE_WEB_FLAG_KEYS.MUTABLE_STATE
         )
     };
   }

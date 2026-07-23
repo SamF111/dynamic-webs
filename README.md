@@ -12,6 +12,7 @@ The module owns web generation, immutable geometry, rendering, modular Scene con
 - **Public API version:** `1`
 - **Blueprint schema version:** `8`
 - **Diagnostic schema version:** `1`
+- **Mutable-state schema version:** `1`
 - **Minimum Foundry version:** v13
 - **Verified Foundry version:** v14
 - **Entry point:** `scripts/dynamic-webs.js`
@@ -29,10 +30,16 @@ Dynamic Webs currently generates:
 
 Version `0.4.0` builds on the former Scene-wide density, colour and thickness model with explicit modular populations.
 
-The authoritative Scene flag is:
+The authoritative Scene population flag is:
 
 ```text
 flags.dynamic-webs.webPopulations
+```
+
+Destroyed wall-span deviations are stored separately at:
+
+```text
+flags.dynamic-webs.mutableState
 ```
 
 An empty population array means that the Scene generates no webs. There is no implicit population and no fallback from the former pre-release Scene-wide flags.
@@ -213,12 +220,13 @@ On `canvasReady` Dynamic Webs:
 4. Skips populations with unavailable levels or no implemented active category.
 5. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
 6. Stores all immutable blueprints.
-7. Reconciles session-scoped destroyed span IDs against stable deterministic web IDs.
-8. Loads bundled WebP assets as needed and renders only the intact level-compatible subset.
+7. Loads the Scene-owned destroyed-span revision and stable IDs.
+8. Reconciles those IDs against the newly generated wall-span population, pruning obsolete IDs without mutating geometry.
+9. Loads bundled WebP assets as needed and renders only the intact level-compatible subset.
 
 Population-array changes perform one deterministic regeneration. Scene geometry, structural wall, Region geometry/tag/elevation, and level-document changes also regenerate. Viewed-level changes only refresh visibility.
 
-Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry. Bundled patch textures remain under Foundry's normal texture loader; Dynamic Webs separately caches in-flight patch requests and native-canvas Region masks for fast level switches.
+Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry. Scene-owned destroyed-span state remains in the Scene flag and is reloaded on the next synchronisation. Bundled patch textures remain under Foundry's normal texture loader; Dynamic Webs separately caches in-flight patch requests and native-canvas Region masks for fast level switches.
 
 ## Web carpets and bundled WebP patches
 
@@ -370,9 +378,12 @@ dynamicWebs.api.interactions.destroyWebs(["<wall-span-web-id>"], {
 dynamicWebs.api.interactions.restoreWeb("<wall-span-web-id>");
 dynamicWebs.api.interactions.reset();
 dynamicWebs.api.interactions.getState();
+
+// Scene-flag load/write telemetry
+dynamicWebs.api.webs.getState().mutableStatePersistence;
 ```
 
-`generate()`, `clear()`, `clearCarpetTextureCache()` and interaction mutations are GM-only. Movement intersection queries are read-only and available to optional consumers.
+`generate()`, `clear()`, `clearCarpetTextureCache()` and interaction mutations are GM-only. Movement intersection queries are read-only and available to optional consumers. Interaction mutations return after the local authoritative redraw; their compact Scene-flag write is serialised in the background and reported through mutable-state persistence diagnostics.
 
 ### Colour profile lookup
 
@@ -406,7 +417,8 @@ The copyable report includes:
 - Identifier uniqueness
 - Same-level wall-support checks
 - Population and Region ownership and immutability checks
-- Mutable destroyed-span revision and IDs
+- Mutable destroyed-span schema, revision and IDs
+- Scene-flag load source, pending write state, last persisted revision and persistence errors
 - Token span-interaction lifecycle telemetry
 - Non-destructive determinism hashes
 
@@ -416,7 +428,7 @@ Dynamic Webs remains critter-agnostic. It owns environmental web geometry, gener
 
 Dynamic Webs exposes no critter-interaction setting. A consumer decides which of its entities may request span destruction. Token movement is handled internally and is GM-authoritative.
 
-Web carpets, later strand-level damage, barriers, persistence, trapping and occupancy must build on stable population-qualified identifiers.
+Web carpets, later strand-level damage, barriers, trapping and occupancy must build on stable population-qualified identifiers.
 
 ## Validation
 
@@ -444,6 +456,8 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Repeated Scene saves without duplicate rendering
 - Token swept movement crossing an intact wall-span web
 - Destroyed span disappearance on every connected client and state reset through the public API
+- Scene reload and server restart with destroyed spans still absent
+- Obsolete persisted span IDs pruned after wall or population changes
 - Baseline diagnostics and deterministic hashes
 
 ## Hybrid corner-web presentation
@@ -465,6 +479,16 @@ Generate and validate the authored span atlas with:
 
 A committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
 
-Destroyed IDs are session-scoped mutable state separate from immutable blueprints. Compatible IDs survive deterministic regeneration of the same Scene, but state is not written to Scene flags. The GM commits mutations and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
+Destroyed IDs are compact Scene-owned mutable state separate from immutable blueprints. The persisted value contains only a schema version, monotonic revision and sorted stable wall-span IDs:
+
+```javascript
+flags["dynamic-webs"].mutableState = {
+  schemaVersion: 1,
+  revision: 7,
+  destroyedWebIds: ["<stable-wall-span-web-id>"]
+};
+```
+
+Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration and the responsible GM repairs the Scene flag. Geometry, strands, textures, generation IDs and PIXI state are never persisted. The GM commits mutations, queues the Scene-flag write and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`; Foundry's `updateScene` propagation provides a second convergence path. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
 
 Generic consumers use `dynamicWebs.api.interactions` and own their own eligibility policy. Dynamic Webs contains no critter-specific flags, UI fields or internal imports.

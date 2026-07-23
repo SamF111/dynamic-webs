@@ -1,13 +1,14 @@
 import {
-  MODULE_TITLE
+  MODULE_TITLE,
+  WEB_MUTABLE_STATE_SCHEMA_VERSION
 } from "../module/moduleConstants.js";
 
 /**
- * Session-scoped mutable state for immutable generated web blueprints.
+ * Mutable whole-span state layered over immutable generated web blueprints.
  *
- * Only stable web IDs are stored. Regeneration reconciles those IDs against
- * the new deterministic population, preserving compatible destroyed spans
- * without mutating any blueprint object.
+ * Only stable wall-span web IDs are stored. Scene entry hydrates the compact
+ * persistent flag, deterministic regeneration reconciles those IDs against
+ * the new population, and no blueprint object is ever mutated.
  */
 export class WebMutableStateService {
   constructor() {
@@ -23,31 +24,30 @@ export class WebMutableStateService {
     this.destroyedWebIds =
       new Set();
 
+    this.eligibleWebIds =
+      new Set();
+
     this.lastMutation =
+      null;
+
+    this.lastReconciliation =
       null;
   }
 
   reconcile({
     sceneId,
     generationId,
-    webs
+    webs,
+    persistedState = null
   }) {
     const nextSceneId =
       normaliseIdentifier(
         sceneId
       );
 
-    const sceneChanged =
-      this.sceneId !==
-        null &&
+    const enteringScene =
       this.sceneId !==
         nextSceneId;
-
-    if (
-      sceneChanged
-    ) {
-      this.destroyedWebIds.clear();
-    }
 
     const validDestroyableIds =
       new Set(
@@ -59,24 +59,46 @@ export class WebMutableStateService {
             : []
         )
           .filter(
-            (
-              web
-            ) =>
+            web =>
               web?.kind ===
                 "wall-span"
           )
           .map(
-            (
-              web
-            ) =>
+            web =>
               String(
                 web.id
               )
           )
       );
 
-    let pruned =
-      false;
+    if (
+      enteringScene
+    ) {
+      const hydrated =
+        normalisePersistentSnapshot(
+          persistedState
+        );
+
+      this.sceneId =
+        nextSceneId;
+
+      this.revision =
+        hydrated.revision;
+
+      this.destroyedWebIds =
+        new Set(
+          hydrated.destroyedWebIds
+        );
+
+      this.lastMutation =
+        null;
+    }
+
+    this.eligibleWebIds =
+      validDestroyableIds;
+
+    const prunedWebIds =
+      [];
 
     for (
       const webId of
@@ -91,8 +113,9 @@ export class WebMutableStateService {
           webId
         );
 
-        pruned =
-          true;
+        prunedWebIds.push(
+          webId
+        );
       }
     }
 
@@ -107,24 +130,50 @@ export class WebMutableStateService {
         : 0;
 
     if (
-      sceneChanged ||
-      pruned
+      prunedWebIds.length >
+        0
     ) {
       this.revision +=
         1;
 
       this.lastMutation =
-        Object.freeze({
+        createMutationSnapshot({
           action:
-            sceneChanged
-              ? "scene-reset"
-              : "reconcile-prune",
-          at:
-            Date.now(),
-          cause:
-            "deterministic-regeneration"
+            "reconcile-prune",
+          webIds:
+            prunedWebIds,
+          metadata: {
+            cause:
+              "deterministic-regeneration"
+          }
         });
     }
+
+    this.lastReconciliation =
+      deepFreezeClone({
+        at:
+          Date.now(),
+        sceneId:
+          nextSceneId,
+        generationId:
+          this.generationId,
+        hydratedFromPersistence:
+          enteringScene &&
+          persistedState !==
+            null &&
+          persistedState !==
+            undefined,
+        persistedRevision:
+          enteringScene
+            ? normalisePersistentSnapshot(
+                persistedState
+              ).revision
+            : null,
+        eligibleWebCount:
+          validDestroyableIds.size,
+        prunedWebIds:
+          prunedWebIds.sort()
+      });
 
     return this.createSnapshot();
   }
@@ -154,6 +203,9 @@ export class WebMutableStateService {
       );
 
     if (
+      !this.eligibleWebIds.has(
+        id
+      ) ||
       this.destroyedWebIds.has(
         id
       )
@@ -199,6 +251,9 @@ export class WebMutableStateService {
       ids
     ) {
       if (
+        this.eligibleWebIds.has(
+          id
+        ) &&
         !this.destroyedWebIds.has(
           id
         )
@@ -309,6 +364,8 @@ export class WebMutableStateService {
       this.sceneId !==
         null ||
       this.destroyedWebIds.size >
+        0 ||
+      this.eligibleWebIds.size >
         0;
 
     this.sceneId =
@@ -317,28 +374,17 @@ export class WebMutableStateService {
     this.generationId =
       0;
 
+    this.revision =
+      0;
+
     this.destroyedWebIds.clear();
+    this.eligibleWebIds.clear();
 
-    if (
-      hadState
-    ) {
-      this.revision +=
-        1;
+    this.lastMutation =
+      null;
 
-      this.lastMutation =
-        Object.freeze({
-          action:
-            "clear",
-          at:
-            Date.now(),
-          cause:
-            "runtime-clear",
-          webIds:
-            Object.freeze([]),
-          entityId:
-            null
-        });
-    }
+    this.lastReconciliation =
+      null;
 
     return hadState;
   }
@@ -347,7 +393,9 @@ export class WebMutableStateService {
     snapshot,
     {
       expectedSceneId =
-        null
+        null,
+      allowRevisionRollback =
+        false
     } = {}
   ) {
     if (
@@ -360,6 +408,26 @@ export class WebMutableStateService {
     ) {
       throw new TypeError(
         `${MODULE_TITLE} | A mutable web-state snapshot is required.`
+      );
+    }
+
+    const schemaVersion =
+      snapshot.schemaVersion ===
+        undefined
+        ? WEB_MUTABLE_STATE_SCHEMA_VERSION
+        : Number(
+            snapshot.schemaVersion
+          );
+
+    if (
+      !Number.isInteger(
+        schemaVersion
+      ) ||
+      schemaVersion !==
+        WEB_MUTABLE_STATE_SCHEMA_VERSION
+    ) {
+      throw new TypeError(
+        `${MODULE_TITLE} | Unsupported mutable web-state schema version.`
       );
     }
 
@@ -398,12 +466,37 @@ export class WebMutableStateService {
       );
     }
 
+    const incomingEligibleWebIds =
+      Array.isArray(
+        snapshot.eligibleWebIds
+      )
+        ? normaliseIdentifierList(
+            snapshot.eligibleWebIds
+          )
+        : null;
+
+    const eligibility =
+      incomingEligibleWebIds
+        ? new Set(
+            incomingEligibleWebIds
+          )
+        : this.eligibleWebIds;
+
     const incomingDestroyedWebIds =
       normaliseIdentifierList(
         snapshot.destroyedWebIds
+      ).filter(
+        webId =>
+          eligibility.size ===
+            0 ||
+          eligibility.has(
+            webId
+          )
       );
 
     if (
+      allowRevisionRollback !==
+        true &&
       this.sceneId ===
         sceneId &&
       incomingRevision <
@@ -430,6 +523,10 @@ export class WebMutableStateService {
     this.sceneId =
       sceneId;
 
+    if (!sceneId) {
+      this.eligibleWebIds.clear();
+    }
+
     this.generationId =
       Number.isInteger(
         Number(
@@ -439,7 +536,7 @@ export class WebMutableStateService {
         ? Number(
             snapshot.generationId
           )
-        : 0;
+        : this.generationId;
 
     this.revision =
       incomingRevision;
@@ -448,6 +545,15 @@ export class WebMutableStateService {
       new Set(
         incomingDestroyedWebIds
       );
+
+    if (
+      incomingEligibleWebIds
+    ) {
+      this.eligibleWebIds =
+        new Set(
+          incomingEligibleWebIds
+        );
+    }
 
     this.lastMutation =
       snapshot.lastMutation &&
@@ -463,6 +569,8 @@ export class WebMutableStateService {
 
   createSnapshot() {
     return deepFreezeClone({
+      schemaVersion:
+        WEB_MUTABLE_STATE_SCHEMA_VERSION,
       sceneId:
         this.sceneId,
       generationId:
@@ -475,10 +583,60 @@ export class WebMutableStateService {
         ).sort(),
       destroyedWebCount:
         this.destroyedWebIds.size,
+      eligibleWebIds:
+        Array.from(
+          this.eligibleWebIds
+        ).sort(),
+      eligibleWebCount:
+        this.eligibleWebIds.size,
       lastMutation:
-        this.lastMutation
+        this.lastMutation,
+      lastReconciliation:
+        this.lastReconciliation
     });
   }
+}
+
+function normalisePersistentSnapshot(
+  value
+) {
+  if (
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
+  ) {
+    return Object.freeze({
+      revision:
+        0,
+      destroyedWebIds:
+        Object.freeze([])
+    });
+  }
+
+  const revision =
+    Number(
+      value.revision
+    );
+
+  return Object.freeze({
+    revision:
+      Number.isInteger(
+        revision
+      ) &&
+      revision >=
+        0
+        ? revision
+        : 0,
+    destroyedWebIds:
+      Object.freeze(
+        normaliseIdentifierList(
+          value.destroyedWebIds
+        )
+      )
+  });
 }
 
 function createMutationSnapshot({

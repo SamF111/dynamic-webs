@@ -37,6 +37,7 @@ function createEnvironment() {
   const generateCalls = [];
   const clearCalls = [];
   const visibilityCalls = [];
+  const mutableStateCalls = [];
   let hookId = 0;
   let timeoutId = 0;
   let populations = [createPopulation()];
@@ -51,6 +52,10 @@ function createEnvironment() {
     },
     refreshLevelVisibility(options) {
       visibilityCalls.push(options);
+      return Object.freeze({ active: true, sceneId: "scene" });
+    },
+    applyPersistedMutableState(options) {
+      mutableStateCalls.push(options);
       return Object.freeze({ active: true, sceneId: "scene" });
     },
     clear(reason) {
@@ -109,6 +114,7 @@ function createEnvironment() {
     generateCalls,
     clearCalls,
     visibilityCalls,
+    mutableStateCalls,
     setPopulations(value) { populations = value; },
     runNextTimeout() {
       const entry = timeoutCallbacks.entries().next().value;
@@ -230,6 +236,30 @@ test("deleting the active generated Scene clears runtime state", () => {
 });
 
 
+
+test("persistent mutable-state updates redraw without regenerating geometry", () => {
+  const environment = createEnvironment();
+  try {
+    const controller = new SceneWebLifecycleController({ runtime: environment.runtime });
+
+    controller.handleSceneUpdated(environment.scene, {
+      flags: {
+        "dynamic-webs": {
+          mutableState: {
+            schemaVersion: 1,
+            revision: 3,
+            destroyedWebIds: ["span-a"]
+          }
+        }
+      }
+    });
+
+    assert.equal(environment.generateCalls.length, 0);
+    assert.equal(environment.mutableStateCalls.length, 1);
+    assert.equal(environment.mutableStateCalls[0].reason, "scene-mutable-state-update");
+  } finally { environment.restore(); }
+});
+
 test("Region geometry and tag changes schedule deterministic rebuilds", () => {
   const environment = createEnvironment();
   try {
@@ -242,5 +272,3 @@ test("Region geometry and tag changes schedule deterministic rebuilds", () => {
     assert.equal(controller.createDiagnosticSnapshot().pendingReason, "update-region");
   } finally { environment.restore(); }
 });
-
-
