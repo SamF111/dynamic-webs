@@ -1,0 +1,217 @@
+name: Publish to Foundry
+
+run-name: Publish ${{ github.event.release.tag_name }} to Foundry VTT
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing published GitHub release tag, for example v0.7.0"
+        required: true
+        type: string
+      dry_run_only:
+        description: "Validate with Foundry without publishing"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dynamic-webs-foundry-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Validate and publish Foundry package version
+    runs-on: ubuntu-latest
+    environment: foundry-release
+
+    steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          tag="${EVENT_TAG:-${INPUT_TAG}}"
+
+          if [[ -z "${tag}" ]]; then
+            echo "::error::No release tag was supplied."
+            exit 1
+          fi
+
+          if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid release tag: ${tag}"
+            exit 1
+          fi
+
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${tag#v}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download published release manifest
+        shell: bash
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/module.json"
+          curl \
+            --fail \
+            --location \
+            --retry 3 \
+            --output module.json \
+            "${url}"
+
+      - name: Validate release assets and prepare Foundry request
+        shell: bash
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+          import os
+          import urllib.request
+          import zipfile
+
+          repository = os.environ["GITHUB_REPOSITORY"]
+          tag = os.environ["TAG"]
+          version = os.environ["VERSION"]
+
+          manifest = json.loads(Path("module.json").read_text("utf-8"))
+          expected_manifest = (
+              f"https://github.com/{repository}/releases/download/"
+              f"{tag}/module.json"
+          )
+          expected_download = (
+              f"https://github.com/{repository}/releases/download/"
+              f"{tag}/module.zip"
+          )
+
+          errors = []
+          if manifest.get("id") != "dynamic-webs":
+              errors.append('Release manifest ID is not "dynamic-webs".')
+          if manifest.get("version") != version:
+              errors.append(
+                  f"Manifest version {manifest.get('version')} does not "
+                  f"match tag version {version}."
+              )
+          if manifest.get("manifest") != expected_manifest:
+              errors.append("Manifest URL is not version-specific or is incorrect.")
+          if manifest.get("download") != expected_download:
+              errors.append("Download URL is not version-specific or is incorrect.")
+
+          if errors:
+              raise SystemExit("\n".join(errors))
+
+          urllib.request.urlretrieve(expected_download, "module.zip")
+          with zipfile.ZipFile("module.zip") as package:
+              corrupt = package.testzip()
+              if corrupt:
+                  raise SystemExit(f"Corrupt release ZIP entry: {corrupt}")
+              if "dynamic-webs/module.json" not in package.namelist():
+                  raise SystemExit("module.zip lacks dynamic-webs/module.json")
+
+          compatibility = manifest.get("compatibility", {})
+          payload = {
+              "id": manifest["id"],
+              "dry-run": True,
+              "release": {
+                  "version": manifest["version"],
+                  "manifest": expected_manifest,
+                  "notes": (
+                      f"https://github.com/{repository}/releases/tag/{tag}"
+                  ),
+                  "compatibility": {
+                      "minimum": str(compatibility.get("minimum", "")),
+                      "verified": str(compatibility.get("verified", "")),
+                      "maximum": str(compatibility.get("maximum", "")),
+                  },
+              },
+          }
+
+          Path("foundry-request.json").write_text(
+              json.dumps(payload, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(payload, indent=2))
+          PY
+
+      - name: Check Foundry release token
+        shell: bash
+        env:
+          FOUNDRY_RELEASE_TOKEN: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+        run: |
+          if [[ -z "${FOUNDRY_RELEASE_TOKEN}" ]]; then
+            echo "::error::Repository or environment secret FOUNDRY_RELEASE_TOKEN is missing."
+            exit 1
+          fi
+
+      - name: Validate release with Foundry
+        shell: bash
+        env:
+          FOUNDRY_RELEASE_TOKEN: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+        run: |
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --header "Authorization: ${FOUNDRY_RELEASE_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data @foundry-request.json \
+            "https://foundryvtt.com/_api/packages/release_version/" \
+            | tee foundry-dry-run-response.json
+
+      - name: Publish release to Foundry
+        if: ${{ github.event_name == 'release' || inputs.dry_run_only != true }}
+        shell: bash
+        env:
+          FOUNDRY_RELEASE_TOKEN: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+
+          path = Path("foundry-request.json")
+          payload = json.loads(path.read_text("utf-8"))
+          payload["dry-run"] = False
+          path.write_text(
+              json.dumps(payload, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --header "Authorization: ${FOUNDRY_RELEASE_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data @foundry-request.json \
+            "https://foundryvtt.com/_api/packages/release_version/" \
+            | tee foundry-publish-response.json
+
+      - name: Write publication summary
+        shell: bash
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          DRY_RUN_ONLY: ${{ inputs.dry_run_only }}
+        run: |
+          {
+            echo "## Foundry package release"
+            echo
+            echo "- GitHub release: \`${TAG}\`"
+            if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${DRY_RUN_ONLY}" == "true" ]]; then
+              echo "- Result: Foundry dry-run validation only"
+            else
+              echo "- Result: Submitted to the Foundry Package Release API"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"

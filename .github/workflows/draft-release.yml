@@ -1,0 +1,307 @@
+name: Draft Release
+
+run-name: Draft Dynamic Webs release ${{ inputs.version || 'from module.json' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version. Leave blank to use module.json."
+        required: false
+        type: string
+      prerelease:
+        description: "Mark the draft as a pre-release"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Check code health
+    uses: ./.github/workflows/validate-module.yml
+    permissions:
+      contents: read
+
+  draft-release:
+    name: Build and draft GitHub release
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Resolve and validate release metadata
+        id: metadata
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const moduleManifest = JSON.parse(
+            fs.readFileSync("module.json", "utf8")
+          );
+          const packageManifest = JSON.parse(
+            fs.readFileSync("package.json", "utf8")
+          );
+          const requested = process.env.REQUESTED_VERSION?.trim();
+          const version = requested || moduleManifest.version;
+          const semver = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u;
+
+          if (!semver.test(version)) {
+            throw new Error(`Invalid release version: ${version}`);
+          }
+
+          if (version !== moduleManifest.version) {
+            throw new Error(
+              `Requested version ${version} does not match ` +
+              `module.json ${moduleManifest.version}.`
+            );
+          }
+
+          if (version !== packageManifest.version) {
+            throw new Error(
+              `Requested version ${version} does not match ` +
+              `package.json ${packageManifest.version}.`
+            );
+          }
+
+          const tag = `v${version}`;
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            `version=${version}\ntag=${tag}\n`
+          );
+          NODE
+
+      - name: Ensure tag and release do not already exist
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          if git rev-parse --verify --quiet "refs/tags/${TAG}"; then
+            echo "::error::Tag ${TAG} already exists."
+            exit 1
+          fi
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "::error::A GitHub release already exists for ${TAG}."
+            exit 1
+          fi
+
+      - name: Build release manifest and module archive
+        shell: bash
+        env:
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+          import os
+          import zipfile
+
+          root = Path.cwd()
+          build = root / "build"
+          staging = build / "dynamic-webs"
+          build.mkdir(exist_ok=True)
+          staging.mkdir(parents=True, exist_ok=True)
+
+          repository = os.environ["REPOSITORY"]
+          version = os.environ["VERSION"]
+          tag = os.environ["TAG"]
+
+          manifest = json.loads((root / "module.json").read_text("utf-8"))
+          manifest["version"] = version
+          manifest["url"] = f"https://github.com/{repository}"
+          manifest["manifest"] = (
+              f"https://github.com/{repository}/releases/download/"
+              f"{tag}/module.json"
+          )
+          manifest["download"] = (
+              f"https://github.com/{repository}/releases/download/"
+              f"{tag}/module.zip"
+          )
+
+          release_manifest = build / "module.json"
+          release_manifest.write_text(
+              json.dumps(manifest, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          excluded_roots = {
+              ".git",
+              ".github",
+              ".venv",
+              "build",
+              "tests",
+              "tools",
+              "docs",
+              "node_modules",
+          }
+          excluded_files = {
+              ".gitignore",
+              "package.json",
+              "package-lock.json",
+              "PATCH-NOTES.md",
+          }
+
+          included = []
+          for path in sorted(root.rglob("*")):
+              if not path.is_file():
+                  continue
+
+              relative = path.relative_to(root)
+              if relative.parts[0] in excluded_roots:
+                  continue
+              if relative.name in excluded_files:
+                  continue
+
+              target = staging / relative
+              target.parent.mkdir(parents=True, exist_ok=True)
+
+              if relative.as_posix() == "module.json":
+                  target.write_text(
+                      json.dumps(manifest, indent=2) + "\n",
+                      encoding="utf-8",
+                  )
+              else:
+                  target.write_bytes(path.read_bytes())
+
+              included.append(relative.as_posix())
+
+          required = {
+              "module.json",
+              "scripts/dynamic-webs.js",
+              "README.md",
+          }
+          missing = sorted(required.difference(included))
+          if missing:
+              raise SystemExit(
+                  "Release archive is missing required files: " +
+                  ", ".join(missing)
+              )
+
+          archive = build / "module.zip"
+          with zipfile.ZipFile(
+              archive,
+              "w",
+              compression=zipfile.ZIP_DEFLATED,
+              compresslevel=9,
+          ) as package:
+              for path in sorted(staging.rglob("*")):
+                  if path.is_file():
+                      package.write(
+                          path,
+                          Path("dynamic-webs") / path.relative_to(staging),
+                      )
+
+          print(f"Packaged {len(included)} files into {archive}")
+          PY
+
+      - name: Validate release archive
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+          import zipfile
+
+          archive = Path("build/module.zip")
+          if not archive.is_file() or archive.stat().st_size == 0:
+              raise SystemExit("module.zip was not created.")
+
+          with zipfile.ZipFile(archive) as package:
+              corrupt = package.testzip()
+              if corrupt:
+                  raise SystemExit(f"Corrupt ZIP entry: {corrupt}")
+
+              names = set(package.namelist())
+              required = {
+                  "dynamic-webs/module.json",
+                  "dynamic-webs/scripts/dynamic-webs.js",
+                  "dynamic-webs/README.md",
+              }
+              missing = sorted(required.difference(names))
+              if missing:
+                  raise SystemExit(
+                      "Archive is missing: " + ", ".join(missing)
+                  )
+
+              manifest = json.loads(
+                  package.read("dynamic-webs/module.json")
+              )
+              if manifest["download"].endswith("/latest/download/module.zip"):
+                  raise SystemExit(
+                      "Packaged manifest must use a version-specific URL."
+                  )
+
+          print(f"Validated {archive.stat().st_size:,} byte module.zip")
+          PY
+
+      - name: Generate release notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="${TAG}" \
+            -f target_commitish="${GITHUB_SHA}" \
+            --jq '.body' > build/RELEASE-NOTES.md
+
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          arguments=(
+            "${TAG}"
+            "build/module.zip"
+            "build/module.json"
+            "--target" "${GITHUB_SHA}"
+            "--title" "Dynamic Webs ${VERSION}"
+            "--notes-file" "build/RELEASE-NOTES.md"
+            "--draft"
+            "--verify-tag=false"
+          )
+
+          if [[ "${PRERELEASE}" == "true" ]]; then
+            arguments+=("--prerelease")
+          fi
+
+          gh release create "${arguments[@]}"
+
+      - name: Write build summary
+        shell: bash
+        env:
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          {
+            echo "## Draft release created"
+            echo
+            echo "- Tag: \`${TAG}\`"
+            echo "- Assets: \`module.json\`, \`module.zip\`"
+            echo "- The release remains a draft until manually published."
+          } >> "${GITHUB_STEP_SUMMARY}"

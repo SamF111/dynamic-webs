@@ -1,0 +1,158 @@
+name: Check Code Health
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dynamic-webs-health-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate module
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Validate package metadata
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const moduleManifest = JSON.parse(
+            fs.readFileSync("module.json", "utf8")
+          );
+          const packageManifest = JSON.parse(
+            fs.readFileSync("package.json", "utf8")
+          );
+
+          const errors = [];
+          const requiredModuleFields = [
+            "id",
+            "title",
+            "description",
+            "version",
+            "compatibility",
+            "esmodules",
+            "url",
+            "manifest",
+            "download"
+          ];
+
+          for (const field of requiredModuleFields) {
+            if (
+              moduleManifest[field] === undefined ||
+              moduleManifest[field] === null ||
+              moduleManifest[field] === ""
+            ) {
+              errors.push(`module.json is missing "${field}".`);
+            }
+          }
+
+          if (moduleManifest.id !== "dynamic-webs") {
+            errors.push('module.json "id" must remain "dynamic-webs".');
+          }
+
+          if (moduleManifest.version !== packageManifest.version) {
+            errors.push(
+              `Version mismatch: module.json=${moduleManifest.version}, ` +
+              `package.json=${packageManifest.version}.`
+            );
+          }
+
+          if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(moduleManifest.version)) {
+            errors.push(
+              `module.json version is not valid semantic version text: ` +
+              `${moduleManifest.version}`
+            );
+          }
+
+          const minimum = Number(moduleManifest.compatibility?.minimum);
+          const verified = Number(moduleManifest.compatibility?.verified);
+
+          if (!Number.isFinite(minimum) || !Number.isFinite(verified)) {
+            errors.push("Foundry compatibility minimum and verified must be numeric.");
+          } else if (verified < minimum) {
+            errors.push("Foundry verified compatibility cannot be below minimum.");
+          }
+
+          const expectedRepository =
+            "https://github.com/SamF111/dynamic-webs";
+
+          if (moduleManifest.url !== expectedRepository) {
+            errors.push(`module.json url must be ${expectedRepository}.`);
+          }
+
+          if (
+            moduleManifest.manifest !==
+            `${expectedRepository}/releases/latest/download/module.json`
+          ) {
+            errors.push("module.json manifest must point to the latest release asset.");
+          }
+
+          if (
+            moduleManifest.download !==
+            `${expectedRepository}/releases/latest/download/module.zip`
+          ) {
+            errors.push("module.json download must point to the latest release asset.");
+          }
+
+          for (const entry of moduleManifest.esmodules ?? []) {
+            if (!fs.existsSync(entry)) {
+              errors.push(`Missing ES module entry point: ${entry}`);
+            }
+          }
+
+          if (errors.length) {
+            console.error(errors.map(error => `- ${error}`).join("\n"));
+            process.exit(1);
+          }
+
+          console.log(
+            `Validated Dynamic Webs ${moduleManifest.version} for Foundry ` +
+            `${minimum}–${verified}.`
+          );
+          NODE
+
+      - name: Run complete project validation
+        run: npm run validate
+
+      - name: Confirm generated asset manifests and WebPs exist
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          manifests = sorted(Path("assets").glob("*/generated/manifest.json"))
+          webps = sorted(Path("assets").glob("*/generated/*.webp"))
+
+          if not manifests:
+              raise SystemExit("No generated asset manifests were found.")
+
+          if not webps:
+              raise SystemExit("No generated WebP assets were found.")
+
+          print(f"Generated manifests: {len(manifests)}")
+          print(f"Generated WebPs: {len(webps)}")
+          PY
