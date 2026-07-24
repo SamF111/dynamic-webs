@@ -73,3 +73,40 @@ test("movement service groups precise strand hits by stable web ID", () => {
   assert.deepEqual(queries[0].options.categories, ["wall-span"]);
   assert.equal(queries[0].options.intactOnly, true);
 });
+
+
+test("movement service supports generic functional web categories while preserving span defaults", () => {
+  const queries = [];
+  const runtime = {
+    queryStrands(bounds, options) {
+      queries.push({ bounds, options });
+      return Object.freeze([
+        Object.freeze({
+          webId: "ground-a",
+          strandId: "ground-a:s1",
+          sceneId: "scene",
+          populationId: "population",
+          levelId: "level-0",
+          elevationBand: Object.freeze({ bottom: 0, top: 9 }),
+          webKind: "ground",
+          points: Object.freeze([{ x: 5, y: -5 }, { x: 5, y: 5 }]),
+          interactionWidthPx: 2,
+          intact: true
+        })
+      ]);
+    }
+  };
+
+  const service = new WebMovementInteractionService({ webRuntimeService: runtime });
+  const hits = service.queryMovement({
+    from: { x: 0, y: 0 },
+    to: { x: 10, y: 0 },
+    levelId: "level-0",
+    categories: ["ground"],
+    strandKinds: ["capture"]
+  });
+
+  assert.deepEqual(hits.map((hit) => hit.webId), ["ground-a"]);
+  assert.deepEqual(queries[0].options.categories, ["ground"]);
+  assert.deepEqual(queries[0].options.strandKinds, ["capture"]);
+});

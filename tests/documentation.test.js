@@ -54,6 +54,15 @@ test("README documents the modular public API", async () => {
     "dynamicWebs.api.findPerches",
     "dynamicWebs.api.spatial.getDiagnostics()",
     "dynamicWebs.api.interactions.queryMovement",
+    "dynamicWebs.api.interactions.queryEntityPosition",
+    "dynamicWebs.api.interactions.evaluateEntityMovement",
+    "dynamicWebs.api.interactions.getContract",
+    "dynamicWebs.api.captures.show",
+    "dynamicWebs.api.captures.get",
+    "dynamicWebs.api.captures.getState",
+    "dynamicWebs.api.captures.remove",
+    "dynamicWebs.api.captures.clearByEntity",
+    "dynamicWebs.api.captures.clear",
     "dynamicWebs.api.interactions.destroyWebs",
     "dynamicWebs.api.interactions.restoreWeb",
     "dynamicWebs.api.interactions.reset",
@@ -168,7 +177,30 @@ test("README and roadmap document world population defaults and maximum span rea
   assert.match(roadmap, /no legacy FormApplication dependency/u);
   assert.match(roadmap, /An explicit `\[\]` remains an intentional no-web Scene/u);
   assert.match(roadmap, /starts at `1\.5`/u);
-  assert.match(roadmap, /Milestone 8 — Scene wall-span behaviour and derived walls — implementation candidate/u);
+  assert.match(roadmap, /Milestone 8 — Scene wall-span behaviour and derived walls — complete/u);
+  assert.match(roadmap, /Milestone 8\.1 — Generic entity interaction and captured-web visuals — complete/u);
   assert.match(roadmap, /Movement blocking is available only through a module-owned closed secret door/u);
 });
 
+
+
+
+test("README documents generic entity hooks and transient captured-web assets", async () => {
+  const [readme, roadmap] = await Promise.all([
+    readText("README.md"),
+    readText("roadmap.md")
+  ]);
+
+  for (const phrase of [
+    "Generic entity interaction and captured-web effects",
+    "dynamic-webs.entityWebInteraction",
+    "dynamic-webs.entityEnteredWeb",
+    "client-local transient presentation state",
+    "assets/web-captured/generated/",
+    "generate_captured_web_assets.py",
+    "validate_captured_web_assets.py"
+  ]) assert.ok(readme.includes(phrase));
+
+  assert.match(roadmap, /Milestone 8\.1 — Generic entity interaction and captured-web visuals — complete/u);
+  assert.match(roadmap, /No persistence, sockets, spatial indexing or mutation of immutable web geometry/u);
+});

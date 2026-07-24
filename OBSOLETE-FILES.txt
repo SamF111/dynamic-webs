@@ -1,8 +1,0 @@
-The following files were introduced by the rejected separate settings-window implementation.
-They are no longer imported or registered after this hotfix and may be deleted for cleanliness:
-
-scripts/ui/moduleSettingsApplication.js
-templates/ui/module-settings.hbs
-tests/moduleSettingsApplication.test.js
-
-Leaving them in place is harmless because no runtime file references them.

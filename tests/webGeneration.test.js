@@ -664,3 +664,269 @@ test(
     );
   }
 );
+
+
+test(
+  "an endpoint touching the middle of a continuing wall generates both local corner sectors",
+  () => {
+    const context = {
+      ...BASE_CONTEXT,
+      wallSegments:
+        Object.freeze([
+          Object.freeze({
+            wallId:
+              "continuing",
+            a:
+              Object.freeze({
+                x:
+                  100,
+                y:
+                  100
+              }),
+            b:
+              Object.freeze({
+                x:
+                  900,
+                y:
+                  100
+              })
+          }),
+          Object.freeze({
+            wallId:
+              "terminating",
+            a:
+              Object.freeze({
+                x:
+                  500,
+                y:
+                  700
+              }),
+            b:
+              Object.freeze({
+                x:
+                  500,
+                y:
+                  100
+              })
+          })
+        ])
+    };
+
+    const options =
+      createOptions();
+
+    const generated =
+      generate(
+        context,
+        {
+          ...options,
+          cornerWebs: {
+            ...options.cornerWebs,
+            maximumCount:
+              2
+          },
+          spanWebs: {
+            ...options.spanWebs,
+            enabled:
+              false
+          },
+          groundWebs: {
+            ...options.groundWebs,
+            enabled:
+              false
+          },
+          carpetWebs: {
+            ...options.carpetWebs,
+            enabled:
+              false
+          }
+        }
+      );
+
+    const corners =
+      generated.webs.filter(
+        web =>
+          web.kind ===
+          "wall-corner"
+      );
+
+    assert.equal(
+      corners.length,
+      2
+    );
+
+    assert.ok(
+      corners.every(
+        corner =>
+          corner.supportingWallIds.length ===
+            2 &&
+          corner.supportingWallIds[0] ===
+            "continuing" &&
+          corner.supportingWallIds[1] ===
+            "terminating"
+      )
+    );
+
+    assert.equal(
+      new Set(
+        corners.map(
+          corner =>
+            corner.sourceKey
+        )
+      ).size,
+      2
+    );
+
+    assert.ok(
+      corners.every(
+        corner =>
+          corner.sourceKey.startsWith(
+            "continuing:terminating:500:100:sector:"
+          )
+      )
+    );
+  }
+);
+
+
+
+
+test(
+  "an interior X crossing generates four stable adjacent corner sectors",
+  () => {
+    const context = {
+      ...BASE_CONTEXT,
+      wallSegments:
+        Object.freeze([
+          Object.freeze({
+            wallId:
+              "diagonal-a",
+            a:
+              Object.freeze({
+                x:
+                  100,
+                y:
+                  100
+              }),
+            b:
+              Object.freeze({
+                x:
+                  900,
+                y:
+                  900
+              })
+          }),
+          Object.freeze({
+            wallId:
+              "diagonal-b",
+            a:
+              Object.freeze({
+                x:
+                  900,
+                y:
+                  100
+              }),
+            b:
+              Object.freeze({
+                x:
+                  100,
+                y:
+                  900
+              })
+          })
+        ])
+    };
+
+    const options =
+      createOptions();
+
+    const requestedOptions = {
+      ...options,
+      cornerWebs: {
+        ...options.cornerWebs,
+        maximumCount:
+          4
+      },
+      spanWebs: {
+        ...options.spanWebs,
+        enabled:
+          false
+      },
+      groundWebs: {
+        ...options.groundWebs,
+        enabled:
+          false
+      },
+      carpetWebs: {
+        ...options.carpetWebs,
+        enabled:
+          false
+      }
+    };
+
+    const first =
+      generate(
+        context,
+        requestedOptions
+      );
+
+    const second =
+      generate(
+        context,
+        requestedOptions
+      );
+
+    const firstCorners =
+      first.webs.filter(
+        web =>
+          web.kind ===
+            "wall-corner"
+      );
+
+    const secondCorners =
+      second.webs.filter(
+        web =>
+          web.kind ===
+            "wall-corner"
+      );
+
+    assert.equal(
+      firstCorners.length,
+      4
+    );
+
+    assert.deepEqual(
+      firstCorners,
+      secondCorners
+    );
+
+    assert.equal(
+      new Set(
+        firstCorners.map(
+          corner =>
+            corner.id
+        )
+      ).size,
+      4
+    );
+
+    assert.equal(
+      new Set(
+        firstCorners.map(
+          corner =>
+            corner.sourceKey
+        )
+      ).size,
+      4
+    );
+
+    assert.ok(
+      firstCorners.every(
+        corner =>
+          corner.sourceKey.startsWith(
+            "diagonal-a:diagonal-b:500:500:sector:"
+          )
+      )
+    );
+  }
+);

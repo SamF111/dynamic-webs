@@ -131,7 +131,9 @@ export function createWebRuntimeSnapshot(
     includeWebs = true,
     spatialDiagnostics = null,
     mutableStatePersistence = null,
-    spanWallDiagnostics = null
+    spanWallDiagnostics = null,
+    captureDiagnostics = null,
+    entityInteractionDiagnostics = null
   } = {}
 ) {
   return deepFreeze({
@@ -232,6 +234,10 @@ export function createWebRuntimeSnapshot(
       null,
     spanWalls:
       spanWallDiagnostics,
+    captures:
+      captureDiagnostics,
+    entityInteractions:
+      entityInteractionDiagnostics,
     mutableState:
       state?.mutableState ??
       null,
@@ -437,4 +443,5 @@ function deepFreeze(
     clone
   );
 }
+
 

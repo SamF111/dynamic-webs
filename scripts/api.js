@@ -38,11 +38,23 @@ import {
 
 import {
   destroyPublicWebs,
+  evaluatePublicEntityWebMovement,
+  getPublicWebInteractionContract,
   getPublicWebInteractionState,
+  queryPublicEntityWebPosition,
   queryPublicWebMovementIntersections,
   resetPublicWebInteractionState,
   restorePublicWeb
 } from "./api/interactionApi.js";
+
+import {
+  clearPublicCapturedWebs,
+  clearPublicCapturedWebsByEntity,
+  getPublicCapturedWeb,
+  getPublicCapturedWebState,
+  removePublicCapturedWeb,
+  showPublicCapturedWeb
+} from "./api/captureApi.js";
 
 /** Create the stable public Dynamic Webs API. */
 export function createPublicApi(
@@ -148,6 +160,28 @@ export function createPublicApi(
             request
           ),
 
+      queryEntityPosition:
+        (
+          request
+        ) =>
+          queryPublicEntityWebPosition(
+            runtime,
+            request
+          ),
+
+      evaluateEntityMovement:
+        (
+          request
+        ) =>
+          evaluatePublicEntityWebMovement(
+            runtime,
+            request
+          ),
+
+      getContract:
+        () =>
+          getPublicWebInteractionContract(),
+
       destroyWebs:
         (
           webIds,
@@ -182,6 +216,52 @@ export function createPublicApi(
       getState:
         () =>
           getPublicWebInteractionState(
+            runtime
+          )
+    });
+
+  const captures =
+    Object.freeze({
+      show:
+        (request) =>
+          showPublicCapturedWeb(
+            runtime,
+            request
+          ),
+
+      remove:
+        (captureId, options = {}) =>
+          removePublicCapturedWeb(
+            runtime,
+            captureId,
+            options
+          ),
+
+      clearByEntity:
+        (entityId, options = {}) =>
+          clearPublicCapturedWebsByEntity(
+            runtime,
+            entityId,
+            options
+          ),
+
+      clear:
+        (options = {}) =>
+          clearPublicCapturedWebs(
+            runtime,
+            options
+          ),
+
+      get:
+        (captureId) =>
+          getPublicCapturedWeb(
+            runtime,
+            captureId
+          ),
+
+      getState:
+        () =>
+          getPublicCapturedWebState(
             runtime
           )
     });
@@ -276,6 +356,8 @@ export function createPublicApi(
     levels,
     spatial,
     interactions,
+    captures,
     diagnostics
   });
 }
+

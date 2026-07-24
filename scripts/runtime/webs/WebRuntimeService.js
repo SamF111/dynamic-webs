@@ -55,6 +55,14 @@ import {
 } from "../../interactions/WebMovementInteractionService.js";
 
 import {
+  EntityWebInteractionService
+} from "../../interactions/EntityWebInteractionService.js";
+
+import {
+  WebCaptureEffectService
+} from "../../interactions/WebCaptureEffectService.js";
+
+import {
   MODULE_ID
 } from "../../module/moduleConstants.js";
 
@@ -129,6 +137,23 @@ export class WebRuntimeService {
             webRuntimeService:
               this
           });
+
+    this.entityInteractionService =
+      options.entityInteractionService instanceof
+        EntityWebInteractionService
+        ? options.entityInteractionService
+        : new EntityWebInteractionService({
+            webRuntimeService:
+              this,
+            movementInteractionService:
+              this.movementInteractionService
+          });
+
+    this.captureEffectService =
+      options.captureEffectService instanceof
+        WebCaptureEffectService
+        ? options.captureEffectService
+        : new WebCaptureEffectService();
 
     this.spanWallService =
       options.spanWallService instanceof
@@ -394,6 +419,13 @@ export class WebRuntimeService {
         generated.counts
     };
 
+    this.captureEffectService.synchroniseContext({
+      sceneId:
+        generated.sceneId,
+      visibleLevelIds:
+        levelVisibility.visibleLevelIds
+    });
+
     this.#recordMutableStatePersistenceLoad({
       sceneId:
         generated.sceneId,
@@ -633,6 +665,13 @@ export class WebRuntimeService {
       levelVisibility
     };
 
+    this.captureEffectService.synchroniseContext({
+      sceneId:
+        this.state.sceneId,
+      visibleLevelIds:
+        levelVisibility.visibleLevelIds
+    });
+
     return this.createDiagnosticSnapshot();
   }
 
@@ -757,6 +796,19 @@ export class WebRuntimeService {
     const clearedMutableState =
       this.mutableStateService.clear();
 
+    const clearedCaptures =
+      this.captureEffectService.clear({
+        emitHook:
+          false,
+        resetContext:
+          true,
+        reason:
+          normaliseOptionalIdentifier(
+            reason
+          ) ??
+          "runtime-clear"
+      });
+
     this.state =
       createWebRuntimeState({
         generationId:
@@ -779,7 +831,156 @@ export class WebRuntimeService {
     return wasActive ||
       clearedRendering ||
       clearedSpatialIndex ||
-      clearedMutableState;
+      clearedMutableState ||
+      clearedCaptures;
+  }
+
+  /** Query whether one generic external entity currently overlaps web strands. */
+  queryEntityWebPosition(
+    request
+  ) {
+    return this.entityInteractionService.queryPosition(
+      request
+    );
+  }
+
+  /** Evaluate one generic external entity movement and emit generic hooks. */
+  evaluateEntityWebMovement(
+    request
+  ) {
+    return this.entityInteractionService.evaluateMovement(
+      request
+    );
+  }
+
+  /** Show or update one transient client-local captured-web overlay. */
+  showCapturedWeb(
+    request = {}
+  ) {
+    if (
+      this.state.active !==
+        true ||
+      !this.state.sceneId
+    ) {
+      throw new Error(
+        "Dynamic Webs | Captured-web visuals require an active generated Scene."
+      );
+    }
+
+    const sourceWebId =
+      normaliseOptionalIdentifier(
+        request?.webId ??
+        request?.sourceWebId
+      );
+
+    const sourceWeb =
+      sourceWebId
+        ? this.getWeb(
+            sourceWebId
+          )
+        : null;
+
+    const levelId =
+      normaliseOptionalIdentifier(
+        request?.levelId
+      ) ??
+      normaliseOptionalIdentifier(
+        sourceWeb?.levelId
+      ) ??
+      normaliseOptionalIdentifier(
+        this.state.levelVisibility?.activeViewedLevelId
+      ) ??
+      normaliseOptionalIdentifier(
+        this.state.levels?.[0]?.id
+      );
+
+    const level =
+      Array.isArray(
+        this.state.levels
+      )
+        ? this.state.levels.find(
+            candidate =>
+              candidate?.id ===
+              levelId
+          ) ??
+          null
+        : null;
+
+    const colourProfileId =
+      normaliseOptionalIdentifier(
+        request?.colourProfileId
+      ) ??
+      normaliseOptionalIdentifier(
+        sourceWeb?.colourProfileId
+      ) ??
+      "natural-white";
+
+    const profile =
+      getWebColourProfile(
+        colourProfileId
+      );
+
+    return this.captureEffectService.show({
+      ...request,
+      sceneId:
+        this.state.sceneId,
+      levelId,
+      elevationBand:
+        request?.elevationBand ??
+        sourceWeb?.elevationBand ??
+        level?.elevationBand ??
+        null,
+      elevation:
+        request?.elevation ??
+        sourceWeb?.elevationBand?.bottom ??
+        level?.elevationBand?.bottom ??
+        null,
+      colourProfileId:
+        profile.id,
+      tint:
+        request?.tint ??
+        profile.configuration.captureColour
+    });
+  }
+
+  removeCapturedWeb(
+    captureId,
+    options = {}
+  ) {
+    return this.captureEffectService.remove(
+      captureId,
+      options
+    );
+  }
+
+  clearCapturedWebsByEntity(
+    entityId,
+    options = {}
+  ) {
+    return this.captureEffectService.clearByEntity(
+      entityId,
+      options
+    );
+  }
+
+  clearCapturedWebs(
+    options = {}
+  ) {
+    return this.captureEffectService.clear(
+      options
+    );
+  }
+
+  getCapturedWeb(
+    captureId
+  ) {
+    return this.captureEffectService.getCapture(
+      captureId
+    );
+  }
+
+  getCapturedWebState() {
+    return this.captureEffectService.createSnapshot();
   }
 
   /** Return the current immutable whole-span state snapshot. */
@@ -1459,7 +1660,11 @@ export class WebRuntimeService {
         mutableStatePersistence:
           this.getMutableStatePersistence(),
         spanWallDiagnostics:
-          this.spanWallService.createDiagnosticSnapshot()
+          this.spanWallService.createDiagnosticSnapshot(),
+        captureDiagnostics:
+          this.captureEffectService.createSnapshot(),
+        entityInteractionDiagnostics:
+          this.entityInteractionService.createDiagnosticSnapshot()
       }
     );
   }
@@ -1477,7 +1682,11 @@ export class WebRuntimeService {
         mutableStatePersistence:
           this.getMutableStatePersistence(),
         spanWallDiagnostics:
-          this.spanWallService.createDiagnosticSnapshot()
+          this.spanWallService.createDiagnosticSnapshot(),
+        captureDiagnostics:
+          this.captureEffectService.createSnapshot(),
+        entityInteractionDiagnostics:
+          this.entityInteractionService.createDiagnosticSnapshot()
       }
     );
   }
@@ -2545,4 +2754,5 @@ function deepFreezeClone(
     clone
   );
 }
+
 

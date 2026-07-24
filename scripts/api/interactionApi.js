@@ -6,6 +6,10 @@ import {
   requireCurrentUserIsGM
 } from "./foundryAccess.js";
 
+import {
+  createPublicWebInteractionContract
+} from "../interactions/webInteractionContract.js";
+
 export function queryPublicWebMovementIntersections(
   runtime,
   request
@@ -15,6 +19,32 @@ export function queryPublicWebMovementIntersections(
   ).queryMovementIntersections(
     request
   );
+}
+
+export function queryPublicEntityWebPosition(
+  runtime,
+  request
+) {
+  return requireInteractionRuntimeService(
+    runtime
+  ).queryEntityWebPosition(
+    request
+  );
+}
+
+export function evaluatePublicEntityWebMovement(
+  runtime,
+  request
+) {
+  return requireInteractionRuntimeService(
+    runtime
+  ).evaluateEntityWebMovement(
+    request
+  );
+}
+
+export function getPublicWebInteractionContract() {
+  return createPublicWebInteractionContract();
 }
 
 export function destroyPublicWebs(
@@ -112,6 +142,8 @@ function requireInteractionRuntimeService(
   const requiredMethods =
     [
       "queryMovementIntersections",
+      "queryEntityWebPosition",
+      "evaluateEntityWebMovement",
       "destroyWebs",
       "restoreWeb",
       "resetMutableState",
@@ -135,3 +167,4 @@ function requireInteractionRuntimeService(
 
   return service;
 }
+

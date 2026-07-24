@@ -317,3 +317,39 @@ assets/web-ground/generated/
 The JavaScript renderer keeps procedural ground strands visible until the WebP
 loads and its affine transform is available. Ground assets use the same tint,
 alpha and discrete thickness-underlay treatment as corner and span assets.
+
+
+## Captured-web overlays
+
+Captured-web overlays are a separate client-local presentation library for
+other modules to place around an entity after a generic web-interaction result.
+They are not generated Scene geometry, do not enter the spatial index and are
+not persisted.
+
+The authored library contains eight deterministic transparent-white local
+entanglement variants:
+
+```text
+assets/web-captured/generated/
+    captured-01.webp ... captured-08.webp
+    manifest.json
+    preview-sheet.webp
+```
+
+Generate and validate the library from the module root:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_captured_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_captured_web_assets.py
+```
+
+Rebuild only the preview sheet with:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\build_captured_web_preview.py
+```
+
+Each manifest record stores the source pivot and radius used by the runtime
+transform. The runtime maps that unit-space source circle to the requested
+world-space point and radius, then applies rotation, tint and alpha without
+writing any new image file.

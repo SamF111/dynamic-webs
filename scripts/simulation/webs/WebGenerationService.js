@@ -50,6 +50,10 @@ import {
   createWebRegionRestrictionDiagnostics
 } from "../../spatial/webRegionRestrictionIndex.js";
 
+import {
+  createWallJunctionTopology
+} from "./wallJunctionTopology.js";
+
 /** Deterministic, Foundry-independent web-blueprint generation service. */
 export class WebGenerationService {
   constructor(options = {}) {
@@ -86,6 +90,9 @@ export class WebGenerationService {
     const webs = [];
     const populationSeeds = {};
     const populationConfigurations = [];
+    const wallJunctionTopologyCache =
+      new Map();
+
     let rendering = null;
 
     for (const requested of requestedPopulations) {
@@ -145,7 +152,8 @@ export class WebGenerationService {
         populationId,
         populationLabel,
         thicknessMultiplier,
-        regionRestriction
+        regionRestriction,
+        wallJunctionTopologyCache
       });
 
       webs.push(...applyWebColourProfileToPopulation(geometry, colourProfile));
@@ -210,6 +218,8 @@ export class WebGenerationService {
     const levelContexts = createWebLevelGenerationContexts(generationContext);
     const categorySeedsByLevel = {};
     const geometryWebs = [];
+    const wallJunctionTopologyCache =
+      new Map();
 
     for (const levelContext of levelContexts) {
       const levelId = levelContext.level.id;
@@ -228,7 +238,8 @@ export class WebGenerationService {
         categorySeeds,
         populationId: "default",
         populationLabel: "Default Web Population",
-        thicknessMultiplier: 1
+        thicknessMultiplier: 1,
+        wallJunctionTopologyCache
       }));
     }
 
@@ -260,8 +271,19 @@ export class WebGenerationService {
     populationId,
     populationLabel,
     thicknessMultiplier,
-    regionRestriction = null
+    regionRestriction = null,
+    wallJunctionTopologyCache = null
   }) {
+    const wallJunctionTopology =
+      resolveWallJunctionTopology({
+        cache:
+          wallJunctionTopologyCache,
+        levelContext,
+        configuration,
+        gridSize:
+          generationContext.gridSize
+      });
+
     const common = {
       sceneId: generationContext.sceneId,
       populationId,
@@ -284,7 +306,10 @@ export class WebGenerationService {
         ...common,
         generationSeed: categorySeeds.corner,
         configuration: configuration.cornerWebs,
-        random: createSeededRandom(categorySeeds.corner)
+        random: createSeededRandom(categorySeeds.corner),
+        wallJunctions:
+          wallJunctionTopology?.junctions ??
+          null
       }),
       ...this.groundGenerator.generate({
         ...common,
@@ -301,6 +326,70 @@ export class WebGenerationService {
       })
     ]);
   }
+}
+
+function resolveWallJunctionTopology({
+  cache,
+  levelContext,
+  configuration,
+  gridSize
+}) {
+  if (
+    configuration?.cornerWebs?.enabled !==
+      true
+  ) {
+    return null;
+  }
+
+  const tolerance =
+    Number(
+      configuration.cornerWebs.endpointTolerancePx
+    );
+
+  const key =
+    [
+      levelContext.level.id,
+      Number.isFinite(
+        tolerance
+      )
+        ? tolerance
+        : "default"
+    ].join(
+      ":"
+    );
+
+  if (
+    cache instanceof
+      Map &&
+    cache.has(
+      key
+    )
+  ) {
+    return cache.get(
+      key
+    );
+  }
+
+  const topology =
+    createWallJunctionTopology({
+      wallSegments:
+        levelContext.wallSegments,
+      endpointTolerancePx:
+        configuration.cornerWebs.endpointTolerancePx,
+      gridSize
+    });
+
+  if (
+    cache instanceof
+      Map
+  ) {
+    cache.set(
+      key,
+      topology
+    );
+  }
+
+  return topology;
 }
 
 function createGenerationCounts(webs, levels) {
@@ -439,3 +528,4 @@ function normalisePositiveNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
 }
+

@@ -14,6 +14,12 @@ function createEnvironment() {
     clear: [],
     clearCarpetTextureCache: [],
     queryMovementIntersections: [],
+    queryEntityWebPosition: [],
+    evaluateEntityWebMovement: [],
+    showCapturedWeb: [],
+    removeCapturedWeb: [],
+    clearCapturedWebsByEntity: [],
+    clearCapturedWebs: [],
     destroyWebs: [],
     restoreWeb: [],
     resetMutableState: [],
@@ -128,6 +134,60 @@ function createEnvironment() {
           strandIds: Object.freeze(["strand-a"])
         })
       ]);
+    },
+
+    queryEntityWebPosition(request) {
+      calls.queryEntityWebPosition.push(request);
+      return Object.freeze({
+        entity: Object.freeze({ id: request.entityId }),
+        onWeb: true,
+        webIds: Object.freeze(["web-a"])
+      });
+    },
+
+    evaluateEntityWebMovement(request) {
+      calls.evaluateEntityWebMovement.push(request);
+      return Object.freeze({
+        primaryOutcome: "entered-web",
+        enteredWebIds: Object.freeze(["web-a"]),
+        currentWebIds: Object.freeze(["web-a"])
+      });
+    },
+
+    showCapturedWeb(request) {
+      calls.showCapturedWeb.push(request);
+      return Object.freeze({
+        captureId: request.captureId ?? "capture:external:entity:entity-a",
+        entityId: request.entityId ?? null
+      });
+    },
+
+    removeCapturedWeb(captureId, options) {
+      calls.removeCapturedWeb.push({ captureId, options });
+      return true;
+    },
+
+    clearCapturedWebsByEntity(entityId, options) {
+      calls.clearCapturedWebsByEntity.push({ entityId, options });
+      return Object.freeze(["capture:external:entity:entity-a"]);
+    },
+
+    clearCapturedWebs(options) {
+      calls.clearCapturedWebs.push(options);
+      return true;
+    },
+
+    getCapturedWeb(captureId) {
+      return captureId === "capture-a"
+        ? Object.freeze({ captureId: "capture-a" })
+        : null;
+    },
+
+    getCapturedWebState() {
+      return Object.freeze({
+        captureCount: 1,
+        captures: Object.freeze([Object.freeze({ captureId: "capture-a" })])
+      });
     },
 
     destroyWebs(webIds, options) {
@@ -246,6 +306,7 @@ test("public API and namespaces are frozen and expose only modular Scene configu
     assert.equal(Object.isFrozen(api.colours), true);
     assert.equal(Object.isFrozen(api.spatial), true);
     assert.equal(Object.isFrozen(api.interactions), true);
+    assert.equal(Object.isFrozen(api.captures), true);
     assert.deepEqual(
       Object.keys(api.scene).sort(),
       ["getPopulation", "getPopulations", "setPopulations"]
@@ -395,6 +456,23 @@ test("public interaction API exposes generic movement queries and GM-only whole-
     assert.equal(api.interactions.queryMovement(request)[0].webId, "web-a");
     assert.deepEqual(environment.calls.queryMovementIntersections, [request]);
 
+    const position = api.interactions.queryEntityPosition({
+      entityId: "entity-a",
+      point: { x: 10, y: 20 },
+      levelId: "base"
+    });
+    assert.equal(position.onWeb, true);
+    assert.deepEqual(position.webIds, ["web-a"]);
+
+    const evaluated = api.interactions.evaluateEntityMovement({
+      entityId: "entity-a",
+      from: { x: 0, y: 0 },
+      to: { x: 10, y: 20 },
+      levelId: "base"
+    });
+    assert.equal(evaluated.primaryOutcome, "entered-web");
+    assert.equal(api.interactions.getContract().schemaVersion, 1);
+
     const destroyed = api.interactions.destroyWebs(["web-a"], {
       cause: "test-entity",
       entityId: "entity-a"
@@ -410,6 +488,31 @@ test("public interaction API exposes generic movement queries and GM-only whole-
     assert.equal(environment.calls.resetMutableState.length, 1);
     assert.equal(api.interactions.getState().sceneId, "scene");
     assert.equal(Object.isFrozen(api.interactions.getState()), true);
+  } finally {
+    environment.restore();
+  }
+});
+
+test("public captured-web API exposes transient show, remove and clear operations", () => {
+  const environment = createEnvironment();
+
+  try {
+    const api = createPublicApi(environment.runtime);
+    const shown = api.captures.show({
+      entityId: "entity-a",
+      point: { x: 100, y: 120 },
+      radiusPx: 30,
+      levelId: "base"
+    });
+
+    assert.equal(shown.entityId, "entity-a");
+    assert.equal(environment.calls.showCapturedWeb.length, 1);
+    assert.equal(api.captures.get("capture-a").captureId, "capture-a");
+    assert.equal(api.captures.getState().captureCount, 1);
+    assert.equal(api.captures.remove("capture-a"), true);
+    assert.deepEqual(api.captures.clearByEntity("entity-a"), ["capture:external:entity:entity-a"]);
+    assert.equal(api.captures.clear(), true);
+    assert.equal(Object.isFrozen(api.captures.getState()), true);
   } finally {
     environment.restore();
   }
@@ -450,4 +553,5 @@ test("GM-only modular operations reject non-GM callers", async () => {
     environment.restore();
   }
 });
+
 

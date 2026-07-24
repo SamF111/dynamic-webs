@@ -37,6 +37,7 @@ export class WebMovementInteractionService {
       [
         "wall-span"
       ],
+    strandKinds = [],
     limit = 1000
   }) {
     const bounds =
@@ -54,6 +55,17 @@ export class WebMovementInteractionService {
           elevation,
           elevationBand,
           categories,
+          ...(
+            Array.isArray(
+              strandKinds
+            ) &&
+            strandKinds.length >
+              0
+              ? {
+                  strandKinds
+                }
+              : {}
+          ),
           intactOnly:
             true,
           limit
@@ -68,8 +80,6 @@ export class WebMovementInteractionService {
       strands
     ) {
       if (
-        strand.webKind !==
-          "wall-span" ||
         !sweptMovementIntersectsPolyline({
           from,
           to,
@@ -151,3 +161,4 @@ export class WebMovementInteractionService {
     );
   }
 }
+

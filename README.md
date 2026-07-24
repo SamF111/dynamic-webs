@@ -422,6 +422,104 @@ dynamicWebs.api.webs.getState().mutableStatePersistence;
 
 `generate()`, `clear()`, `clearCarpetTextureCache()` and interaction mutations are GM-only. Movement intersection queries are read-only and available to optional consumers. Interaction mutations return after the local authoritative redraw; their compact Scene-flag write is serialised in the background and reported through mutable-state persistence diagnostics.
 
+## Generic entity interaction and captured-web effects
+
+Dynamic Webs does not autonomously inspect entities owned by other modules. A consumer submits the entity's movement or current position through the public API. Dynamic Webs evaluates functional strand geometry, returns a deeply frozen result and emits generic hooks. Creature motivation, eligibility, trapping policy and AI remain owned by the consumer.
+
+Functional entity evaluation covers genuine generated strands from wall-corner, wall-span and ground webs. Web carpets remain excluded by default because their decorative WebP fibres do not fabricate functional strand geometry.
+
+A consumer must supply explicit physical level compatibility through `levelId`, `elevation` or `elevationBand`:
+
+```javascript
+const result = dynamicWebs.api.interactions.evaluateEntityMovement({
+  sourceModuleId: "ambient-critters",
+  entityType: "critter",
+  entityId: "firefly-42",
+  from: { x: 1000, y: 800 },
+  to: { x: 1030, y: 810 },
+  levelId: "level-0",
+  collisionRadiusPx: 8,
+  categories: ["wall-corner", "wall-span", "ground"],
+  strandKinds: ["capture", "decorative"]
+});
+```
+
+The result distinguishes:
+
+- `enteredWebIds`
+- `leftWebIds`
+- `intersectedWebIds`
+- `currentWebIds`
+- `primaryOutcome`
+- ordered immutable `webHits`
+
+Current position can be queried without emitting hooks:
+
+```javascript
+dynamicWebs.api.interactions.queryEntityPosition({
+  sourceModuleId: "ambient-critters",
+  entityType: "critter",
+  entityId: "firefly-42",
+  point: { x: 1030, y: 810 },
+  levelId: "level-0",
+  radiusPx: 8
+});
+```
+
+The versioned contract is available through:
+
+```javascript
+dynamicWebs.api.interactions.getContract();
+```
+
+Generic interaction hooks are:
+
+```text
+dynamic-webs.entityWebInteraction
+dynamic-webs.entityOnWeb
+dynamic-webs.entityEnteredWeb
+dynamic-webs.entityLeftWeb
+dynamic-webs.entityIntersectedWeb
+```
+
+### Transient captured-web visuals
+
+Consumer modules may show a local captured-web overlay independently of geometry and mutable destruction state:
+
+```javascript
+const capture = dynamicWebs.api.captures.show({
+  sourceModuleId: "ambient-critters",
+  entityType: "critter",
+  entityId: "firefly-42",
+  webId: result.enteredWebIds[0],
+  point: { x: 1030, y: 810 },
+  radiusPx: 22,
+  levelId: "level-0"
+});
+```
+
+Supplying the same module, entity type and entity ID updates the existing capture rather than stacking another overlay. Explicit `captureId`, `variant`, `rotation`, `alpha`, `tint` and `colourProfileId` values are also supported.
+
+```javascript
+dynamicWebs.api.captures.get(capture.captureId);
+dynamicWebs.api.captures.getState();
+dynamicWebs.api.captures.remove(capture.captureId);
+dynamicWebs.api.captures.clearByEntity("firefly-42", {
+  sourceModuleId: "ambient-critters"
+});
+dynamicWebs.api.captures.clear();
+```
+
+Captured-web overlays are client-local transient presentation state. They are not Scene geometry, do not enter the spatial index, do not modify destroyed-span state, and are neither persisted nor socket-synchronised. A consumer requiring the effect on every client must invoke the API on every relevant client through its own synchronisation model.
+
+Capture hooks are:
+
+```text
+dynamic-webs.captureShown
+dynamic-webs.captureRemoved
+dynamic-webs.capturesCleared
+```
+
 ### Colour profile lookup
 
 ```javascript
@@ -461,11 +559,11 @@ The copyable report includes:
 
 ## Architectural boundary
 
-Dynamic Webs remains critter-agnostic. It owns environmental web geometry, generic movement intersection and generic mutable state only. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
+Dynamic Webs remains critter-agnostic. It owns environmental web geometry, generic movement and position evaluation, generic hooks, transient captured-web presentation and generic mutable span state. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
 
-Dynamic Webs exposes no critter-interaction setting. A consumer decides which of its entities may request span destruction. Token movement is handled internally and is GM-authoritative.
+Dynamic Webs exposes no critter-interaction setting. A consumer decides which entities are evaluated, which outcomes count as capture, whether a captured overlay is shown, and whether an eligible span-destruction request is made. Token movement remains handled internally and is GM-authoritative.
 
-Web carpets, later strand-level damage, barriers, trapping and occupancy must build on stable population-qualified identifiers.
+Captured overlays are not occupancy records. Later strand-level damage, trapping and persistent occupancy must build on stable population-qualified identifiers without converting transient presentation into Scene geometry.
 
 ## Validation
 
@@ -491,6 +589,8 @@ Automated validation must be followed by live Foundry smoke tests in v13 and v14
 - Confine/Exclude combinations, wildcard tags, missing tags and same-level filtering
 - Viewed-level switching as both GM and player, confirming that the active level and every lower level are rendered while upper levels remain hidden
 - Spatial queries with explicit level, category, Region, distance, strand-role and result-limit filters
+- Generic entity position and movement evaluation with explicit level compatibility, hook emission and immutable outcomes
+- Captured-web overlay show, update, level visibility, removal and entity-scoped clearing
 - Querying a stored but currently unrendered level without changing visibility or generation identity
 - Repeated Scene saves without duplicate rendering
 - Token swept movement crossing an intact wall-span web
@@ -514,6 +614,25 @@ Generate and validate the authored span atlas with:
 .\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
 ```
 
+## Captured-web asset pipeline
+
+The development-only Python tools generate eight deterministic transparent-white captured-web overlays at:
+
+```text
+assets/web-captured/generated/
+```
+
+The assets are local entanglement overlays intended to surround an entity without becoming generated Scene web geometry. They are tintable at runtime and selected deterministically from the consumer's capture key.
+
+Generate, preview and validate them with:
+
+```powershell
+.\.venv\Scripts\python.exe tools\asset_generation\generate_captured_web_assets.py --clean --preview
+.\.venv\Scripts\python.exe tools\asset_generation\validate_captured_web_assets.py
+```
+
+The generated manifest stores asset IDs, dimensions, hashes, source pivot/radius metadata and recommended alpha ranges. Runtime never generates or writes these images.
+
 ## Whole-span destruction
 
 When the Scene's **Span webs are destructible** option is enabled, a committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
@@ -533,5 +652,6 @@ flags["dynamic-webs"].mutableState = {
 Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration and the responsible GM repairs the Scene flag. Geometry, strands, textures, generation IDs and PIXI state are never persisted. The GM commits mutations, queues the Scene-flag write and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`; Foundry's `updateScene` propagation provides a second convergence path. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
 
 Generic consumers use `dynamicWebs.api.interactions` and own their own eligibility policy. Dynamic Webs contains no critter-specific flags, UI fields or internal imports.
+
 
 

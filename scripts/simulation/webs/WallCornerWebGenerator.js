@@ -29,6 +29,11 @@ import {
   createWebCornerAssetPresentation
 } from "../../data/webCornerAssetCatalog.js";
 
+import {
+  buildWallJunctionTopology,
+  createWallJunctionSectors
+} from "./wallJunctionTopology.js";
+
 /** Generate deterministic organic radial webs at structural wall corners. */
 export class WallCornerWebGenerator {
   generate({
@@ -42,7 +47,8 @@ export class WallCornerWebGenerator {
     gridSize,
     configuration,
     random,
-    regionRestriction = null
+    regionRestriction = null,
+    wallJunctions = null
   }) {
     if (
       configuration?.enabled !== true ||
@@ -58,6 +64,7 @@ export class WallCornerWebGenerator {
     const candidates =
       buildCornerCandidates({
         wallSegments,
+        wallJunctions,
         configuration,
         gridSize,
         random
@@ -102,127 +109,90 @@ export class WallCornerWebGenerator {
 
 function buildCornerCandidates({
   wallSegments,
+  wallJunctions,
   configuration,
   gridSize,
   random
 }) {
   const nodes =
-    new Map();
-
-  const tolerance =
-    configuration.endpointTolerancePx;
-
-  for (const segment of wallSegments) {
-    addRay(
-      segment.a,
-      segment.b,
-      segment
-    );
-
-    addRay(
-      segment.b,
-      segment.a,
-      segment
-    );
-  }
+    Array.isArray(
+      wallJunctions
+    )
+      ? wallJunctions
+      : buildWallJunctionTopology({
+          wallSegments,
+          endpointTolerancePx:
+            configuration.endpointTolerancePx,
+          gridSize
+        });
 
   const candidates =
     [];
 
-  for (const node of nodes.values()) {
-    let bestAtNode =
-      null;
-
+  for (const node of nodes) {
     for (
-      let leftIndex = 0;
-      leftIndex < node.rays.length;
-      leftIndex += 1
+      const sector of
+      createWallJunctionSectors(
+        node
+      )
     ) {
-      for (
-        let rightIndex = leftIndex + 1;
-        rightIndex < node.rays.length;
-        rightIndex += 1
+      const left =
+        sector.left;
+
+      const right =
+        sector.right;
+
+      if (
+        left.wallId ===
+          right.wallId
       ) {
-        const left =
-          node.rays[leftIndex];
-
-        const right =
-          node.rays[rightIndex];
-
-        if (left.wallId === right.wallId) {
-          continue;
-        }
-
-        const directionDot =
-          clamp(
-            left.direction.x *
-              right.direction.x +
-            left.direction.y *
-              right.direction.y,
-            -1,
-            1
-          );
-
-        const angleDeg =
-          Math.acos(
-            directionDot
-          ) *
-          180 /
-          Math.PI;
-
-        const minimumLength =
-          Math.min(
-            left.availableLength,
-            right.availableLength
-          );
-
-        if (
-          angleDeg < configuration.minimumCornerAngleDeg ||
-          angleDeg > configuration.maximumCornerAngleDeg ||
-          minimumLength <
-            configuration.minimumWallLengthGridUnits *
-            gridSize
-        ) {
-          continue;
-        }
-
-        const candidate = {
-          corner:
-            {
-              ...node.point
-            },
-          left,
-          right,
-          angleDeg,
-          score:
-            Math.abs(
-              angleDeg -
-              90
-            ) -
-            Math.min(
-              minimumLength,
-              gridSize
-            ) /
-            gridSize +
-            random() *
-            0.2
-        };
-
-        if (
-          !bestAtNode ||
-          candidate.score <
-            bestAtNode.score
-        ) {
-          bestAtNode =
-            candidate;
-        }
+        continue;
       }
-    }
 
-    if (bestAtNode) {
-      candidates.push(
-        bestAtNode
-      );
+      const angleDeg =
+        sector.angleDeg;
+
+      const minimumLength =
+        Math.min(
+          left.availableLength,
+          right.availableLength
+        );
+
+      if (
+        angleDeg <
+          configuration.minimumCornerAngleDeg ||
+        angleDeg >
+          configuration.maximumCornerAngleDeg ||
+        minimumLength <
+          configuration.minimumWallLengthGridUnits *
+          gridSize
+      ) {
+        continue;
+      }
+
+      candidates.push({
+        corner:
+          {
+            ...node.point
+          },
+        left,
+        right,
+        angleDeg,
+        sectorKey:
+          sector.sectorKey,
+        score:
+          Math.abs(
+            angleDeg -
+            90
+          ) -
+          Math.min(
+            minimumLength,
+            gridSize
+          ) /
+          gridSize +
+          random() *
+          0.2
+      });
     }
   }
 
@@ -231,7 +201,10 @@ function buildCornerCandidates({
       left,
       right
     ) => {
-      if (left.score !== right.score) {
+      if (
+        left.score !==
+          right.score
+      ) {
         return left.score -
           right.score;
       }
@@ -245,96 +218,8 @@ function buildCornerCandidates({
       );
     }
   );
-
-  function addRay(
-    point,
-    otherPoint,
-    segment
-  ) {
-    const key =
-      [
-        Math.round(
-          point.x /
-          tolerance
-        ),
-        Math.round(
-          point.y /
-          tolerance
-        )
-      ].join(
-        ":"
-      );
-
-    const node =
-      nodes.get(
-        key
-      ) ??
-      {
-        point:
-          {
-            x:
-              point.x,
-            y:
-              point.y
-          },
-        rays:
-          []
-      };
-
-    const dx =
-      otherPoint.x -
-      point.x;
-
-    const dy =
-      otherPoint.y -
-      point.y;
-
-    const length =
-      Math.hypot(
-        dx,
-        dy
-      );
-
-    if (length <= 0) {
-      return;
-    }
-
-    node.rays.push({
-      wallId:
-        segment.wallId,
-      direction:
-        {
-          x:
-            dx /
-            length,
-          y:
-            dy /
-            length
-        },
-      availableLength:
-        length
-    });
-
-    node.rays.sort(
-      (
-        first,
-        second
-      ) =>
-        String(
-          first.wallId
-        ).localeCompare(
-          String(
-            second.wallId
-          )
-        )
-    );
-
-    nodes.set(
-      key,
-      node
-    );
-  }
 }
+
 
 function createCornerWeb({
   candidate,
@@ -750,18 +635,30 @@ function createCornerRayAnchors({
 function createCandidateKey(
   candidate
 ) {
-  return [
-    ...[
-      candidate.left.wallId,
-      candidate.right.wallId
-    ].sort(),
-    Math.round(
-      candidate.corner.x
-    ),
-    Math.round(
-      candidate.corner.y
-    )
-  ].join(
-    ":"
-  );
+  const baseKey =
+    [
+      ...[
+        candidate.left.wallId,
+        candidate.right.wallId
+      ].sort(),
+      Math.round(
+        candidate.corner.x
+      ),
+      Math.round(
+        candidate.corner.y
+      )
+    ].join(
+      ":"
+    );
+
+  const sectorKey =
+    typeof candidate.sectorKey ===
+      "string"
+      ? candidate.sectorKey.trim()
+      : "";
+
+  return sectorKey
+    ? `${baseKey}:sector:${encodeURIComponent(sectorKey)}`
+    : baseKey;
 }
+
