@@ -1,0 +1,2468 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "Dynamic Webs procedural corner-web asset generator",
+    "version": "1.4.0",
+    "masterSeed": "dynamic-webs:web-corner-assets:v3",
+    "generatedAt": "2026-07-24T09:18:09.806546+00:00",
+    "deterministicContent": true,
+    "authoredFibreStandard": "span-visibility-v1",
+    "topology": "distributed-sheet"
+  },
+  "rendering": {
+    "format": "webp",
+    "colourMode": "transparent-white",
+    "sizePx": 512,
+    "supersample": 4
+  },
+  "assets": [
+    {
+      "id": "corner-005-01",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 1,
+      "file": "corner-005-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "9a4e6368349840ca0ca9d1f355d144a2c9aa2a3abdf2ac34df1fe63f0e853856",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-005-02",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 2,
+      "file": "corner-005-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "346aeed573e84874d06abb82249bfb72a47a16a4df489315e145f2dcea01086d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-005-03",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 3,
+      "file": "corner-005-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "6b1093d4f1cad3ccc101375dbe497bdc9a3ce71e9a0711ac5cf2f9619f70f19f",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-005-04",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 4,
+      "file": "corner-005-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "804767adfd4e137bb75494515b24d96e0d28bcb7bba0b8f696b7e47b9d0ef9a2",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-005-05",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 5,
+      "file": "corner-005-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0988ddcc940c3f28116acdc82d5cc8b7fb004e1a4af4f0cba6b38238a4db1d0a",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-005-06",
+      "canonicalAngleDeg": 5.0,
+      "supportedAngleRangeDeg": [
+        3.0,
+        7.5
+      ],
+      "variant": 6,
+      "file": "corner-005-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-005-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0c13c431e16804977e5d90d4f4ac898f5bf83da5f8a106f5b98229a7a8f712b2",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9184017731985331,
+          "y": 0.5366054119540165
+        }
+      }
+    },
+    {
+      "id": "corner-010-01",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 1,
+      "file": "corner-010-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "6e2e987ade13672986005f28e562913b906544c9177cb599fe9b423eb49452cb",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-010-02",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 2,
+      "file": "corner-010-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f7007ea9a76349245fe079de4db23da4470ddada10fc488965d1a125d39fd76d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-010-03",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 3,
+      "file": "corner-010-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f1a01e020bcab422ca57073f08fb7a0927a9747c90e6d1778429785190417cf4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-010-04",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 4,
+      "file": "corner-010-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f754f063fc0fe139951e14fc49373f1e7b3f6d5977d521411d1c3862150b9db6",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-010-05",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 5,
+      "file": "corner-010-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "dc88c81fab69cdce546c653c586d92db70f4ae98cab52c19fc598a2705c27b0b",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-010-06",
+      "canonicalAngleDeg": 10.0,
+      "supportedAngleRangeDeg": [
+        7.5,
+        12.5
+      ],
+      "variant": 6,
+      "file": "corner-010-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-010-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "7cf03d582cbde7a62bebe9e5c068d24c1d8c4009281b1f38d1e9fd6f6997da1f",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9136192562651273,
+          "y": 0.5729322346201108
+        }
+      }
+    },
+    {
+      "id": "corner-015-01",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 1,
+      "file": "corner-015-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "d03ee9c8c290caa42876dd7ad0752d4019ed19d4702ec416f39366f6a6b427c5",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-015-02",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 2,
+      "file": "corner-015-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4762d51320804c0c321f16e26f386b276427a502fff2f5e136151d78f79a81cb",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-015-03",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 3,
+      "file": "corner-015-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "bc8b538273110f1f22d738075eeb6bd9ae781cca560d77da96c8548779c115d5",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-015-04",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 4,
+      "file": "corner-015-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "cfddaba785da8117a4197d54cd02f2dc957a3e6573efe80184cb4e5d14bceae7",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-015-05",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 5,
+      "file": "corner-015-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "acbd942415108c1c4452961c4e7a533058f55455fa00c1b27146c98198e71469",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-015-06",
+      "canonicalAngleDeg": 15.0,
+      "supportedAngleRangeDeg": [
+        12.5,
+        20.0
+      ],
+      "variant": 6,
+      "file": "corner-015-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-015-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "a6137ebb24ce7db81c620275146316987bdc41f9218652751ecb5b31c2692ede",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.9056888470414086,
+          "y": 0.6087039989430587
+        }
+      }
+    },
+    {
+      "id": "corner-025-01",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 1,
+      "file": "corner-025-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "00b3246ca8abcfbf63b482346246b79b82becb83b0487df2c7a74ddea7703096",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-025-02",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 2,
+      "file": "corner-025-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1cf435f265e6bb036be2b424bd817d0f8b79eb19d3556595c217fbb309fdcee3",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-025-03",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 3,
+      "file": "corner-025-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f01ad3c8563a45d3841cfa5f5f51efb0ef62432b7c9adf4ef0e9473b65776d51",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-025-04",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 4,
+      "file": "corner-025-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "54142882014b4947d6898efff01e60037550c985fc80381eaff339abceae726d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-025-05",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 5,
+      "file": "corner-025-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "beedd7596a059fc3b3450a02b1126aa1063bfd59c926c3832bd69c48be80a564",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-025-06",
+      "canonicalAngleDeg": 25.0,
+      "supportedAngleRangeDeg": [
+        20.0,
+        30.0
+      ],
+      "variant": 6,
+      "file": "corner-025-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-025-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "cf9f1402c8e0f0a8d2c984b94851561c154ffe0ab08eaf6ffbf781ab998c57c5",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.880649270555393,
+          "y": 0.6774996699310938
+        }
+      }
+    },
+    {
+      "id": "corner-035-01",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 1,
+      "file": "corner-035-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b25cc6b2ca7df259762fa9da2fe472cfc608c8de5aa24ef2e7f9088289dbf3d7",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-035-02",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 2,
+      "file": "corner-035-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4ed76d262e346e367c886ed51fe85e8773578cc514cd36facfa7760f27655ef7",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-035-03",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 3,
+      "file": "corner-035-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b31dc6fb9606ce2f66d34767f266cbb7d44d5dac1c083a964dda697e57b87d3c",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-035-04",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 4,
+      "file": "corner-035-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5a5dbce7b2f6b74c504959f9a26e2c1ebb5588a8e9ea9abad0ff2e09864000b4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-035-05",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 5,
+      "file": "corner-035-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "45c97846cd2a87e68c12c561b108ba4b49c85358beba7276d5aeadbf246655c4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-035-06",
+      "canonicalAngleDeg": 35.0,
+      "supportedAngleRangeDeg": [
+        30.0,
+        40.0
+      ],
+      "variant": 6,
+      "file": "corner-035-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-035-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "9e547bacb6e0aca63158fb778cbc068bcb0a783928d5bac8c05022a88cd0f65d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.8440438586013765,
+          "y": 0.7409021032674393
+        }
+      }
+    },
+    {
+      "id": "corner-045-01",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 1,
+      "file": "corner-045-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "110bf384422124a5b392a7f73317e3031d98f3e6c3492f89bb11fefc7b3ba0bf",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-045-02",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 2,
+      "file": "corner-045-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "cf06022328c5eb695a88468ee379abe093faa1123a56c67882a3445af2146695",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-045-03",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 3,
+      "file": "corner-045-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "af7313f2de3e6378b99be922dd2eda432c223608bbb048ba01faefe758888a50",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-045-04",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 4,
+      "file": "corner-045-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "09e9bbd0be6446cfa14c5d2865a0e354fbfff1f19036eda24ede2182b1c4bf78",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-045-05",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 5,
+      "file": "corner-045-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3621f66d70dd97921239a3e5ae52a687ac9462272243393867951a79ce9f0656",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-045-06",
+      "canonicalAngleDeg": 45.0,
+      "supportedAngleRangeDeg": [
+        40.0,
+        52.5
+      ],
+      "variant": 6,
+      "file": "corner-045-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-045-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "687089e8ec86bf3bb18acf363a58dfc2663967f6d2b0f4d52c0a17c1e8cc7250",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7969848480983499,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-060-01",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 1,
+      "file": "corner-060-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "e1935fa29e7616db722d840dbb8712f65ecb19fffd2a695522aba64b8c731682",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-060-02",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 2,
+      "file": "corner-060-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "52a2b59a01dc733f3bbdae0ce80c34fa7aa122e292a22fdc6f008cd2d0de93da",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-060-03",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 3,
+      "file": "corner-060-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "92ece9e918ce08159adce35dc96d3705d64d9c06bcef1f7f6c7ca91f9137d636",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-060-04",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 4,
+      "file": "corner-060-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f98ccd16a0128cc246d12fbdd7c50185756841e85abdc3bdc450398275842719",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-060-05",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 5,
+      "file": "corner-060-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "caf5661e7fb8f6c823a893014ebb1df18b31fa061d7f2180c247119746a8cc99",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-060-06",
+      "canonicalAngleDeg": 60.0,
+      "supportedAngleRangeDeg": [
+        52.5,
+        67.5
+      ],
+      "variant": 6,
+      "file": "corner-060-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-060-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "788c13d391fa9949aa7ea4e449bc2568033d91142b8bd7ae9a60ee5a28f1d324",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.7100000000000001,
+          "y": 0.8637306695894642
+        }
+      }
+    },
+    {
+      "id": "corner-075-01",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 1,
+      "file": "corner-075-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "4ab9c9fb7d89a604f1a7d2df39d54ee9d9e04e4dd088be04e5c77f274bfea0a8",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-075-02",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 2,
+      "file": "corner-075-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "cfad86642f2e8cb8d73a5a389ac386b2c5dc48756b1ca0bb81e4047d85653c2a",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-075-03",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 3,
+      "file": "corner-075-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1b9194823c6a0e2e7af715f1ab73f2c44672cfe577989466fd999ef7907b795f",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-075-04",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 4,
+      "file": "corner-075-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f10a82d6e11e6b721c1932bf9a44ea1bf76ab9bcef0eaa6a5c036ce9f1d062ef",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-075-05",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 5,
+      "file": "corner-075-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "75cd58d30cd3de68d77a39fb957dfabaa0d77ba24edbe1bc714bbc1fe56c5db9",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-075-06",
+      "canonicalAngleDeg": 75.0,
+      "supportedAngleRangeDeg": [
+        67.5,
+        82.5
+      ],
+      "variant": 6,
+      "file": "corner-075-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-075-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "cd146572f1982ec11b03800f1f8633c2cd25720b39626e74f580f853383f53e1",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.6087039989430587,
+          "y": 0.9056888470414086
+        }
+      }
+    },
+    {
+      "id": "corner-090-01",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 1,
+      "file": "corner-090-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "a66da31f965584cc57ffe424dd2d21a0a441f5468624b1801d2bb655b7cefeb3",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-090-02",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 2,
+      "file": "corner-090-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "a32afa7279ed370b3285a5744b176bea1c469cec2c929637119b18be58ab9ca4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-090-03",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 3,
+      "file": "corner-090-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5789cb09bdb95bfc8a4539d718c0f6ef85a86d2afd9d36b411de438b8fa3c76a",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-090-04",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 4,
+      "file": "corner-090-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "498dbf841cfa478538f18b5d338f0038d44d264b235bf5660afb0dc9ab6bebb1",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-090-05",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 5,
+      "file": "corner-090-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "ff849f20e8b64dc004b7bbe0bfcf30473368143dc071a64a0e1b635f51204ade",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-090-06",
+      "canonicalAngleDeg": 90.0,
+      "supportedAngleRangeDeg": [
+        82.5,
+        100.0
+      ],
+      "variant": 6,
+      "file": "corner-090-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-090-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "f7ccdbb952c5e21a52750e1810d94c0bfdb8fd611b93f644e308a196f88a3680",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.5,
+          "y": 0.9199999999999999
+        }
+      }
+    },
+    {
+      "id": "corner-110-01",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 1,
+      "file": "corner-110-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "141e45dd1dc173e07909822844e0913c1f95d8cc608fa6ab00af68e58cc66fd5",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-110-02",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 2,
+      "file": "corner-110-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "96e7404c037ac5b1bf829048c8d5b0c567b696038efd5fbb3ef5d9f661e1734d",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-110-03",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 3,
+      "file": "corner-110-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "dd74eb7f6156bebfa898a2c4d8635aa7a5ed0f643c2d952780d5a56e6d4994f2",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-110-04",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 4,
+      "file": "corner-110-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b46b13d32ff24455bdb7dc35aa8b0456ecf649983e68b432d2d2acd0009b9375",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-110-05",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 5,
+      "file": "corner-110-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "eb20229a6a71a31db70f853c74bd1c16967185fed7370b0910bf2ff3fccba36a",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-110-06",
+      "canonicalAngleDeg": 110.0,
+      "supportedAngleRangeDeg": [
+        100.0,
+        122.5
+      ],
+      "variant": 6,
+      "file": "corner-110-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-110-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "8e905fafbffebbe4ed586f5c62f6f483282300e616cea3114f31cd4fc9ed80e5",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.35635153980321915,
+          "y": 0.8946709007300815
+        }
+      }
+    },
+    {
+      "id": "corner-135-01",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 1,
+      "file": "corner-135-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "34ba07ffe1d226bc9bd451086935b81910675b945d5e55f25368281cb3b844d6",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-135-02",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 2,
+      "file": "corner-135-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b505bfd83237e966a1a8c78f1638f1c6405910627c005317b126823b886dfbd3",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-135-03",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 3,
+      "file": "corner-135-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "92c0ffbbe7132e1177c157349ef790745476e04cb9079d3a279a5a1a828bd877",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-135-04",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 4,
+      "file": "corner-135-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1db5afbadde5f25f1b319c62ac013cc990df473d4b1de0caaf00a8e68eed65bc",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-135-05",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 5,
+      "file": "corner-135-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "0814e92157452fc528a03624a904496287e65b2a00edc440b2b83f26e6107070",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-135-06",
+      "canonicalAngleDeg": 135.0,
+      "supportedAngleRangeDeg": [
+        122.5,
+        142.5
+      ],
+      "variant": 6,
+      "file": "corner-135-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-135-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1672d7191f939274bee59aa9ab8bdf1c55b816a894bf15829c1e27603350b16a",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.2030151519016501,
+          "y": 0.7969848480983499
+        }
+      }
+    },
+    {
+      "id": "corner-150-01",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 1,
+      "file": "corner-150-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "9635e93d205bdced769e1bbaa069a9bc55fc871783ea2d078b3bb5f5378ee4c1",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    },
+    {
+      "id": "corner-150-02",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 2,
+      "file": "corner-150-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "59e92eea562c64419c9e1773d8e3bd356b2816e30dffab627812d68afb80b406",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    },
+    {
+      "id": "corner-150-03",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 3,
+      "file": "corner-150-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "5cbbcd1f314d2adc2b79ede2704817077c3471121d882b5ab66e5e6d0f52fbeb",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    },
+    {
+      "id": "corner-150-04",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 4,
+      "file": "corner-150-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3091be6046a2eaa34cc92bb06e04c2ac75f0d7dd5750a9b6f4fd80ca3a0c78a4",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    },
+    {
+      "id": "corner-150-05",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 5,
+      "file": "corner-150-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "1e742eeb8c61c8a019dd34c8a369ce4a9e5ab702a5401da295c4f426d510e349",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    },
+    {
+      "id": "corner-150-06",
+      "canonicalAngleDeg": 150.0,
+      "supportedAngleRangeDeg": [
+        142.5,
+        160.0
+      ],
+      "variant": 6,
+      "file": "corner-150-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-corner/generated/corner-150-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b5d7e6d8ac5e16fdf1e7d943822bbb755e681692b0750df4bb0a8587e98142d0",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        0.88,
+        1.0
+      ],
+      "tintable": true,
+      "source": {
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "firstAnchor": {
+          "x": 0.9199999999999999,
+          "y": 0.5
+        },
+        "secondAnchor": {
+          "x": 0.13626933041053574,
+          "y": 0.71
+        }
+      }
+    }
+  ]
+}

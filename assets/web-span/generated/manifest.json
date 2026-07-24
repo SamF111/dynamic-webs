@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 2,
+  "generator": {
+    "name": "Dynamic Webs distributed span-sheet asset generator",
+    "version": "1.3.0",
+    "masterSeed": "dynamic-webs:web-span-assets:v2",
+    "generatedAt": "2026-07-24T09:18:19.549218+00:00",
+    "deterministicContent": true,
+    "authoredFibreStandard": "span-visibility-v1",
+    "topology": "distributed-span-sheet"
+  },
+  "rendering": {
+    "format": "webp",
+    "colourMode": "transparent-white",
+    "sizePx": 512,
+    "supersample": 4,
+    "warpMode": "piecewise-affine-quad"
+  },
+  "assets": [
+    {
+      "id": "span-01",
+      "variant": 1,
+      "file": "span-01.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-01.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "15cc1b44f9b9d3e830b4d74454aff8bf83c0ed2dc73cfa36fabfa359a5cbb8c7",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-02",
+      "variant": 2,
+      "file": "span-02.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-02.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "402abc604e00e531374f5995dc5b7423228068a1793d1c085952f3813c31a167",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-03",
+      "variant": 3,
+      "file": "span-03.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-03.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "b06a5b6245c46cb51494c4143a4eabe8a2630a55ba828cf56d0e35c4447057cd",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-04",
+      "variant": 4,
+      "file": "span-04.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-04.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "e9d3f44b590a2a8723ba48a59e8995998723dfafa64a66fb224bd5fa04ee9126",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-05",
+      "variant": 5,
+      "file": "span-05.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-05.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "23039ed97b5c84d89055d3b9b8b60bacf34914e4bf72129d9fde8f4b7c47f6c3",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-06",
+      "variant": 6,
+      "file": "span-06.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-06.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "99dd48b8c8e047921965c3e9d941a2957792e0c7ac08cd4268b56335333bdbd7",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-07",
+      "variant": 7,
+      "file": "span-07.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-07.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "3fdef5824b108e83bebe5bb401160f3d792f5ca059e3218156dd3f3e3b34f67e",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    },
+    {
+      "id": "span-08",
+      "variant": 8,
+      "file": "span-08.webp",
+      "modulePath": "modules/dynamic-webs/assets/web-span/generated/span-08.webp",
+      "width": 512,
+      "height": 512,
+      "sha256": "ce08e208f6f91c30be17cf78dd6f27d6b3f660259f58a18085634cf737d2800e",
+      "weight": 1.0,
+      "recommendedAlpha": [
+        1.0,
+        1.0
+      ],
+      "tintable": true,
+      "warpMode": "piecewise-affine-quad",
+      "source": {
+        "firstWallStart": {
+          "x": 0.06,
+          "y": 0.08
+        },
+        "firstWallEnd": {
+          "x": 0.94,
+          "y": 0.08
+        },
+        "secondWallStart": {
+          "x": 0.06,
+          "y": 0.92
+        },
+        "secondWallEnd": {
+          "x": 0.94,
+          "y": 0.92
+        }
+      }
+    }
+  ]
+}
