@@ -19,9 +19,6 @@ import {
   createSceneConfigTemplateContext
 } from "../scripts/ui/sceneConfigTemplateContext.js";
 
-import {
-  activateSceneConfigDensitySliders
-} from "../scripts/ui/sceneConfigDensitySliders.js";
 
 import {
   WebGenerationService
@@ -484,7 +481,7 @@ test(
 );
 
 test(
-  "Scene Configuration exposes four labelled discrete sliders per population",
+  "Scene Configuration exposes four labelled discrete density controls per population",
   async () => {
     const context =
       await createSceneConfigTemplateContext({
@@ -577,118 +574,6 @@ test(
   }
 );
 
-test(
-  "slider activation maps numeric positions to persisted density identifiers",
-  () => {
-    const listeners =
-      new Map();
-
-    const slider = {
-      value:
-        "4",
-      addEventListener(
-        event,
-        callback
-      ) {
-        listeners.set(
-          event,
-          callback
-        );
-      }
-    };
-
-    const hiddenInput = {
-      value:
-        "disabled",
-      dispatchEvent() {}
-    };
-
-    const output = {
-      value:
-        "",
-      textContent:
-        "",
-      dataset:
-        {}
-    };
-
-    const control = {
-      dataset:
-        {},
-      querySelector(
-        selector
-      ) {
-        if (
-          selector.includes(
-            "density-range"
-          )
-        ) {
-          return slider;
-        }
-
-        if (
-          selector.includes(
-            "density-value"
-          )
-        ) {
-          return hiddenInput;
-        }
-
-        if (
-          selector.includes(
-            "density-output"
-          )
-        ) {
-          return output;
-        }
-
-        return null;
-      }
-    };
-
-    const htmlElement = {
-      querySelectorAll:
-        () => [
-          control
-        ]
-    };
-
-    assert.equal(
-      activateSceneConfigDensitySliders(
-        null,
-        htmlElement
-      ),
-      1
-    );
-
-    assert.equal(
-      hiddenInput.value,
-      "infested"
-    );
-
-    assert.equal(
-      output.textContent,
-      "Infested"
-    );
-
-    slider.value =
-      "1";
-
-    listeners.get(
-      "input"
-    )();
-
-    assert.equal(
-      hiddenInput.value,
-      "sparse"
-    );
-
-    assert.equal(
-      control.dataset.densityId,
-      "sparse"
-    );
-  }
-);
 
 function selectKinds(
   webs,
@@ -708,4 +593,3 @@ function selectKinds(
       )
   );
 }
-
