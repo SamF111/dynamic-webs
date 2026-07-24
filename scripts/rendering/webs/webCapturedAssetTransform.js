@@ -2,8 +2,21 @@ import {
   MODULE_TITLE
 } from "../../module/moduleConstants.js";
 
+/**
+ * Create a texture-pixel-to-Scene transform for one captured-web asset.
+ *
+ * Captured asset catalogue coordinates are normalised. The optional runtime
+ * dimensions allow the loaded texture to remain authoritative while the
+ * catalogue dimensions provide a deterministic fallback before loading.
+ */
 export function createWebCapturedAssetMatrix(
-  presentation
+  presentation,
+  {
+    sourceWidthPx =
+      null,
+    sourceHeightPx =
+      null
+  } = {}
 ) {
   const sourcePivot =
     requirePoint(
@@ -15,6 +28,20 @@ export function createWebCapturedAssetMatrix(
     requirePositiveNumber(
       presentation?.source?.radius,
       "captured asset source radius"
+    );
+
+  const sourceWidth =
+    resolvePositiveDimension(
+      sourceWidthPx,
+      presentation?.source?.widthPx,
+      "captured asset source width"
+    );
+
+  const sourceHeight =
+    resolvePositiveDimension(
+      sourceHeightPx,
+      presentation?.source?.heightPx,
+      "captured asset source height"
     );
 
   const targetPivot =
@@ -36,9 +63,25 @@ export function createWebCapturedAssetMatrix(
       "captured asset rotation"
     );
 
+  const sourcePivotPx = {
+    x:
+      sourcePivot.x *
+      sourceWidth,
+    y:
+      sourcePivot.y *
+      sourceHeight
+  };
+
+  const sourceRadiusPx =
+    sourceRadius *
+    Math.min(
+      sourceWidth,
+      sourceHeight
+    );
+
   const scale =
     targetRadius /
-    sourceRadius;
+    sourceRadiusPx;
 
   const cosine =
     Math.cos(
@@ -69,16 +112,16 @@ export function createWebCapturedAssetMatrix(
   const tx =
     targetPivot.x -
     a *
-      sourcePivot.x -
+      sourcePivotPx.x -
     c *
-      sourcePivot.y;
+      sourcePivotPx.y;
 
   const ty =
     targetPivot.y -
     b *
-      sourcePivot.x -
+      sourcePivotPx.x -
     d *
-      sourcePivot.y;
+      sourcePivotPx.y;
 
   return Object.freeze({
     a,
@@ -93,7 +136,9 @@ export function createWebCapturedAssetMatrix(
 export function applyWebCapturedAssetTransform({
   pixi,
   displayObject,
-  presentation
+  presentation,
+  sourceDimensions =
+    null
 }) {
   if (
     !displayObject ||
@@ -107,7 +152,17 @@ export function applyWebCapturedAssetTransform({
 
   const values =
     createWebCapturedAssetMatrix(
-      presentation
+      presentation,
+      {
+        sourceWidthPx:
+          sourceDimensions?.width ??
+          sourceDimensions?.widthPx ??
+          null,
+        sourceHeightPx:
+          sourceDimensions?.height ??
+          sourceDimensions?.heightPx ??
+          null
+      }
     );
 
   const matrix =
@@ -122,7 +177,18 @@ export function applyWebCapturedAssetTransform({
           values.ty
         )
       : {
-          ...values
+          a:
+            values.a,
+          b:
+            values.b,
+          c:
+            values.c,
+          d:
+            values.d,
+          tx:
+            values.tx,
+          ty:
+            values.ty
         };
 
   if (
@@ -149,6 +215,56 @@ export function applyWebCapturedAssetTransform({
   }
 
   return matrix;
+}
+
+function resolvePositiveDimension(
+  runtimeValue,
+  catalogueValue,
+  label
+) {
+  const runtimeNumber =
+    Number(
+      runtimeValue
+    );
+
+  if (
+    Number.isFinite(
+      runtimeNumber
+    ) &&
+    runtimeNumber >
+      0
+  ) {
+    return runtimeNumber;
+  }
+
+  const catalogueNumber =
+    Number(
+      catalogueValue
+    );
+
+  if (
+    Number.isFinite(
+      catalogueNumber
+    ) &&
+    catalogueNumber >
+      0
+  ) {
+    return catalogueNumber;
+  }
+
+  /** Legacy presentation descriptors used a normalised one-unit texture. */
+  if (
+    catalogueValue ===
+      null ||
+    catalogueValue ===
+      undefined
+  ) {
+    return 1;
+  }
+
+  throw new TypeError(
+    `${MODULE_TITLE} | ${label} must be a positive finite number.`
+  );
 }
 
 function requirePoint(

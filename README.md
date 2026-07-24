@@ -1,657 +1,120 @@
 # Dynamic Webs
 
-Dynamic Webs is a standalone Foundry Virtual Tabletop module that procedurally generates deterministic spider webs as Scene-owned environmental scenery.
+![Foundry Version](https://img.shields.io/badge/Foundry-v13%20%7C%20v14-informational)
+![Public API](https://img.shields.io/badge/Public%20API-v1-blue)
 
-The module owns web generation, immutable geometry, rendering, modular Scene configuration, level awareness, lifecycle and future generic web interactions. Ambient Critters and other consumers integrate only through the public API and hooks.
+**Dynamic Webs** fills Foundry Virtual Tabletop scenes with procedurally generated spider webs.
 
-## Project status
+Add a few dusty cobwebs to an abandoned room, stretch thick sheets across narrow passages, cover a spider nest in web carpet, or turn an entire dungeon floor into an infestation. Webs are generated from the shape and configuration of the Scene, remain consistent between sessions, and can be used as scenery or as part of play.
 
-- **Module ID:** `dynamic-webs`
-- **Runtime namespace:** `dynamicWebs`
-- **Current version:** `0.7.0`
+## Why I made it
+
+I built Dynamic Webs for my own game because I wanted scenes to feel more lived-in. I had a large spider battle in the works as GM, and drawing or placing every web by hand was not how I wanted to spend my preparation time.
+
+The web system originally lived inside another module I am working on. As it gained its own generation, Scene controls, Regions, floors, interactions and destructible passage webs, it became clear that it had grown into a module of its own. I split it out, kept it independent, and decided to share it for other GMs who want the same sort of environmental detail.
+
+## What it adds
+
+Dynamic Webs can:
+
+- Generate webs automatically from your Scene rather than requiring manual placement.
+- Build separate web populations with their own density, colour, thickness, Regions and floor.
+- Place natural-looking webs in wall corners, across passages, on open ground and throughout tagged areas.
+- Keep the same web layout when a Scene is reopened or regenerated with unchanged settings.
+- Support multi-floor Scenes in Foundry v14 and v13 with the Levels module.
+- Let wall-spanning webs limit vision, block movement through secret doors, or break when tokens push through them.
+- Expose a public API for other modules without coupling Dynamic Webs to a particular creature or game system.
+
+## Web types
+
+### Corner webs
+
+Webs form around suitable wall corners and junctions. They work well for old rooms, caves, ruins, attics and places that have been left undisturbed.
+
+### Passage webs
+
+Wall-spanning webs stretch across suitable narrow gaps. They can remain purely decorative, interfere with vision, act as closed secret doors, or be made destructible.
+
+### Ground webs
+
+Loose radial webs appear across open parts of the Scene, adding scattered silk and nesting areas away from walls.
+
+### Web carpets
+
+Tagged Regions can be filled with broad patches of tangled web. These are intended for spider dens, egg chambers, overgrown tunnels and other heavily infested spaces.
+
+## Getting started
+
+1. Enable **Dynamic Webs** in your world.
+2. Open a Scene's configuration and select the **Dynamic Webs** tab.
+3. Add or edit a web population.
+4. Choose the densities for corner, span, ground and carpet webs.
+5. Select a colour, thickness and target floor.
+6. Optionally use Region tags to confine or exclude the population.
+7. Use the Scene-wide **Span behaviour** section when passage webs should affect vision, movement or destruction.
+
+A single population is enough for most Scenes. Multiple populations let you combine effects, such as pale sparse cobwebs around a whole floor with dense red webs restricted to a ritual chamber.
+
+## Shape the infestation
+
+Each population has independent controls for:
+
+- **Density:** disabled, sparse, standard, dense or infested.
+- **Web categories:** corner, span, ground and carpet.
+- **Colour:** from natural white and dusty grey to blood red, arcane blue or toxic green.
+- **Thickness:** four visible levels from subtle fibres to heavy strands.
+- **Floor:** one detected level per population.
+- **Regions:** confine webs to matching tags or exclude them from protected areas.
+
+World settings provide defaults for new or previously unconfigured Scene populations. Existing Scene choices are not silently overwritten.
+
+## Webs can be scenery or part of play
+
+Wall-spanning webs have optional Scene-wide behaviour:
+
+- Vision can be unaffected, limited or blocked.
+- Movement blocking can be represented by a closed Foundry secret door.
+- Span webs can be destructible or indestructible.
+
+When destructible span webs are crossed by a token, the whole span can tear away and remain destroyed after the Scene is reopened. Corner, ground and carpet webs remain environmental scenery.
+
+## Regions and floors
+
+Use **Confine** tags to keep webs inside places such as `crypt`, `cave` or `spider-nest`. Use **Exclude** tags for paths, altars, bridges or other areas that should remain clear.
+
+Each population belongs to one detected floor. Dynamic Webs supports Foundry v14's native elevation model and theripper93's Levels in Foundry v13. Visible webs follow the viewed floor while lower floors remain visible where appropriate.
+
+## Consistent without being static
+
+Dynamic Webs uses deterministic generation. Unchanged Scene geometry and configuration reproduce the same webs, so a room does not randomly rearrange itself every time it is opened.
+
+Change the walls, Regions, population settings or span reach and the affected web layout is rebuilt. Simply switching the viewed floor changes only what is shown.
+
+## Integration with other modules
+
+Dynamic Webs is intentionally creature-agnostic. It knows where the webs are and can report when an entity reaches or crosses them, but it does not decide whether a spider ignores a web, a fly becomes trapped, or a construct tears through it.
+
+Other modules can use the stable version-1 public API for spatial queries, generic movement checks, whole-span destruction and transient captured-web visuals. Dynamic Webs does not require Ambient Critters, and consumers must not import its internal source files.
+
+See the [Public API documentation](docs/PUBLIC-API.md) for the complete integration contract.
+
+## Compatibility
+
+- **Foundry VTT:** minimum v13, verified v14
+- **Game systems:** system-independent
+- **Foundry v13 floors:** optional support through theripper93's Levels
+- **Foundry v14 floors:** native Scene elevation support
+- **Current module version:** `0.7.0`
 - **Public API version:** `1`
-- **Blueprint schema version:** `8`
-- **Diagnostic schema version:** `1`
-- **Mutable-state schema version:** `1`
-- **Minimum Foundry version:** v13
-- **Verified Foundry version:** v14
-- **Entry point:** `scripts/dynamic-webs.js`
 
-## Generated web categories
+## Documentation
 
-Dynamic Webs currently generates:
+- [Configuration guide](docs/CONFIGURATION.md) — populations, Regions, floors, appearance, span behaviour and maintenance.
+- [Public API](docs/PUBLIC-API.md) — supported integration methods, hooks and compatibility commitments.
+- [Technical design](docs/TECHNICAL-DESIGN.md) — deterministic geometry, rendering, spatial indexing, assets and mutable span state.
+- [Development guide](docs/DEVELOPMENT.md) — validation, asset tooling, live testing and architectural rules.
+- [Roadmap](roadmap.md) — completed milestones and future work.
 
-- **Wall-corner webs** from compatible same-level structural wall corners.
-- **Wall-span webs** across suitable narrow same-level passages.
-- **Ground webs** at deterministic positions inside the Scene rectangle.
-- **Web carpets** place deterministic reusable transparent WebP patches inside matching same-level Confine Regions, with Exclude Regions cut from a cached native-canvas mask.
+## AI assistance disclosure
 
-## Modular Scene web populations
-
-Version `0.4.0` builds on the former Scene-wide density, colour and thickness model with explicit modular populations.
-
-The authoritative Scene population flag is:
-
-```text
-flags.dynamic-webs.webPopulations
-```
-
-Destroyed wall-span deviations are stored separately at:
-
-```text
-flags.dynamic-webs.mutableState
-```
-
-An explicitly stored empty population array means that the Scene generates no webs. A missing population flag resolves one stable world-default population, but there is still no fallback from the former pre-release Scene-wide density, colour or thickness flags.
-
-Each population independently stores:
-
-```javascript
-{
-  id: "web-r7Kp2mN4xQ8vT3sL",
-  enabled: true,
-  levelId: "level-10",
-  confineRegionTags: ["crypt", "area-*"],
-  excludeRegionTags: ["altar"],
-  categoryDensities: {
-    "wall-corner": "dense",
-    "wall-span": "dense",
-    ground: "dense",
-    "web-carpet": "standard"
-  },
-  colourProfileId: "blood-red",
-  thicknessMultiplier: 1
-}
-```
-
-Supported density states are:
-
-```text
-disabled → sparse → standard → dense → infested
-```
-
-The Dynamic Webs Scene Configuration tab provides collapsible population cards with:
-
-- Enabled state
-- Target level
-- A nested **Regions** section containing Confine and Exclude tag fields
-- A nested **Web options** section containing corner, span, ground and carpet density controls
-- A nested **Appearance** section containing web colour and visible thickness
-- Duplicate and remove actions
-
-No population card is expanded automatically. The nested Regions, Web options and Appearance sections also start collapsed and retain their state while the rendered form remains open. Adding or duplicating a card expands only the new outer card and collapses the others. Card headings such as `Web Population 1` are presentation-only and are recalculated from card order.
-
-Each population receives a hidden opaque ID such as `web-r7Kp2mN4xQ8vT3sL`. The ID is generated once, persisted with the population and never changes when its level, densities, colour, thickness, order or neighbouring populations change. Duplicating a population creates a fresh ID. Removing a population removes only that ID.
-
-New populations start enabled from GM-facing world defaults for corner, span, ground and carpet density, colour and thickness. The authored initial values remain `standard` for every category, `natural-white` and `1×`, but the world GM may change them in Game Settings without rewriting any existing Scene population. Duplicating a population continues to copy the source population rather than the world defaults.
-
-A Scene whose `webPopulations` flag has never been configured resolves one stable implicit population from the current world defaults. Its reserved Scene-qualified ID remains stable across regeneration and becomes explicit when the Scene Configuration form is saved. An explicitly saved empty array remains an intentional no-web Scene and is never repopulated automatically.
-
-Multiple populations may target the same level. This allows combinations such as sparse blue corner webs and dense red ground webs on one floor.
-
-## Categorised GM defaults and Scene span behaviour
-
-Dynamic Webs uses Foundry's standard **Configure Settings** page. All world settings remain ordinary Foundry settings, with module-added headings for:
-
-- **Generation Defaults** — maximum span width, span vision, secret-door movement blocking and span destructibility
-- **Population Defaults** — independent corner, span, ground and carpet densities
-- **Appearance Defaults** — web colour and thickness
-- **Level Awareness** — the Foundry v13 provider selector when applicable
-- **Maintenance** — the client-local carpet texture cache action, world-wide destroyed-span restoration, lingering-wall cleanup, and a confirmed clear-all preparation step before uninstalling the module
-
-No separate Dynamic Webs settings window or legacy FormApplication is used.
-
-Population defaults apply only to newly added populations and Scenes whose `flags.dynamic-webs.webPopulations` value has never been configured. Existing arrays, including `[]`, remain authoritative and are not silently rewritten when a world default changes.
-
-The authored maximum span width is `1.5` Scene grid units. The supported range is `0.35–10` in `0.05` increments. Each Scene may continue following that world default or store its own maximum-width override.
-
-Below the population cards, Scene Configuration provides one collapsed **Span behaviour** section. These controls are Scene-wide rather than population fields:
-
-- Maximum span width using either the current world default or a Scene override
-- Vision mode: **None**, **Limited** or **Blocked**
-- Optional movement blocking represented only by module-owned **closed secret-door** walls
-- Destructible or indestructible wall-span webs
-
-Vision and movement are independent. A vision-only span never blocks movement. Enabling the secret-door option creates movement blocking through a Foundry secret door, while retaining the selected vision mode. Corner, ground and carpet webs never create these walls.
-
-Generated span walls are derived from intact immutable wall-span blueprints and carry explicit Dynamic Webs ownership flags. They are excluded from structural-wall collection and ignored by wall lifecycle rebuild hooks, preventing recursive web generation. Reconciliation creates, updates or removes one wall per intact span and preserves a GM-opened secret door's open state. When token movement destroys a span through an already-open generated secret door, Dynamic Webs removes the web immediately but deliberately leaves that harmless open WallDocument for deferred cleanup, avoiding Foundry's expensive wall/perception rebuild during movement. Closed doors and vision-only walls are still removed immediately.
-
-The standard Configure Settings page provides **Restore Destroyed Span Webs in All Scenes**, **Destroy All Lingering Web Walls** and **Clear All Webs and Prepare for Uninstall** buttons. Restore clears the compact destroyed-span state in every Scene. The active Scene uses the incremental runtime restoration path immediately; inactive Scenes do not generate geometry during the maintenance pass, and any retained generated wall linked to a destroyed span is removed so the next Scene synchronisation recreates it in the closed/default state. Clean-up deletes destroyed-span, duplicate and malformed generated walls while retaining valid intact walls. Prepare for Uninstall requires typed confirmation, deletes every generated web wall, clears Dynamic Webs Region flags and resets every Scene to an explicit empty web-population array while removing the remaining Dynamic Webs Scene flags, and clears the active local runtime.
-
-The Scene Configuration **Span behaviour** section also provides **Restore Destroyed Span Webs**, **Update Web Walls** and **Delete Web Walls**. Restore clears that Scene's destroyed-span state and is available for both active and inactive Scenes. Update performs a complete active-Scene reconciliation and therefore removes deferred walls, repairs missing or outdated walls and removes duplicates. Delete removes every generated web WallDocument from that Scene without changing populations or destroyed-span state.
-
-When Scene span webs are indestructible, token movement does not query or destroy them. Any previously persisted destroyed-span IDs are restored and the compact Scene mutable-state flag is repaired during reconciliation.
-
-
-## Region-aware generation
-
-Each population may independently configure:
-
-- **Confine to Region tags** — generate only when every visible strand segment remains inside the union of same-level Regions matching at least one configured tag.
-- **Exclude Region tags** — reject a complete candidate when any visible strand touches or enters a same-level Region matching a configured tag. Exclude takes precedence over Confine.
-
-Tags use the same authoring syntax as Ambient Critters: comma- or line-separated values, lower-case slug normalisation, deduplication, and optional `*` wildcards in population role fields. A tag cannot be reused in both Confine and Exclude for the same population.
-
-Dynamic Webs adds its own Region Configuration tab storing tags at:
-
-```text
-flags.dynamic-webs.regionTags
-```
-
-For a unified authoring experience, Dynamic Webs also recognises existing tags stored by Ambient Critters at `flags.ambient-critters.regionTags`. This is read-only interoperability; neither module imports the other's source code.
-
-Region acceptance is evaluated against complete generated strand polylines. Adjacent or overlapping Confine Regions form one allowed union, but an unassigned gap is not allowed. Candidates are rejected rather than clipped, so accepted strands retain their deterministic organic geometry. Foundry's native Region point test is authoritative when available; serialised rectangle, ellipse and polygon records are compatibility fallbacks.
-
-Web carpets use the matching Confine Region itself as their ownership boundary. Each eligible Region receives an immutable deterministic patch recipe. Patch centres are accepted through native `RegionDocument#testPoint({x, y, elevation})` when available, while the displayed patch container is clipped by a lightweight vector-derived alpha mask. Matching Exclude Regions are subtracted from that mask.
-
-## Level provider
-
-The world-scoped **Level Awareness Provider** setting matches Ambient Critters' provider interface:
-
-- **Foundry v14 and later:** the provider setting is hidden and native Scene elevation is used automatically.
-- **Foundry v13 with theripper93's Levels active:** the setting offers `Base Level only` and `theripper93's Levels`.
-- **Foundry v13 without Levels:** the single Base Level choice is disabled and visually muted.
-
-Every population targets exactly one detected level. If its saved level is unavailable, the population remains configured but does not generate until the GM selects a valid level.
-
-Wall-corner and wall-span webs use only walls assigned to the population's selected level. Ground webs and Region-owned web carpets are also generated only on that level.
-
-## Colour profiles
-
-Authored profiles are stored in `data/webs/colours.json`:
-
-- `natural-white`
-- `dusty-grey`
-- `yellowed`
-- `black`
-- `blood-red`
-- `arcane-blue`
-- `toxic-green`
-
-Colour is owned by each population. Profiles resolve structural, capture and decorative strand colours, under-stroke colour and alpha multiplier onto immutable strand blueprints. Carpet WebPs are transparent white assets and use the profile's decorative colour as a client-side PIXI tint, so changing colour never regenerates the asset library.
-
-## Visible thickness
-
-Each population selects one of four discrete thickness levels: `1×`, `2×`, `3×` or `4×`. Scene Configuration presents these as a drop-down and persisted values are capped at `4×`. Historical fractional values from `0.5×` to `4×` remain readable and are rounded to the nearest discrete level when resolved or saved.
-
-Procedural strands apply the selected level directly to their visible stroke widths. Corner-web assets retain one unfiltered crisp sprite and, above `1×`, add one custom alpha-dilation fringe beneath it. This widens the authored fibres symmetrically without the former directional offset copies or Gaussian blur.
-
-Thickness remains presentation-only. It does not change strand points, base `widthPx`, functional `collisionWidthPx`, bounds, supports, perches, deterministic generation or the spatial index.
-
-## Deterministic generation
-
-Geometry is generated during lifecycle rebuilds, never per frame.
-
-The modular seed root is:
-
-```text
-dynamic-webs:web-generation:v4:<scene-id>:<encoded-population-id>
-```
-
-Each population and category receives an isolated stream:
-
-```text
-dynamic-webs:web-generation:v4:<scene-id>:<population-id>:<level-id>:wall-corner
-dynamic-webs:web-generation:v4:<scene-id>:<population-id>:<level-id>:wall-span
-dynamic-webs:web-generation:v4:<scene-id>:<population-id>:<level-id>:ground
-```
-
-Changing one population does not reshuffle another population. Changing one category does not reshuffle unrelated categories within the same population.
-
-## Blueprint contract
-
-Every web and strand uses blueprint schema version `8`.
-
-Web IDs are Scene-, population- and level-qualified:
-
-```text
-<web-kind>:<encoded-scene-id>:<encoded-population-id>:<encoded-level-id>:<encoded-source-key>
-```
-
-Every web blueprint includes:
-
-- `populationId`
-- `populationLabel`, currently an internal alias of the opaque `populationId`
-- `thicknessMultiplier`
-- `levelProviderMode`
-- `levelId`
-- immutable `elevationBand`
-- `colourProfileId`
-- generation seed and source key
-- controlling `regionIds` and matched `regionTags`
-- immutable geometry, strands, perches and supporting wall IDs
-
-Strand IDs remain qualified by their web ID:
-
-```text
-<web-id>:<encoded-local-strand-id>
-```
-
-Consumers must treat all complete identifiers as opaque.
-
-## Rendering and visibility
-
-Dynamic Webs renders into one transient PIXI container per visible elevation band:
-
-```text
-dynamic-webs.webs
-dynamic-webs.webs.level-<index>.elevation-<bottom>
-```
-
-Single-level rendering retains the stable `dynamic-webs.webs` name. When several elevation bands are visible, Dynamic Webs creates separate sibling containers so each floor sorts independently against Foundry and Levels tiles. Generated webs are not embedded Foundry documents. Repeated synchronisation destroys and replaces the complete module-owned container set rather than stacking graphics.
-
-The runtime stores every generated population. GMs and players render the active viewed level plus every detected level below it. A token on elevation `10` can therefore see webs on elevations `10` and `0`, while a token on elevation `0` cannot see elevation `10` webs. Viewed-level changes replace only the visible subset and do not regenerate geometry.
-
-Each transient render container is stamped with its own level's point elevation as well as the Primary Canvas sort band, placing same-floor webs above tiles and drawings but below tokens while preserving correct cross-floor ordering in v13 Levels and v14 native elevation.
-
-The renderer resolves thickness per web, so populations with different multipliers can render together safely.
-
-## Lifecycle
-
-On `canvasReady` Dynamic Webs:
-
-1. Resolves the global level provider.
-2. Reads and validates `flags.dynamic-webs.webPopulations`.
-3. Resolves the selected level and category presets for each enabled population.
-4. Skips populations with unavailable levels or no implemented active category.
-5. Applies the current world maximum-span-width rule to every active span category.
-6. Generates each population from isolated deterministic streams, including Region-owned carpet patch descriptors.
-6. Stores all immutable blueprints.
-7. Loads the Scene-owned destroyed-span revision and stable IDs.
-8. Reconciles those IDs against the newly generated wall-span population, pruning obsolete IDs without mutating geometry.
-9. Loads bundled WebP assets as needed and renders only the intact level-compatible subset.
-
-Population-array changes perform one deterministic regeneration. Scene geometry, structural wall, Region geometry/tag/elevation, and level-document changes also regenerate. Viewed-level changes only refresh visibility.
-
-Canvas teardown, Scene deletion and module disposal destroy local rendering and clear transient geometry. Scene-owned destroyed-span state remains in the Scene flag and is reloaded on the next synchronisation. Bundled patch textures remain under Foundry's normal texture loader; Dynamic Webs separately caches in-flight patch requests and native-canvas Region masks for fast level switches.
-
-## Web carpets and bundled WebP patches
-
-Version `0.6.0` implements the `web-carpet` category without per-Scene texture baking or persistent server storage.
-
-The development-only Python tools in `tools/asset_generation/` create the authored atlas at:
-
-```text
-assets/web-carpet/generated/
-```
-
-`manifest.json` describes 48 transparent lossless WebP assets covering loose networks, support arcs, dense knots, edge frays and faint sheet fragments. Runtime generation does not stretch one complete carpet image across a Region. It deterministically chooses local patch assets and stores, for each patch:
-
-- Stable patch ID
-- Asset ID and module path
-- World-space centre
-- Width and height
-- Rotation
-- Horizontal and vertical flips
-- Alpha
-
-Each carpet blueprint belongs to one matching Confine Region. The visual patch container is clipped to the Region's rectangle, ellipse or polygon shapes, with matching Exclude shapes removed using `destination-out` on a compact native Canvas 2D mask. The mask long edge defaults to `512 px`, is independent of the source WebP resolution, and is cached by an immutable geometry key. This avoids millions of JavaScript point-containment calls while keeping the 512-pixel WebP fibres sharp.
-
-Carpet blueprints have no automatically fabricated dense interaction mesh. The web itself remains discoverable through the spatial web index using its Region bounds, while strand queries continue to return only real generated corner, span and ground strands. A later interaction milestone may add deliberately authored carpet support strands.
-
-The GM-only world setting **Clear Web Carpet Texture Cache** clears Dynamic Webs' local patch-request and Region-mask caches on connected clients, redraws the active visible subset, and then resets itself. It does not alter Scene populations, Regions, immutable geometry, corner webs, span webs or ground webs.
-
-The same operation is available through:
-
-```javascript
-dynamicWebs.api.webs.clearCarpetTextureCache();
-```
-
-## Spatial index and read-only queries
-
-Version `0.5.0` builds a runtime-only uniform-grid spatial index after each successful deterministic geometry replacement. The index contains all stored web levels, whether or not those levels are currently rendered. Viewed-level changes therefore do not rebuild or discard spatial data, and cumulative downward visibility does not imply cross-level physical compatibility. Consumers should supply an explicit `levelId`, `elevation`, or `elevationBand` whenever level compatibility matters.
-
-Indexed records include:
-
-- Web and functional strand bounds
-- Population, level and elevation ownership
-- Web category and strand role
-- Region identifiers and tags
-- Functional `collisionWidthPx` as `interactionWidthPx`
-- Immutable perch points
-- A live `intact` field reflecting session-scoped whole-span destruction state
-
-The public read-only API is:
-
-```javascript
-dynamicWebs.api.getWebs();
-dynamicWebs.api.getWeb(webId);
-
-dynamicWebs.api.queryNearby(
-  { x: 1200, y: 800 },
-  { levelId: "level-10", maximumDistancePx: 100 }
-);
-
-dynamicWebs.api.queryStrands(
-  { x: 1000, y: 700, width: 400, height: 300 },
-  { strandRoles: ["capture", "decorative"], limit: 50 }
-);
-
-dynamicWebs.api.findCompatibleWebs({
-  levelId: "level-10",
-  categories: ["wall-corner", "wall-span"],
-  regionTag: "crypt"
-});
-
-dynamicWebs.api.findPerches({
-  levelId: "level-10",
-  maximumDistancePx: 250,
-  point: { x: 1200, y: 800 }
-});
-
-dynamicWebs.api.spatial.getDiagnostics();
-```
-
-Shared filters support level IDs, population IDs, web categories, Region IDs or tags, elevation points or bands, strand roles, minimum functional interaction width, maximum distance and a bounded result limit. Results use stable distance-and-identifier ordering and are deeply frozen plain snapshots. No PIXI objects, internal Maps, Sets or mutable service references are exposed.
-
-`queryNearby()` performs a uniform-grid broad-phase followed by a precise point-to-polyline distance check that includes the strand's functional interaction width. `queryStrands()` returns strands whose functional broad-phase bounds overlap the supplied rectangle. Presentation-only colour or thickness remapping refreshes indexed snapshots without rebuilding cells; visible-level changes leave both geometry and query snapshots unchanged.
-
-## Public API
-
-The API is available through:
-
-```javascript
-globalThis.dynamicWebs.api
-game.modules.get("dynamic-webs")?.api
-```
-
-### Population configuration
-
-```javascript
-dynamicWebs.api.scene.getPopulations();
-dynamicWebs.api.scene.getPopulation("web-r7Kp2mN4xQ8vT3sL");
-
-await dynamicWebs.api.scene.setPopulations([
-  {
-    id: "web-r7Kp2mN4xQ8vT3sL",
-    enabled: true,
-    levelId: "level-0",
-    confineRegionTags: ["crypt"],
-    excludeRegionTags: ["altar"],
-    categoryDensities: {
-      "wall-corner": "standard",
-      "wall-span": "standard",
-      ground: "disabled",
-      "web-carpet": "disabled"
-    },
-    colourProfileId: "arcane-blue",
-    thicknessMultiplier: 1
-  }
-]);
-```
-
-Population mutations are GM-only and replace the complete Scene population array in one flag update.
-
-### Runtime and administrative operations
-
-```javascript
-dynamicWebs.api.getState();
-dynamicWebs.api.getWebs();
-dynamicWebs.api.getWeb(webId);
-dynamicWebs.api.queryNearby(point, options);
-dynamicWebs.api.queryStrands(bounds, options);
-dynamicWebs.api.findCompatibleWebs(options);
-dynamicWebs.api.findPerches(options);
-
-dynamicWebs.api.webs.getState();
-dynamicWebs.api.webs.generate();
-dynamicWebs.api.webs.clear();
-dynamicWebs.api.webs.clearCarpetTextureCache();
-dynamicWebs.api.levels.getState();
-dynamicWebs.api.spatial.getDiagnostics();
-
-dynamicWebs.api.interactions.queryMovement({
-  from: { x: 800, y: 500 },
-  to: { x: 1000, y: 500 },
-  levelId: "level-0",
-  collisionRadiusPx: 25
-});
-
-dynamicWebs.api.interactions.destroyWebs(["<wall-span-web-id>"], {
-  cause: "external-entity-movement",
-  entityId: "<stable-entity-id>"
-});
-
-dynamicWebs.api.interactions.restoreWeb("<wall-span-web-id>");
-dynamicWebs.api.interactions.reset();
-dynamicWebs.api.interactions.getState();
-
-// Scene-flag load/write telemetry
-dynamicWebs.api.webs.getState().mutableStatePersistence;
-```
-
-`generate()`, `clear()`, `clearCarpetTextureCache()` and interaction mutations are GM-only. Movement intersection queries are read-only and available to optional consumers. Interaction mutations return after the local authoritative redraw; their compact Scene-flag write is serialised in the background and reported through mutable-state persistence diagnostics.
-
-## Generic entity interaction and captured-web effects
-
-Dynamic Webs does not autonomously inspect entities owned by other modules. A consumer submits the entity's movement or current position through the public API. Dynamic Webs evaluates functional strand geometry, returns a deeply frozen result and emits generic hooks. Creature motivation, eligibility, trapping policy and AI remain owned by the consumer.
-
-Functional entity evaluation covers genuine generated strands from wall-corner, wall-span and ground webs. Web carpets remain excluded by default because their decorative WebP fibres do not fabricate functional strand geometry.
-
-A consumer must supply explicit physical level compatibility through `levelId`, `elevation` or `elevationBand`:
-
-```javascript
-const result = dynamicWebs.api.interactions.evaluateEntityMovement({
-  sourceModuleId: "ambient-critters",
-  entityType: "critter",
-  entityId: "firefly-42",
-  from: { x: 1000, y: 800 },
-  to: { x: 1030, y: 810 },
-  levelId: "level-0",
-  collisionRadiusPx: 8,
-  categories: ["wall-corner", "wall-span", "ground"],
-  strandKinds: ["capture", "decorative"]
-});
-```
-
-The result distinguishes:
-
-- `enteredWebIds`
-- `leftWebIds`
-- `intersectedWebIds`
-- `currentWebIds`
-- `primaryOutcome`
-- ordered immutable `webHits`
-
-Current position can be queried without emitting hooks:
-
-```javascript
-dynamicWebs.api.interactions.queryEntityPosition({
-  sourceModuleId: "ambient-critters",
-  entityType: "critter",
-  entityId: "firefly-42",
-  point: { x: 1030, y: 810 },
-  levelId: "level-0",
-  radiusPx: 8
-});
-```
-
-The versioned contract is available through:
-
-```javascript
-dynamicWebs.api.interactions.getContract();
-```
-
-Generic interaction hooks are:
-
-```text
-dynamic-webs.entityWebInteraction
-dynamic-webs.entityOnWeb
-dynamic-webs.entityEnteredWeb
-dynamic-webs.entityLeftWeb
-dynamic-webs.entityIntersectedWeb
-```
-
-### Transient captured-web visuals
-
-Consumer modules may show a local captured-web overlay independently of geometry and mutable destruction state:
-
-```javascript
-const capture = dynamicWebs.api.captures.show({
-  sourceModuleId: "ambient-critters",
-  entityType: "critter",
-  entityId: "firefly-42",
-  webId: result.enteredWebIds[0],
-  point: { x: 1030, y: 810 },
-  radiusPx: 22,
-  levelId: "level-0"
-});
-```
-
-Supplying the same module, entity type and entity ID updates the existing capture rather than stacking another overlay. Explicit `captureId`, `variant`, `rotation`, `alpha`, `tint` and `colourProfileId` values are also supported.
-
-```javascript
-dynamicWebs.api.captures.get(capture.captureId);
-dynamicWebs.api.captures.getState();
-dynamicWebs.api.captures.remove(capture.captureId);
-dynamicWebs.api.captures.clearByEntity("firefly-42", {
-  sourceModuleId: "ambient-critters"
-});
-dynamicWebs.api.captures.clear();
-```
-
-Captured-web overlays are client-local transient presentation state. They are not Scene geometry, do not enter the spatial index, do not modify destroyed-span state, and are neither persisted nor socket-synchronised. A consumer requiring the effect on every client must invoke the API on every relevant client through its own synchronisation model.
-
-Capture hooks are:
-
-```text
-dynamic-webs.captureShown
-dynamic-webs.captureRemoved
-dynamic-webs.capturesCleared
-```
-
-### Colour profile lookup
-
-```javascript
-dynamicWebs.api.colours.getProfiles();
-dynamicWebs.api.colours.getProfile("blood-red");
-```
-
-All public snapshots are frozen and contain no PIXI references or mutable internal collections.
-
-## Diagnostics
-
-Run:
-
-```javascript
-dynamicWebs.api.diagnostics.showBaselineReport();
-```
-
-The copyable report includes:
-
-- Module, API, blueprint and diagnostic schema versions
-- Requested and resolved level provider
-- Detected levels and wall counts by level
-- Configured and active modular populations
-- Unavailable population IDs
-- Population seeds and category seeds
-- Web and strand counts by population, level and category
-- Population colours, thickness multipliers, and Region restrictions
-- Rendered versus stored counts
-- Spatial-index revision, cell size, indexed counts and query candidate/result telemetry
-- Identifier uniqueness
-- Same-level wall-support checks
-- Population and Region ownership and immutability checks
-- Mutable destroyed-span schema, revision and IDs
-- Scene-flag load source, pending write state, last persisted revision and persistence errors
-- Token span-interaction lifecycle telemetry
-- Non-destructive determinism hashes
-
-## Architectural boundary
-
-Dynamic Webs remains critter-agnostic. It owns environmental web geometry, generic movement and position evaluation, generic hooks, transient captured-web presentation and generic mutable span state. Ambient Critters must use the public API and hooks and must never import files from `modules/dynamic-webs/scripts/...`.
-
-Dynamic Webs exposes no critter-interaction setting. A consumer decides which entities are evaluated, which outcomes count as capture, whether a captured overlay is shown, and whether an eligible span-destruction request is made. Token movement remains handled internally and is GM-authoritative.
-
-Captured overlays are not occupancy records. Later strand-level damage, trapping and persistent occupancy must build on stable population-qualified identifiers without converting transient presentation into Scene geometry.
-
-## Validation
-
-From the module root:
-
-```bash
-npm run validate
-```
-
-This runs JavaScript syntax checks and the complete Node regression suite.
-
-Automated validation must be followed by live Foundry smoke tests in v13 and v14, including:
-
-- GM world defaults for new populations, including preservation of existing Scene arrays and explicit `[]`
-- Maximum span-width changes at narrow and wide passage boundaries
-- Adding, duplicating and removing populations
-- Different populations on different levels
-- Different colours and thicknesses on the same level
-- Empty population arrays
-- Missing saved levels
-- Wall creation, movement and deletion
-- Region creation, geometry edits, elevation changes, tag changes and deletion
-- Confine/Exclude combinations, wildcard tags, missing tags and same-level filtering
-- Viewed-level switching as both GM and player, confirming that the active level and every lower level are rendered while upper levels remain hidden
-- Spatial queries with explicit level, category, Region, distance, strand-role and result-limit filters
-- Generic entity position and movement evaluation with explicit level compatibility, hook emission and immutable outcomes
-- Captured-web overlay show, update, level visibility, removal and entity-scoped clearing
-- Querying a stored but currently unrendered level without changing visibility or generation identity
-- Repeated Scene saves without duplicate rendering
-- Token swept movement crossing an intact wall-span web
-- Destroyed span disappearance on every connected client, Scene-level restoration, world-wide restoration and state reset through the public API
-- Scene reload and server restart with destroyed spans still absent
-- Obsolete persisted span IDs pruned after wall or population changes
-- Baseline diagnostics and deterministic hashes
-
-## Hybrid corner-web presentation
-
-Corner webs retain deterministic procedural strand geometry for spatial queries and interactions while rendering through locally generated transparent-white WebP assets when available. Twelve angle families from 5–150 degrees provide six deterministic variants each. Their distributed-sheet topology has no compulsory off-corner hub. Each asset is affinely fitted from its authored pivot and two edge anchors onto the exact generated wall corner. Missing or failed assets leave the procedural fallback visible.
-
-## Hybrid span-web presentation
-
-Wall-span webs retain their complete deterministic procedural strand geometry but render through one of eight locally generated distributed-sheet WebP variants when available. Each asset has four authored wall-support anchors. Runtime maps those anchors onto the exact two generated wall edges with a two-triangle textured mesh, allowing parallel, converging, diverging and moderately skewed cave passages rather than requiring parallel walls. Thickness uses the same crisp mesh plus alpha-dilation underlay as corner assets. Missing mesh or texture support leaves the procedural fallback visible, and no generated WebPs are created at runtime.
-
-Generate and validate the authored span atlas with:
-
-```powershell
-.\.venv\Scripts\python.exe tools\asset_generation\generate_span_web_assets.py --clean --preview
-.\.venv\Scripts\python.exe tools\asset_generation\validate_span_web_assets.py
-```
-
-## Captured-web asset pipeline
-
-The development-only Python tools generate eight deterministic transparent-white captured-web overlays at:
-
-```text
-assets/web-captured/generated/
-```
-
-The assets are local entanglement overlays intended to surround an entity without becoming generated Scene web geometry. They are tintable at runtime and selected deterministically from the consumer's capture key.
-
-Generate, preview and validate them with:
-
-```powershell
-.\.venv\Scripts\python.exe tools\asset_generation\generate_captured_web_assets.py --clean --preview
-.\.venv\Scripts\python.exe tools\asset_generation\validate_captured_web_assets.py
-```
-
-The generated manifest stores asset IDs, dimensions, hashes, source pivot/radius metadata and recommended alpha ranges. Runtime never generates or writes these images.
-
-## Whole-span destruction
-
-When the Scene's **Span webs are destructible** option is enabled, a committed token movement uses its swept centre path and collision radius rather than only its final position. Dynamic Webs queries nearby intact wall-span strands through the spatial index, performs precise capsule-to-polyline checks, and destroys each intersected **whole span web**. Drag previews do not mutate state because only committed TokenDocument updates are processed.
-
-Destroyed spans stop rendering immediately. Vision-only walls and closed generated secret doors are deleted immediately. An already-open generated secret door is instead retained as a harmless deferred-cleanup WallDocument so token movement does not trigger Foundry's expensive wall/perception rebuild; full reconciliation or either maintenance control removes it later. Restoring a span closes and reuses a retained generated secret door, or recreates the wall when none remains. Scene Configuration can restore every destroyed span in one Scene, while Configure Settings can restore every destroyed span across the world. Inactive-Scene restoration changes only compact persistent state and removes retained derived walls; geometry and missing walls are recreated when the Scene is next opened. Disabling destructibility restores all currently destroyed spans and prevents both local GM destruction and player socket requests from mutating them.
-
-Destroyed IDs are compact Scene-owned mutable state separate from immutable blueprints. The persisted value contains only a schema version, monotonic revision and sorted stable wall-span IDs:
-
-```javascript
-flags["dynamic-webs"].mutableState = {
-  schemaVersion: 1,
-  revision: 7,
-  destroyedWebIds: ["<stable-wall-span-web-id>"]
-};
-```
-
-Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration and the responsible GM repairs the Scene flag. Geometry, strands, textures, generation IDs and PIXI state are never persisted. The GM commits mutations, queues the Scene-flag write and broadcasts immutable state snapshots to other clients over `module.dynamic-webs`; Foundry's `updateScene` propagation provides a second convergence path. Destroyed spans are removed from rendering, intact-only spatial queries and perch results without rebuilding deterministic geometry.
-
-Generic consumers use `dynamicWebs.api.interactions` and own their own eligibility policy. Dynamic Webs contains no critter-specific flags, UI fields or internal imports.
-
-
-
+This project uses ChatGPT as a development assistant for architecture, JavaScript drafting, debugging, tests and documentation. The module is reviewed, tested and integrated manually by the author. Generated visual assets are produced locally through deterministic project tooling rather than supplied by ChatGPT.

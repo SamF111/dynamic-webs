@@ -19,6 +19,12 @@ const SOURCE_PIVOT =
 const SOURCE_RADIUS =
   0.44;
 
+const SOURCE_WIDTH_PX =
+  512;
+
+const SOURCE_HEIGHT_PX =
+  512;
+
 export const WEB_CAPTURED_ASSETS =
   Object.freeze(
     Array.from(
@@ -184,8 +190,13 @@ export function createWebCapturedAssetPresentation({
       selectedAlpha,
     rotation:
       targetRotation,
-    source:
-      asset.source,
+    source: {
+      ...asset.source,
+      widthPx:
+        asset.width,
+      heightPx:
+        asset.height
+    },
     target: {
       pivot:
         targetPoint,
@@ -223,6 +234,10 @@ function createAssetRecord(
       ],
     tintable:
       true,
+    width:
+      SOURCE_WIDTH_PX,
+    height:
+      SOURCE_HEIGHT_PX,
     source: {
       pivot:
         SOURCE_PIVOT,
@@ -420,3 +435,4 @@ function deepFreeze(
     clone
   );
 }
+

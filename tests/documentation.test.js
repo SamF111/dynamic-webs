@@ -5,202 +5,210 @@ import { readFile } from "node:fs/promises";
 const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readJson = async (path) => JSON.parse(await readText(path));
 
-test("README locks the v0.7.0 span assets, destruction and existing spatial contract", async () => {
+test("README is a public landing page with the author's motivation", async () => {
   const readme = await readText("README.md");
-
-  assert.match(readme, /Current version:\*\* `0\.7\.0`/u);
-  assert.match(readme, /Blueprint schema version:\*\* `8`/u);
-  assert.match(readme, /flags\.dynamic-webs\.webPopulations/u);
-  assert.match(readme, /An explicitly stored empty population array means that the Scene generates no webs/u);
-  assert.match(readme, /missing population flag resolves one stable world-default population/u);
-  assert.match(readme, /No population card is expanded automatically/u);
-  assert.match(readme, /Confine to Region tags/u);
-  assert.match(readme, /Exclude Region tags/u);
-  assert.match(readme, /every visible strand segment/u);
-  assert.match(readme, /unassigned gap/u);
-  assert.match(readme, /above tiles and drawings but below tokens/u);
-  assert.match(readme, /separate sibling containers/u);
-  assert.match(readme, /Spatial index and read-only queries/u);
-  assert.match(readme, /all stored web levels/u);
-  assert.match(readme, /cumulative downward visibility does not imply cross-level physical compatibility/u);
-});
-
-test("README documents population-qualified IDs and v4 seeds", async () => {
-  const readme = await readText("README.md");
-  assert.match(readme, /dynamic-webs:web-generation:v4:<scene-id>:<encoded-population-id>/u);
-  assert.match(readme, /<web-kind>:<encoded-scene-id>:<encoded-population-id>:<encoded-level-id>:<encoded-source-key>/u);
-  assert.match(readme, /populationId/u);
-  assert.match(readme, /hidden opaque ID/u);
-  assert.match(readme, /authored initial values remain `standard` for every category/u);
-  assert.match(readme, /nested \*\*Web options\*\* section/u);
-  assert.match(readme, /nested \*\*Appearance\*\* section/u);
-  assert.match(readme, /active viewed level plus every detected level below it/u);
-  assert.doesNotMatch(readme, /render all stored levels/u);
-  assert.doesNotMatch(readme, /- Population name/u);
-  assert.match(readme, /thicknessMultiplier/u);
-});
-
-test("README documents the modular public API", async () => {
-  const readme = await readText("README.md");
-  for (const method of [
-    "dynamicWebs.api.scene.getPopulations()",
-    "dynamicWebs.api.scene.getPopulation",
-    "dynamicWebs.api.scene.setPopulations",
-    "dynamicWebs.api.getWebs()",
-    "dynamicWebs.api.getWeb(webId)",
-    "dynamicWebs.api.queryNearby",
-    "dynamicWebs.api.queryStrands",
-    "dynamicWebs.api.findCompatibleWebs",
-    "dynamicWebs.api.findPerches",
-    "dynamicWebs.api.spatial.getDiagnostics()",
-    "dynamicWebs.api.interactions.queryMovement",
-    "dynamicWebs.api.interactions.queryEntityPosition",
-    "dynamicWebs.api.interactions.evaluateEntityMovement",
-    "dynamicWebs.api.interactions.getContract",
-    "dynamicWebs.api.captures.show",
-    "dynamicWebs.api.captures.get",
-    "dynamicWebs.api.captures.getState",
-    "dynamicWebs.api.captures.remove",
-    "dynamicWebs.api.captures.clearByEntity",
-    "dynamicWebs.api.captures.clear",
-    "dynamicWebs.api.interactions.destroyWebs",
-    "dynamicWebs.api.interactions.restoreWeb",
-    "dynamicWebs.api.interactions.reset",
-    "dynamicWebs.api.interactions.getState"
-  ]) {
-    assert.ok(readme.includes(method));
-  }
-});
-
-test("README preserves the Ambient Critters-compatible provider interface", async () => {
-  const readme = await readText("README.md");
-  assert.match(readme, /Foundry v14 and later.*hidden/u);
-  assert.match(readme, /Base Level only/u);
-  assert.match(readme, /theripper93's Levels/u);
-  assert.match(readme, /disabled and visually muted/u);
-});
-
-test("README lists all authored density states and colour profiles", async () => {
-  const [readme, presets, colours] = await Promise.all([
-    readText("README.md"),
-    readJson("data/webs/presets.json"),
-    readJson("data/webs/colours.json")
-  ]);
-
-  for (const id of presets.presets.map((entry) => entry.id)) assert.ok(readme.includes(id));
-  for (const id of colours.profiles.map((entry) => entry.id)) assert.ok(readme.includes(id));
-});
-
-test("roadmap records v0.7.0 span assets after carpets and retains later milestones", async () => {
-  const roadmap = await readText("roadmap.md");
-  assert.match(roadmap, /Current baseline — v0\.7\.0/u);
-  assert.match(roadmap, /Milestone 4 — Region-aware webs — complete/u);
-  assert.match(roadmap, /Milestone 5 — Spatial index and read-only query API — complete/u);
-  assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
-  assert.match(roadmap, /Milestone 7 — Span assets and whole-span destruction — complete/u);
-  assert.match(roadmap, /Milestone 7\.1 — Persistent span-destruction hardening — complete/u);
-  assert.match(roadmap, /\*\*Delivered:\*\* v0\.7\.0/u);
-  assert.match(roadmap, /Milestone 7\.2 — Categorised GM defaults and Scene span reach — complete/u);
-  assert.match(roadmap, /no legacy FormApplication dependency/u);
-  assert.ok(roadmap.indexOf("Region-aware webs") < roadmap.indexOf("Spatial index and read-only query API"));
-  for (const phrase of [
-    "Spatial index and read-only query API",
-    "Web carpets",
-    "Span assets and whole-span destruction",
-    "Scene wall-span behaviour and derived walls",
-    "Extended token and strand interactions",
-    "Extended persistence and network state",
-    "Generic trapping and occupancy",
-    "Ambient Critters adapter and release hardening"
-  ]) assert.ok(roadmap.includes(phrase));
-});
-
-
-test("README documents four-anchor cave fitting and critter-agnostic whole-span destruction", async () => {
-  const readme = await readText("README.md");
-  for (const phrase of [
-    "four authored wall-support anchors",
-    "two-triangle textured mesh",
-    "moderately skewed cave passages",
-    "swept centre path",
-    "whole span web",
-    "Scene-owned mutable state",
-    'flags["dynamic-webs"].mutableState',
-    "no critter-specific flags"
-  ]) assert.ok(readme.includes(phrase));
-  assert.doesNotMatch(readme, /walls must be parallel/iu);
-});
-
-
-test("README and roadmap document bundled WebP carpets without GM baking", async () => {
-  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  const roadmap = await readFile(new URL("../roadmap.md", import.meta.url), "utf8");
-
-  assert.match(readme, /Current version:\*\* `0\.7\.0`/u);
-  assert.match(readme, /lossless WebP/u);
-  assert.match(readme, /Clear Web Carpet Texture Cache/u);
-  assert.match(readme, /clearCarpetTextureCache/u);
-  assert.match(readme, /destination-out/u);
-  assert.doesNotMatch(readme, /persistent server storage is required/u);
-
-  assert.match(roadmap, /Milestone 6 — Web carpets — complete/u);
-  assert.match(roadmap, /No GM baking, upload, persistent storage/u);
-  assert.match(roadmap, /At v0\.6\.0, corner, span and ground webs remained dynamic/u);
-});
-
-
-
-
-test("README and roadmap document world population defaults and maximum span reach", async () => {
-  const [readme, roadmap] = await Promise.all([
-    readText("README.md"),
-    readText("roadmap.md")
-  ]);
 
   for (const phrase of [
-    "Configure Settings",
-    "Generation Defaults",
-    "Population Defaults",
-    "Appearance Defaults",
-    "maximum span width",
-    "Scene override",
-    "None**, **Limited** or **Blocked",
-    "closed secret-door",
-    "indestructible",
-    "explicitly saved empty array",
-    "0.35–10"
+    "fills Foundry Virtual Tabletop scenes with procedurally generated spider webs",
+    "I built Dynamic Webs for my own game",
+    "scenes to feel more lived-in",
+    "large spider battle",
+    "originally lived inside another module",
+    "decided to share it"
   ]) {
     assert.ok(readme.includes(phrase));
   }
 
-  assert.match(roadmap, /Milestone 7\.2 — Categorised GM defaults and Scene span reach — complete/u);
-  assert.match(roadmap, /no legacy FormApplication dependency/u);
-  assert.match(roadmap, /An explicit `\[\]` remains an intentional no-web Scene/u);
-  assert.match(roadmap, /starts at `1\.5`/u);
-  assert.match(roadmap, /Milestone 8 — Scene wall-span behaviour and derived walls — complete/u);
-  assert.match(roadmap, /Milestone 8\.1 — Generic entity interaction and captured-web visuals — complete/u);
-  assert.match(roadmap, /Movement blocking is available only through a module-owned closed secret door/u);
+  assert.match(readme, /## What it adds/u);
+  assert.match(readme, /## Getting started/u);
+  assert.match(readme, /## Compatibility/u);
+  assert.match(readme, /## Documentation/u);
 });
 
-
-
-
-test("README documents generic entity hooks and transient captured-web assets", async () => {
-  const [readme, roadmap] = await Promise.all([
-    readText("README.md"),
-    readText("roadmap.md")
-  ]);
+test("README presents the four web types and principal GM-facing features", async () => {
+  const readme = await readText("README.md");
 
   for (const phrase of [
-    "Generic entity interaction and captured-web effects",
-    "dynamic-webs.entityWebInteraction",
-    "dynamic-webs.entityEnteredWeb",
-    "client-local transient presentation state",
-    "assets/web-captured/generated/",
-    "generate_captured_web_assets.py",
-    "validate_captured_web_assets.py"
-  ]) assert.ok(readme.includes(phrase));
+    "### Corner webs",
+    "### Passage webs",
+    "### Ground webs",
+    "### Web carpets",
+    "disabled, sparse, standard, dense or infested",
+    "Confine",
+    "Exclude",
+    "closed Foundry secret door",
+    "destructible or indestructible",
+    "Foundry v14",
+    "theripper93's Levels"
+  ]) {
+    assert.ok(readme.includes(phrase));
+  }
+});
 
-  assert.match(roadmap, /Milestone 8\.1 — Generic entity interaction and captured-web visuals — complete/u);
-  assert.match(roadmap, /No persistence, sockets, spatial indexing or mutation of immutable web geometry/u);
+test("README links specialist documentation instead of carrying internal contracts", async () => {
+  const readme = await readText("README.md");
+
+  for (const link of [
+    "docs/CONFIGURATION.md",
+    "docs/PUBLIC-API.md",
+    "docs/TECHNICAL-DESIGN.md",
+    "docs/DEVELOPMENT.md",
+    "roadmap.md"
+  ]) {
+    assert.ok(readme.includes(link));
+  }
+
+  for (const technicalDetail of [
+    "flags.dynamic-webs.webPopulations",
+    "dynamic-webs:web-generation:v4",
+    "two-triangle textured mesh",
+    'flags["dynamic-webs"].mutableState',
+    "PrimaryCanvasGroup",
+    "Blueprint schema version"
+  ]) {
+    assert.equal(readme.includes(technicalDetail), false);
+  }
+});
+
+test("configuration guide owns populations, defaults, Regions, levels and span behaviour", async () => {
+  const configuration = await readText("docs/CONFIGURATION.md");
+
+  for (const phrase of [
+    "flags.dynamic-webs.webPopulations",
+    "An explicitly saved empty array means that the Scene intentionally generates no webs",
+    "missing population flag",
+    "disabled → sparse → standard → dense → infested",
+    "Confine to Region tags",
+    "Exclude Region tags",
+    "flags.dynamic-webs.regionTags",
+    "theripper93's Levels",
+    "natural-white",
+    "toxic-green",
+    "1×, 2×, 3×, 4×",
+    "0.35–10",
+    "None** — no vision restriction",
+    "closed secret-door",
+    "indestructible",
+    "Clear All Webs and Prepare for Uninstall"
+  ]) {
+    assert.ok(configuration.includes(phrase));
+  }
+});
+
+test("technical design preserves deterministic geometry, rendering and destruction contracts", async () => {
+  const design = await readText("docs/TECHNICAL-DESIGN.md");
+
+  for (const phrase of [
+    "Blueprint schema version:** `8`",
+    "dynamic-webs:web-generation:v4:<scene-id>:<encoded-population-id>",
+    "<web-kind>:<encoded-scene-id>:<encoded-population-id>:<encoded-level-id>:<encoded-source-key>",
+    "complete generated strand polylines",
+    "destination-out",
+    "separate sibling containers",
+    "above tiles and drawings but below tokens",
+    "active viewed level plus every detected level below it",
+    "two-triangle textured mesh",
+    "all stored levels",
+    "uniform-grid spatial index",
+    "swept centre path",
+    "whole span",
+    "Scene-owned destroyed-span state",
+    "client-local transient presentation"
+  ]) {
+    assert.ok(design.includes(phrase));
+  }
+});
+
+test("public API guide locks the version-1 integration and capture ownership boundary", async () => {
+  const api = await readText("docs/PUBLIC-API.md");
+
+  for (const method of [
+    "api.getWebs()",
+    "api.getWeb(webId)",
+    "api.queryNearby(point, options = {})",
+    "api.queryStrands(bounds, options = {})",
+    "api.findCompatibleWebs(options = {})",
+    "api.findPerches(options = {})",
+    "api.interactions.queryMovement(request)",
+    "api.interactions.queryEntityPosition(request)",
+    "api.interactions.evaluateEntityMovement(request)",
+    "api.interactions.destroyWebs(webIds, options = {})",
+    "api.captures.show(request)",
+    "api.captures.clearByEntity(entityId, options = {})"
+  ]) {
+    assert.ok(api.includes(method));
+  }
+
+  for (const phrase of [
+    "Public API version:** `1`",
+    "aboveTokens",
+    "defaults to `false` and renders below tokens",
+    "preserves its previous placement",
+    "moves the same capture between layers without creating a duplicate",
+    "Moving or deleting the external entity does not automatically move or remove the overlay",
+    "The consumer decides"
+  ]) {
+    assert.ok(api.includes(phrase));
+  }
+});
+
+test("development guide owns validation, asset tooling and architecture rules", async () => {
+  const development = await readText("docs/DEVELOPMENT.md");
+
+  for (const phrase of [
+    "npm run validate",
+    "node --test tests/documentation.test.js",
+    "Foundry v13 and v14",
+    "generate_span_web_assets.py",
+    "validate_span_web_assets.py",
+    "generate_captured_web_assets.py",
+    "validate_captured_web_assets.py",
+    "Do not add AI-generated image files",
+    "Atomic spatial replacement",
+    "Visibility is presentation-only",
+    "Capture lifecycle belongs to the consumer",
+    "Do not move low-level implementation detail back into the landing-page README"
+  ]) {
+    assert.ok(development.includes(phrase));
+  }
+});
+
+test("configuration documentation lists every authored density and colour profile", async () => {
+  const [configuration, presets, colours] = await Promise.all([
+    readText("docs/CONFIGURATION.md"),
+    readJson("data/webs/presets.json"),
+    readJson("data/webs/colours.json")
+  ]);
+
+  for (const id of presets.presets.map((entry) => entry.id)) {
+    assert.ok(configuration.includes(id));
+  }
+
+  for (const id of colours.profiles.map((entry) => entry.id)) {
+    assert.ok(configuration.includes(id));
+  }
+});
+
+test("roadmap retains completed milestones and later integration scope", async () => {
+  const roadmap = await readText("roadmap.md");
+
+  for (const phrase of [
+    "Current baseline — v0.7.0",
+    "Milestone 4 — Region-aware webs — complete",
+    "Milestone 5 — Spatial index and read-only query API — complete",
+    "Milestone 6 — Web carpets — complete",
+    "Milestone 7 — Span assets and whole-span destruction — complete",
+    "Milestone 7.1 — Persistent span-destruction hardening — complete",
+    "Milestone 7.2 — Categorised GM defaults and Scene span reach — complete",
+    "Milestone 8 — Scene wall-span behaviour and derived walls — complete",
+    "Milestone 8.1 — Generic entity interaction and captured-web visuals — complete",
+    "Ambient Critters adapter and release hardening"
+  ]) {
+    assert.ok(roadmap.includes(phrase));
+  }
+
+  assert.ok(
+    roadmap.indexOf("Region-aware webs") <
+    roadmap.indexOf("Spatial index and read-only query API")
+  );
 });

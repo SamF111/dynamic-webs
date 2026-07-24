@@ -310,6 +310,29 @@ test("under-token web ordering resolves above tiles and below tokens", () => {
   }
 });
 
+
+test("above-token web ordering resolves above tokens and below weather", () => {
+  const previousFoundry = globalThis.foundry;
+  try {
+    globalThis.foundry = {
+      canvas: {
+        groups: {
+          PrimaryCanvasGroup: {
+            SORT_LAYERS: { SCENE: 0, TILES: 500, DRAWINGS: 600, TOKENS: 700, WEATHER: 1000 }
+          }
+        }
+      }
+    };
+
+    const sortLayer = resolveWebPrimarySortLayer("above-tokens");
+    assert.equal(sortLayer, 850);
+    assert.ok(sortLayer > 700);
+    assert.ok(sortLayer < 1000);
+  } finally {
+    globalThis.foundry = previousFoundry;
+  }
+});
+
 test("sort-layer compatibility never touches the deprecated PrimaryCanvasGroup global", () => {
   const previous = {
     foundry: globalThis.foundry,
@@ -400,3 +423,4 @@ test(
     }
   }
 );
+

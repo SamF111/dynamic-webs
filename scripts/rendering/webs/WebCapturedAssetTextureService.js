@@ -115,12 +115,6 @@ export class WebCapturedAssetTextureService {
     sprite.y =
       0;
 
-    sprite.width =
-      1;
-
-    sprite.height =
-      1;
-
     sprite.tint =
       normaliseTint(
         tint
@@ -171,32 +165,77 @@ export class WebCapturedAssetTextureService {
           sprite.destroyed ===
             true
         ) {
-          return;
+          return false;
         }
 
-        sprite.texture =
-          texture;
+        try {
+          sprite.texture =
+            texture;
 
-        sprite.width =
-          1;
+          applyWebCapturedAssetTransform({
+            pixi,
+            displayObject:
+              sprite,
+            presentation,
+            sourceDimensions:
+              resolveTextureDimensions(
+                texture,
+                presentation
+              )
+          });
 
-        sprite.height =
-          1;
+          sprite.visible =
+            true;
 
-        sprite.visible =
-          true;
+          if (
+            fallbackDisplay &&
+            fallbackDisplay.destroyed !==
+              true
+          ) {
+            fallbackDisplay.visible =
+              false;
+          }
 
-        if (
-          fallbackDisplay &&
-          fallbackDisplay.destroyed !==
-            true
-        ) {
-          fallbackDisplay.visible =
+          display.dynamicWebsCapturedAssetLoaded =
+            true;
+
+          return true;
+        } catch (error) {
+          sprite.visible =
             false;
-        }
 
-        display.dynamicWebsCapturedAssetLoaded =
-          true;
+          if (
+            fallbackDisplay &&
+            fallbackDisplay.destroyed !==
+              true
+          ) {
+            fallbackDisplay.visible =
+              true;
+          }
+
+          display.dynamicWebsCapturedAssetLoaded =
+            false;
+
+          this.failureCount +=
+            1;
+
+          this.lastFailure =
+            Object.freeze({
+              source,
+              name:
+                String(
+                  error?.name ??
+                  "Error"
+                ),
+              message:
+                String(
+                  error?.message ??
+                  error
+                )
+            });
+
+          return false;
+        }
       };
 
     if (
@@ -577,6 +616,59 @@ function normaliseLoadedTexture(
   return null;
 }
 
+function resolveTextureDimensions(
+  texture,
+  presentation
+) {
+  const width =
+    firstPositiveNumber(
+      texture?.orig?.width,
+      texture?.frame?.width,
+      texture?.width,
+      texture?.baseTexture?.width,
+      texture?.source?.width,
+      presentation?.source?.widthPx
+    );
+
+  const height =
+    firstPositiveNumber(
+      texture?.orig?.height,
+      texture?.frame?.height,
+      texture?.height,
+      texture?.baseTexture?.height,
+      texture?.source?.height,
+      presentation?.source?.heightPx
+    );
+
+  return Object.freeze({
+    width,
+    height
+  });
+}
+
+function firstPositiveNumber(
+  ...values
+) {
+  for (const value of values) {
+    const number =
+      Number(
+        value
+      );
+
+    if (
+      Number.isFinite(
+        number
+      ) &&
+      number >
+        0
+    ) {
+      return number;
+    }
+  }
+
+  return 1;
+}
+
 function clamp(
   value,
   minimum,
@@ -590,3 +682,4 @@ function clamp(
     )
   );
 }
+

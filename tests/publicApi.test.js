@@ -502,11 +502,13 @@ test("public captured-web API exposes transient show, remove and clear operation
       entityId: "entity-a",
       point: { x: 100, y: 120 },
       radiusPx: 30,
-      levelId: "base"
+      levelId: "base",
+      aboveTokens: true
     });
 
     assert.equal(shown.entityId, "entity-a");
     assert.equal(environment.calls.showCapturedWeb.length, 1);
+    assert.equal(environment.calls.showCapturedWeb[0].aboveTokens, true);
     assert.equal(api.captures.get("capture-a").captureId, "capture-a");
     assert.equal(api.captures.getState().captureCount, 1);
     assert.equal(api.captures.remove("capture-a"), true);
@@ -553,5 +555,6 @@ test("GM-only modular operations reject non-GM callers", async () => {
     environment.restore();
   }
 });
+
 
 

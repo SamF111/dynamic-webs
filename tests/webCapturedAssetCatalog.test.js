@@ -94,8 +94,24 @@ test(
         presentation
       );
 
-    const pivot =
-      presentation.source.pivot;
+    const pivot = {
+      x:
+        presentation.source.pivot.x *
+        presentation.source.widthPx,
+      y:
+        presentation.source.pivot.y *
+        presentation.source.heightPx
+    };
+
+    assert.equal(
+      presentation.source.widthPx,
+      512
+    );
+
+    assert.equal(
+      presentation.source.heightPx,
+      512
+    );
 
     assert.ok(
       Math.abs(
@@ -120,5 +136,21 @@ test(
       ) <
         0.000001
     );
+
+    assert.ok(
+      Math.abs(
+        Math.hypot(
+          matrix.a,
+          matrix.b
+        ) -
+        40 /
+        (
+          0.44 *
+          512
+        )
+      ) <
+        0.000001
+    );
   }
 );
+

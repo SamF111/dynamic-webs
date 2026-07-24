@@ -1,7 +1,8 @@
 import {
   DEFAULT_WEB_RENDER_LAYER_MODE,
   MODULE_ID,
-  MODULE_TITLE
+  MODULE_TITLE,
+  WEB_RENDER_LAYER_MODES
 } from "../module/moduleConstants.js";
 
 import {
@@ -530,9 +531,14 @@ export class WebCaptureEffectService {
     const pixi =
       requirePixi();
 
+    const layerMode =
+      resolveCaptureLayerMode(
+        descriptor
+      );
+
     const parent =
       resolveCanvasParentForWebLayer(
-        DEFAULT_WEB_RENDER_LAYER_MODE
+        layerMode
       );
 
     if (!parent) {
@@ -548,7 +554,8 @@ export class WebCaptureEffectService {
       this.#requireContainer({
         pixi,
         parent,
-        elevation
+        elevation,
+        layerMode
       });
 
     const display =
@@ -626,11 +633,15 @@ export class WebCaptureEffectService {
   #requireContainer({
     pixi,
     parent,
-    elevation
+    elevation,
+    layerMode
   }) {
     const key =
-      String(
+      [
+        layerMode,
         elevation
+      ].join(
+        ":"
       );
 
     const existing =
@@ -654,14 +665,17 @@ export class WebCaptureEffectService {
     );
 
     container.name =
-      `${MODULE_ID}.captures.elevation-${formatElevation(elevation)}`;
+      `${MODULE_ID}.captures.${layerMode}.elevation-${formatElevation(elevation)}`;
+
+    container.dynamicWebsCaptureLayerMode =
+      layerMode;
 
     container.elevation =
       elevation;
 
     container.sortLayer =
       resolveWebPrimarySortLayer(
-        DEFAULT_WEB_RENDER_LAYER_MODE
+        layerMode
       ) +
       CAPTURE_SORT_LAYER_OFFSET;
 
@@ -919,6 +933,12 @@ function createCaptureDescriptor({
     levelId,
     elevation,
     elevationBand,
+    aboveTokens:
+      normaliseCaptureAboveTokens(
+        request.aboveTokens,
+        previous?.aboveTokens ??
+        false
+      ),
     point,
     radiusPx,
     tint:
@@ -1129,6 +1149,42 @@ function createProceduralCaptureFallback({
   }
 
   return graphics;
+}
+
+function resolveCaptureLayerMode(
+  descriptor
+) {
+  return descriptor?.aboveTokens ===
+    true
+    ? WEB_RENDER_LAYER_MODES.ABOVE_TOKENS
+    : DEFAULT_WEB_RENDER_LAYER_MODE;
+}
+
+function normaliseCaptureAboveTokens(
+  value,
+  fallback =
+    false
+) {
+  if (
+    value ===
+      null ||
+    value ===
+      undefined
+  ) {
+    return fallback ===
+      true;
+  }
+
+  if (
+    typeof value !==
+      "boolean"
+  ) {
+    throw new TypeError(
+      `${MODULE_TITLE} | Captured-web aboveTokens must be a boolean.`
+    );
+  }
+
+  return value;
 }
 
 function resolveCaptureElevation(
@@ -1542,3 +1598,4 @@ function deepFreeze(
     clone
   );
 }
+
