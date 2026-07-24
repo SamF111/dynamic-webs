@@ -49,7 +49,8 @@ function preserveGlobals() {
     game: globalThis.game,
     canvas: globalThis.canvas,
     Hooks: globalThis.Hooks,
-    Levels: globalThis.Levels
+    Levels: globalThis.Levels,
+    localStorage: globalThis.localStorage
   };
 }
 
@@ -59,6 +60,7 @@ function restoreGlobals(previous) {
   globalThis.canvas = previous.canvas;
   globalThis.Hooks = previous.Hooks;
   globalThis.Levels = previous.Levels;
+  globalThis.localStorage = previous.localStorage;
 }
 
 function createSettingsHarness(initialValues = {}) {
@@ -200,71 +202,149 @@ test("v14 hides only the obsolete provider selector while keeping the other stan
   }
 });
 
-test("the standard settings form receives five idempotent category headings", () => {
+test("the standard settings form receives five idempotent collapsible groups and remembers their open state", () => {
   const previous = preserveGlobals();
 
   globalThis.game = {
     release: { generation: 13 },
-    modules: { get() { return { active: true }; } }
+    modules: { get() { return { active: true }; } },
+    user: { isGM: false }
   };
   globalThis.canvas = {};
 
+  const storedValues = new Map([
+    [
+      "dynamic-webs.settingsGroups",
+      JSON.stringify({
+        generation: false,
+        maintenance: true
+      })
+    ]
+  ]);
+
+  globalThis.localStorage = {
+    getItem(key) {
+      return storedValues.get(key) ?? null;
+    },
+    setItem(key, value) {
+      storedValues.set(key, value);
+    }
+  };
+
   try {
-    const inserted = [];
-    const existingHeadings = new Map();
+    let settingsContainer = null;
     const controls = new Map();
 
+    function createElement(tagName) {
+      return {
+        tagName: tagName.toUpperCase(),
+        dataset: {},
+        style: {},
+        children: [],
+        className: "",
+        textContent: "",
+        open: false,
+        listeners: new Map(),
+        appendChild(child) {
+          child.parentNode = this;
+          child.parentElement = this;
+          this.children.push(child);
+          return child;
+        },
+        addEventListener(event, callback) {
+          this.listeners.set(event, callback);
+        }
+      };
+    }
+
     const documentObject = {
-      createElement(tagName) {
-        return {
-          tagName: tagName.toUpperCase(),
-          textContent: "",
-          className: "",
-          dataset: {}
-        };
+      createElement
+    };
+
+    const parent = createElement("section");
+    parent.insertBefore = function(child) {
+      child.parentNode = this;
+      child.parentElement = this;
+      this.children.push(child);
+
+      if (child.dataset?.dynamicWebsSettingsGroups === "true") {
+        settingsContainer = child;
       }
     };
 
     for (const definition of MODULE_SETTINGS_CATEGORY_DEFINITIONS) {
-      const parent = {
-        querySelector(selector) {
-          const match = /data-dynamic-webs-settings-category="([^"]+)"/u.exec(selector);
-          return match ? existingHeadings.get(match[1]) ?? null : null;
-        },
-        insertBefore(heading, row) {
-          existingHeadings.set(heading.dataset.dynamicWebsSettingsCategory, heading);
-          inserted.push({ heading, row });
-        }
-      };
+      for (const settingKey of definition.settingKeys) {
+        const row = createElement("div");
+        row.ownerDocument = documentObject;
+        row.parentNode = parent;
+        row.parentElement = parent;
+        row.style = { setProperty() {} };
 
-      const row = {
-        parentNode: parent,
-        ownerDocument: documentObject,
-        style: { setProperty() {} }
-      };
-
-      controls.set(`dynamic-webs.${definition.firstSettingKey}`, {
-        closest(selector) {
-          return selector === ".form-group" ? row : null;
-        }
-      });
+        controls.set(`dynamic-webs.${settingKey}`, {
+          tagName: settingKey === MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE
+            ? "SELECT"
+            : "INPUT",
+          closest(selector) {
+            return selector === ".form-group" ? row : null;
+          }
+        });
+      }
     }
 
     const root = {
       querySelector(selector) {
+        if (selector === "[data-dynamic-webs-settings-groups]") {
+          return settingsContainer;
+        }
+
+        if (selector === "[data-dynamic-webs-world-maintenance-controls]") {
+          return null;
+        }
+
         const match = /^\[name="(.+)"\]$/u.exec(selector);
-        return match ? controls.get(match[1].replaceAll('\\"', '"').replaceAll('\\\\', '\\')) ?? null : null;
+        return match
+          ? controls.get(
+              match[1]
+                .replaceAll('\\"', '"')
+                .replaceAll('\\\\', '\\')
+            ) ?? null
+          : null;
       }
     };
 
     assert.equal(applyModuleSettingsCategories(root), 5);
-    assert.deepEqual(inserted.map((entry) => entry.heading.textContent), [
+    assert.ok(settingsContainer);
+    assert.equal(settingsContainer.children.length, 5);
+
+    const labels = settingsContainer.children.map(
+      details => details.children[0].children[0].textContent
+    );
+
+    assert.deepEqual(labels, [
       "Generation Defaults",
       "Population Defaults",
       "Appearance Defaults",
       "Level Awareness",
       "Maintenance"
     ]);
+
+    assert.deepEqual(
+      settingsContainer.children.map(details => details.open),
+      [false, false, false, false, true]
+    );
+
+    const generationGroup = settingsContainer.children[0];
+    generationGroup.open = true;
+    generationGroup.listeners.get("toggle")();
+
+    assert.deepEqual(
+      JSON.parse(storedValues.get("dynamic-webs.settingsGroups")),
+      {
+        generation: true,
+        maintenance: true
+      }
+    );
+
     assert.equal(applyModuleSettingsCategories(root), 0);
   } finally {
     restoreGlobals(previous);
@@ -410,3 +490,4 @@ test("maximum span normalisation clamps and snaps to the authored step", () => {
   assert.equal(normaliseConfiguredMaximumSpanGridUnits(2.73), 2.75);
   assert.equal(normaliseConfiguredMaximumSpanGridUnits(100), 10);
 });
+

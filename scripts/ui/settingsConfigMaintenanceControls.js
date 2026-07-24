@@ -6,6 +6,9 @@ import {
 const CONTROLS_ATTRIBUTE =
   "data-dynamic-webs-world-maintenance-controls";
 
+export const SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR =
+  `[${CONTROLS_ATTRIBUTE}]`;
+
 const UNINSTALL_CONFIRMATION_TEXT =
   "UNINSTALL";
 
@@ -21,7 +24,7 @@ export function activateSettingsConfigMaintenanceControls(
   if (
     globalThis.game?.user?.isGM !== true ||
     typeof root?.querySelector !== "function" ||
-    root.querySelector(`[${CONTROLS_ATTRIBUTE}]`)
+    root.querySelector(SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR)
   ) {
     return false;
   }
@@ -39,11 +42,11 @@ export function activateSettingsConfigMaintenanceControls(
   }
 
   const group = documentObject.createElement("div");
-  group.className = "form-group";
+  group.className = "form-group stacked";
   group.setAttribute(CONTROLS_ATTRIBUTE, "true");
 
   const label = documentObject.createElement("label");
-  label.textContent = "Web State and Generated Walls";
+  label.textContent = "World Maintenance";
 
   const fields = documentObject.createElement("div");
   fields.className = "form-fields";
@@ -76,7 +79,7 @@ export function activateSettingsConfigMaintenanceControls(
 
   const hint = documentObject.createElement("p");
   hint.className = "hint";
-  hint.textContent = "Restore clears persistent destroyed-span state in every Scene. The active Scene is restored immediately; inactive Scenes restore without generating geometry and complete their derived-wall reconciliation when next opened. Clean-up deletes only invalid, duplicate, or destroyed-span generated walls. Prepare for Uninstall deletes every generated web wall, clears Dynamic Webs Region flags, and resets every Scene to an explicit empty web-population array.";
+  hint.textContent = "Restore clears persistent destroyed-span state in every Scene. The active Scene is restored immediately; inactive Scenes restore without generating geometry and complete their derived-wall reconciliation when next opened. Clean-up deletes invalid, duplicate, and destroyed-span generated walls only. Prepare for Uninstall deletes every generated web wall, clears Dynamic Webs Region flags, and resets every Scene to an explicit empty web-population array.";
 
   group.append(label, fields, hint);
 
@@ -332,3 +335,4 @@ function readDialogInputValue(
 function notify(type, message) {
   globalThis.ui?.notifications?.[type]?.(message);
 }
+

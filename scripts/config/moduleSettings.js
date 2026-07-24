@@ -52,6 +52,7 @@ import {
 } from "./spanWebBehaviourContract.js";
 
 import {
+  SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR,
   activateSettingsConfigMaintenanceControls
 } from "../ui/settingsConfigMaintenanceControls.js";
 
@@ -125,32 +126,102 @@ export const WEB_LEVEL_PROVIDER_SETTING_LABELS =
       "Scene elevation"
   });
 
+const SETTINGS_GROUP_STATE_STORAGE_KEY =
+  `${MODULE_ID}.settingsGroups`;
+
+const SETTINGS_GROUPS_SELECTOR =
+  "[data-dynamic-webs-settings-groups]";
+
 export const MODULE_SETTINGS_CATEGORY_DEFINITIONS =
   Object.freeze([
     Object.freeze({
-      id: "generation",
-      label: "Generation Defaults",
-      firstSettingKey: MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS
+      id:
+        "generation",
+      label:
+        "Generation Defaults",
+      description:
+        "Span eligibility, vision, movement blocking, and destructibility.",
+      open:
+        true,
+      firstSettingKey:
+        MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS,
+      settingKeys:
+        Object.freeze([
+          MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS,
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE,
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+        ])
     }),
     Object.freeze({
-      id: "population",
-      label: "Population Defaults",
-      firstSettingKey: MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY
+      id:
+        "population",
+      label:
+        "Population Defaults",
+      description:
+        "Default density for each generated web category.",
+      open:
+        false,
+      firstSettingKey:
+        MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY,
+      settingKeys:
+        Object.freeze([
+          MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY,
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY,
+          MODULE_SETTING_KEYS.DEFAULT_GROUND_WEB_DENSITY,
+          MODULE_SETTING_KEYS.DEFAULT_CARPET_WEB_DENSITY
+        ])
     }),
     Object.freeze({
-      id: "appearance",
-      label: "Appearance Defaults",
-      firstSettingKey: MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR
+      id:
+        "appearance",
+      label:
+        "Appearance Defaults",
+      description:
+        "Default web colour and visible thickness.",
+      open:
+        false,
+      firstSettingKey:
+        MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR,
+      settingKeys:
+        Object.freeze([
+          MODULE_SETTING_KEYS.DEFAULT_WEB_COLOUR,
+          MODULE_SETTING_KEYS.DEFAULT_WEB_THICKNESS
+        ])
     }),
     Object.freeze({
-      id: "level-awareness",
-      label: "Level Awareness",
-      firstSettingKey: MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE
+      id:
+        "level-awareness",
+      label:
+        "Level Awareness",
+      description:
+        "Foundry v13 level-provider selection.",
+      open:
+        false,
+      firstSettingKey:
+        MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE,
+      settingKeys:
+        Object.freeze([
+          MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE
+        ])
     }),
     Object.freeze({
-      id: "maintenance",
-      label: "Maintenance",
-      firstSettingKey: MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE
+      id:
+        "maintenance",
+      label:
+        "Maintenance",
+      description:
+        "Texture caches, destroyed-span restoration, generated-wall clean-up, and uninstall preparation.",
+      open:
+        false,
+      firstSettingKey:
+        MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE,
+      settingKeys:
+        Object.freeze([
+          MODULE_SETTING_KEYS.CLEAR_CARPET_TEXTURE_CACHE
+        ]),
+      includesMaintenanceControls:
+        true
     })
   ]);
 
@@ -487,11 +558,15 @@ export function resetModuleSettingsRegistrationForTests() {
 }
 
 /**
- * Insert readable headings into Foundry's standard module-settings form.
+ * Group Dynamic Webs settings into Ambient Critters-style collapsible sections.
  *
- * This keeps Foundry's own SettingsConfig application, form submission,
- * permissions and reset behaviour. Dynamic Webs only adds non-interactive
- * headings before the first setting in each group.
+ * Foundry still owns form submission, permissions, reset behaviour, and setting
+ * controls. Dynamic Webs only moves its existing rows into labelled details
+ * blocks and adds its immediate maintenance controls to the final section.
+ *
+ * @param {object} html - Rendered SettingsConfig HTML.
+ * @param {object} maintenanceActions - Immediate maintenance callbacks.
+ * @returns {number} Number of groups created.
  */
 export function applyModuleSettingsCategories(
   html,
@@ -506,86 +581,395 @@ export function applyModuleSettingsCategories(
     return 0;
   }
 
-  let insertedCount =
-    0;
+  activateSettingsConfigMaintenanceControls(
+    root,
+    maintenanceActions
+  );
 
-  for (
-    const definition of
-    MODULE_SETTINGS_CATEGORY_DEFINITIONS
+  if (
+    root.querySelector?.(
+      SETTINGS_GROUPS_SELECTOR
+    )
   ) {
-    const control =
-      findSettingsControl(
-        root,
-        `${MODULE_ID}.${definition.firstSettingKey}`
-      );
-
-    if (!control) {
-      continue;
-    }
-
-    const row =
-      resolveSettingsRow(
-        control
-      );
-
-    const parent =
-      row?.parentNode ??
-      null;
-
-    if (
-      !row ||
-      !parent ||
-      parent.querySelector?.(
-        `[data-dynamic-webs-settings-category="${definition.id}"]`
-      )
-    ) {
-      continue;
-    }
-
-    const documentObject =
-      row.ownerDocument ??
-      globalThis.document;
-
-    if (
-      typeof documentObject?.createElement !==
-        "function"
-    ) {
-      continue;
-    }
-
-    const heading =
-      documentObject.createElement(
-        "h3"
-      );
-
-    heading.textContent =
-      definition.label;
-
-    heading.className =
-      "dynamic-webs-settings-category";
-
-    heading.dataset.dynamicWebsSettingsCategory =
-      definition.id;
-
-    parent.insertBefore(
-      heading,
-      row
+    disableUnavailableLevelProviderControl(
+      root
     );
 
-    insertedCount +=
-      1;
+    return 0;
+  }
+
+  const groups =
+    createModuleSettingsGroups(
+      root
+    );
+
+  if (
+    groups.length ===
+      0
+  ) {
+    disableUnavailableLevelProviderControl(
+      root
+    );
+
+    return 0;
+  }
+
+  const firstRow =
+    groups[0].rows[0];
+
+  const parent =
+    firstRow?.parentElement ??
+    firstRow?.parentNode ??
+    null;
+
+  const documentReference =
+    firstRow?.ownerDocument ??
+    globalThis.document;
+
+  if (
+    !parent ||
+    typeof documentReference?.createElement !==
+      "function"
+  ) {
+    disableUnavailableLevelProviderControl(
+      root
+    );
+
+    return 0;
+  }
+
+  const groupState =
+    readModuleSettingsGroupState();
+
+  const container =
+    documentReference.createElement(
+      "section"
+    );
+
+  container.dataset.dynamicWebsSettingsGroups =
+    "true";
+
+  container.className =
+    "dynamic-webs-settings-groups";
+
+  applySettingsContainerStyles(
+    container
+  );
+
+  parent.insertBefore(
+    container,
+    firstRow
+  );
+
+  for (const group of groups) {
+    container.appendChild(
+      createModuleSettingsGroupElement({
+        documentReference,
+        group,
+        groupState
+      })
+    );
   }
 
   disableUnavailableLevelProviderControl(
     root
   );
 
-  activateSettingsConfigMaintenanceControls(
-    root,
-    maintenanceActions
+  return groups.length;
+}
+
+/**
+ * Resolve each configured group and its currently rendered rows.
+ *
+ * Groups with no visible rows are omitted. This naturally hides Level
+ * Awareness in Foundry v14, where the provider setting remains registered but
+ * is not rendered.
+ *
+ * @param {HTMLElement} root - SettingsConfig root.
+ * @returns {object[]} Group descriptors with DOM rows.
+ */
+function createModuleSettingsGroups(
+  root
+) {
+  const maintenanceControls =
+    root.querySelector?.(
+      SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR
+    ) ??
+    null;
+
+  return MODULE_SETTINGS_CATEGORY_DEFINITIONS
+    .map(
+      (definition) => {
+        const rows =
+          definition.settingKeys
+            .map(
+              (settingKey) =>
+                findSettingsRow(
+                  root,
+                  `${MODULE_ID}.${settingKey}`
+                )
+            )
+            .filter(
+              Boolean
+            );
+
+        if (
+          definition.includesMaintenanceControls ===
+            true &&
+          maintenanceControls &&
+          !rows.includes(
+            maintenanceControls
+          )
+        ) {
+          rows.push(
+            maintenanceControls
+          );
+        }
+
+        return {
+          ...definition,
+          rows
+        };
+      }
+    )
+    .filter(
+      (group) =>
+        group.rows.length >
+          0
+    );
+}
+
+/**
+ * Create one collapsible settings group.
+ *
+ * @param {object} options - Element creation values.
+ * @returns {HTMLElement} Details element.
+ */
+function createModuleSettingsGroupElement({
+  documentReference,
+  group,
+  groupState
+}) {
+  const details =
+    documentReference.createElement(
+      "details"
+    );
+
+  details.dataset.dynamicWebsSettingsGroup =
+    group.id;
+
+  details.className =
+    "dynamic-webs-settings-group";
+
+  details.open =
+    resolveModuleSettingsGroupOpenState(
+      group,
+      groupState
+    );
+
+  details.addEventListener?.(
+    "toggle",
+    () =>
+      persistModuleSettingsGroupOpenState(
+        group.id,
+        details.open
+      )
   );
 
-  return insertedCount;
+  applySettingsGroupStyles(
+    details
+  );
+
+  const summary =
+    documentReference.createElement(
+      "summary"
+    );
+
+  applySettingsSummaryStyles(
+    summary
+  );
+
+  const label =
+    documentReference.createElement(
+      "strong"
+    );
+
+  label.textContent =
+    group.label;
+
+  summary.appendChild(
+    label
+  );
+
+  const description =
+    documentReference.createElement(
+      "span"
+    );
+
+  description.textContent =
+    group.description;
+
+  applySettingsDescriptionStyles(
+    description
+  );
+
+  summary.appendChild(
+    description
+  );
+
+  details.appendChild(
+    summary
+  );
+
+  const body =
+    documentReference.createElement(
+      "div"
+    );
+
+  body.dataset.dynamicWebsSettingsGroupBody =
+    group.id;
+
+  applySettingsBodyStyles(
+    body
+  );
+
+  for (const row of group.rows) {
+    body.appendChild(
+      row
+    );
+  }
+
+  details.appendChild(
+    body
+  );
+
+  return details;
+}
+
+/** @returns {Record<string, boolean>} Persisted local group state. */
+function readModuleSettingsGroupState() {
+  try {
+    const rawState =
+      globalThis.localStorage?.getItem?.(
+        SETTINGS_GROUP_STATE_STORAGE_KEY
+      );
+
+    const parsedState =
+      rawState
+        ? JSON.parse(
+            rawState
+          )
+        : {};
+
+    return parsedState &&
+      typeof parsedState ===
+        "object" &&
+      !Array.isArray(
+        parsedState
+      )
+      ? parsedState
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Resolve one group's persisted or authored open state. */
+function resolveModuleSettingsGroupOpenState(
+  group,
+  groupState
+) {
+  const storedOpenState =
+    groupState?.[
+      group.id
+    ];
+
+  return typeof storedOpenState ===
+    "boolean"
+    ? storedOpenState
+    : group.open ===
+        true;
+}
+
+/** Persist one group's open state locally. */
+function persistModuleSettingsGroupOpenState(
+  groupId,
+  isOpen
+) {
+  try {
+    const groupState =
+      readModuleSettingsGroupState();
+
+    groupState[
+      groupId
+    ] =
+      isOpen ===
+      true;
+
+    globalThis.localStorage?.setItem?.(
+      SETTINGS_GROUP_STATE_STORAGE_KEY,
+      JSON.stringify(
+        groupState
+      )
+    );
+  } catch {
+    // Group state is a convenience; the settings form remains functional.
+  }
+}
+
+function applySettingsContainerStyles(
+  element
+) {
+  element.style.display =
+    "grid";
+  element.style.gap =
+    "0.75rem";
+  element.style.margin =
+    "0.5rem 0";
+}
+
+function applySettingsGroupStyles(
+  element
+) {
+  element.style.border =
+    "1px solid var(--color-border-light-primary, rgba(0, 0, 0, 0.25))";
+  element.style.borderRadius =
+    "6px";
+  element.style.padding =
+    "0.35rem 0.55rem";
+  element.style.background =
+    "var(--color-bg-option, rgba(0, 0, 0, 0.035))";
+}
+
+function applySettingsSummaryStyles(
+  element
+) {
+  element.style.cursor =
+    "pointer";
+  element.style.display =
+    "grid";
+  element.style.gap =
+    "0.15rem";
+  element.style.padding =
+    "0.2rem 0";
+}
+
+function applySettingsDescriptionStyles(
+  element
+) {
+  element.style.fontSize =
+    "0.9em";
+  element.style.opacity =
+    "0.78";
+  element.style.fontWeight =
+    "normal";
+}
+
+function applySettingsBodyStyles(
+  element
+) {
+  element.style.marginTop =
+    "0.45rem";
 }
 
 function registerDefaultSettingsCategorisationHook(
@@ -663,6 +1047,18 @@ function disableUnavailableLevelProviderControl(
   );
 
   return true;
+}
+
+function findSettingsRow(
+  root,
+  settingName
+) {
+  return resolveSettingsRow(
+    findSettingsControl(
+      root,
+      settingName
+    )
+  );
 }
 
 function findSettingsControl(
@@ -1542,3 +1938,4 @@ function createFrozenDefaultSpanWebBehaviourSettings(
     destructible
   });
 }
+

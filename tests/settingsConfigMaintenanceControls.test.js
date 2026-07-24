@@ -163,6 +163,9 @@ test("standard Settings Configuration uses DialogV2 for cleanup and uninstall co
     assert.equal(activateSettingsConfigMaintenanceControls(harness.root), false);
 
     const group = harness.getInserted();
+    assert.equal(group.className, "form-group stacked");
+    assert.equal(group.children[0].textContent, "World Maintenance");
+
     const fields = group.children[1];
     const [restoreButton, cleanupButton, uninstallButton] = fields.children;
 
@@ -265,3 +268,4 @@ test("missing DialogV2 fails safely without using browser prompt or confirm", as
     restoreGlobals(previous);
   }
 });
+
