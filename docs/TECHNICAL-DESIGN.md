@@ -138,7 +138,7 @@ Each asset has four authored wall-support anchors. Runtime fits them to the two 
 
 ### Captured-web overlays
 
-Eight transparent-white local-entanglement assets provide transient captured-web presentation. Selection is deterministic from the consumer capture key. Runtime transforms use the actual loaded texture dimensions and keep the procedural fallback visible until a finite, bounded asset display is ready.
+Eight transparent-white local-entanglement assets provide client-local transient presentation for captured webs. Selection is deterministic from the consumer capture key. Runtime transforms use the actual loaded texture dimensions and keep the procedural fallback visible until a finite, bounded asset display is ready.
 
 Captured overlays are not Scene geometry, are not indexed, are not persisted and do not mutate whole-span state.
 

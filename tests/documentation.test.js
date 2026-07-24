@@ -189,26 +189,26 @@ test("configuration documentation lists every authored density and colour profil
   }
 });
 
-test("roadmap retains completed milestones and later integration scope", async () => {
+test("roadmap records feature-complete status and maintenance-only scope", async () => {
   const roadmap = await readText("roadmap.md");
 
   for (const phrase of [
-    "Current baseline — v0.7.0",
-    "Milestone 4 — Region-aware webs — complete",
-    "Milestone 5 — Spatial index and read-only query API — complete",
-    "Milestone 6 — Web carpets — complete",
-    "Milestone 7 — Span assets and whole-span destruction — complete",
-    "Milestone 7.1 — Persistent span-destruction hardening — complete",
-    "Milestone 7.2 — Categorised GM defaults and Scene span reach — complete",
-    "Milestone 8 — Scene wall-span behaviour and derived walls — complete",
-    "Milestone 8.1 — Generic entity interaction and captured-web visuals — complete",
-    "Ambient Critters adapter and release hardening"
+    "feature complete for its intended standalone scope",
+    "There is no scheduled post-release feature roadmap",
+    "Feature-complete scope",
+    "Release work",
+    "release engineering rather than feature development",
+    "Maintenance policy",
+    "Maintaining the public API version 1 contract",
+    "New functionality should be added only when actual play or a real external integration demonstrates a missing generic capability",
+    "Dynamic Webs remains creature-agnostic",
+    "There are no committed future feature milestones",
+    "Feature history should remain in the changelog and GitHub releases"
   ]) {
     assert.ok(roadmap.includes(phrase));
   }
 
-  assert.ok(
-    roadmap.indexOf("Region-aware webs") <
-    roadmap.indexOf("Spatial index and read-only query API")
-  );
+  assert.doesNotMatch(roadmap, /## Milestone/u);
+  assert.doesNotMatch(roadmap, /implementation candidate/u);
+  assert.doesNotMatch(roadmap, /Target:\*\*/u);
 });

@@ -123,7 +123,7 @@ The documentation is split by audience:
 - `docs/PUBLIC-API.md` — stable external integration contract
 - `docs/TECHNICAL-DESIGN.md` — internal architecture and data behaviour
 - `docs/DEVELOPMENT.md` — validation, assets and release process
-- `roadmap.md` — completed milestones and future scope
+- `roadmap.md` — feature-complete status, release work and maintenance policy
 
 Do not move low-level implementation detail back into the landing-page README. New public-facing features should receive a brief plain-language README entry and detailed documentation in the appropriate file.
 

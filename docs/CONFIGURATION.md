@@ -56,7 +56,7 @@ Dynamic Webs uses Foundry's standard **Configure Settings** page. Module setting
 
 Population defaults apply only to newly added populations and Scenes whose population flag has never been configured. Existing population arrays, including an explicit empty array, remain authoritative and are not silently rewritten.
 
-A Scene with no stored population flag resolves one stable implicit population from the current world defaults. Saving Scene Configuration makes that population explicit while preserving its reserved stable ID.
+A Scene with a missing population flag resolves one stable implicit population from the current world defaults. Saving Scene Configuration makes that population explicit while preserving its reserved stable ID.
 
 An explicitly saved empty array means that the Scene intentionally generates no webs:
 

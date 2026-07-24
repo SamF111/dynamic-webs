@@ -113,7 +113,7 @@ See the [Public API documentation](docs/PUBLIC-API.md) for the complete integrat
 - [Public API](docs/PUBLIC-API.md) — supported integration methods, hooks and compatibility commitments.
 - [Technical design](docs/TECHNICAL-DESIGN.md) — deterministic geometry, rendering, spatial indexing, assets and mutable span state.
 - [Development guide](docs/DEVELOPMENT.md) — validation, asset tooling, live testing and architectural rules.
-- [Roadmap](roadmap.md) — completed milestones and future work.
+- [Roadmap](roadmap.md) — feature-complete status, release work and maintenance policy.
 
 ## AI assistance disclosure
 
