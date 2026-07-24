@@ -4,7 +4,7 @@
     "name": "Dynamic Webs procedural ground-web asset generator",
     "version": "1.0.0",
     "masterSeed": "dynamic-webs:web-ground-assets:v1",
-    "generatedAt": "2026-07-24T09:18:16.790928+00:00",
+    "generatedAt": "2026-07-24T09:57:42.275302+00:00",
     "deterministicContent": true,
     "authoredFibreStandard": "span-visibility-v1",
     "topology": "irregular-radial-sheet"
