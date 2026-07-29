@@ -10,6 +10,10 @@ import {
   sweptMovementIntersectsPolyline
 } from "../scripts/interactions/spanWebMovementGeometry.js";
 
+import {
+  WebSpatialIndex
+} from "../scripts/spatial/WebSpatialIndex.js";
+
 test("swept movement detects crossing and near-miss distances", () => {
   assert.equal(segmentToSegmentDistance(
     { x: 0, y: 5 }, { x: 10, y: 5 },
@@ -109,4 +113,242 @@ test("movement service supports generic functional web categories while preservi
   assert.deepEqual(hits.map((hit) => hit.webId), ["ground-a"]);
   assert.deepEqual(queries[0].options.categories, ["ground"]);
   assert.deepEqual(queries[0].options.strandKinds, ["capture"]);
+});
+
+
+test("movement service uses the internal strand visitor when available", () => {
+  const calls = [];
+
+  const runtime = {
+    queryStrands() {
+      throw new Error(
+        "public strand snapshots should not be materialised"
+      );
+    },
+
+    visitStrands(
+      bounds,
+      options,
+      visitor
+    ) {
+      calls.push({
+        bounds,
+        options
+      });
+
+      visitor({
+        webId:
+          "span-fast",
+        strandId:
+          "span-fast:s1",
+        sceneId:
+          "scene",
+        populationId:
+          "population",
+        levelId:
+          "level-0",
+        elevationBand: {
+          bottom:
+            0,
+          top:
+            9
+        },
+        webKind:
+          "wall-span",
+        points:
+          [
+            {
+              x:
+                5,
+              y:
+                -5
+            },
+            {
+              x:
+                5,
+              y:
+                5
+            }
+          ],
+        interactionWidthPx:
+          2,
+        intact:
+          true
+      });
+
+      return 1;
+    }
+  };
+
+  const service =
+    new WebMovementInteractionService({
+      webRuntimeService:
+        runtime
+    });
+
+  const hits =
+    service.queryMovement({
+      from: {
+        x:
+          0,
+        y:
+          0
+      },
+      to: {
+        x:
+          10,
+        y:
+          0
+      },
+      levelId:
+        "level-0",
+      collisionRadiusPx:
+        0
+    });
+
+  assert.deepEqual(
+    hits.map(
+      hit =>
+        hit.webId
+    ),
+    [
+      "span-fast"
+    ]
+  );
+
+  assert.equal(
+    calls.length,
+    1
+  );
+
+  assert.equal(
+    calls[0].options.intactOnly,
+    true
+  );
+});
+
+test("spatial strand visitor filters indexed entries without public snapshots", () => {
+  const index =
+    new WebSpatialIndex({
+      cellSizePx:
+        50
+    });
+
+  index.rebuild(
+    [
+      {
+        id:
+          "span-indexed",
+        sceneId:
+          "scene",
+        populationId:
+          "population",
+        levelId:
+          "level-0",
+        elevationBand: {
+          bottom:
+            0,
+          top:
+            9
+        },
+        kind:
+          "wall-span",
+        bounds: {
+          x:
+            0,
+          y:
+            -10,
+          width:
+            20,
+          height:
+            20
+        },
+        strands:
+          [
+            {
+              id:
+                "span-indexed:s1",
+              localId:
+                "s1",
+              kind:
+                "capture",
+              collisionWidthPx:
+                2,
+              points:
+                [
+                  {
+                    x:
+                      5,
+                    y:
+                      -5
+                  },
+                  {
+                    x:
+                      5,
+                    y:
+                      5
+                  }
+                ]
+            }
+          ],
+        perches:
+          []
+      }
+    ],
+    {
+      sceneId:
+        "scene",
+      generationId:
+        1
+    }
+  );
+
+  const visited =
+    [];
+
+  const count =
+    index.visitStrands(
+      {
+        x:
+          0,
+        y:
+          -1,
+        width:
+          10,
+        height:
+          2
+      },
+      {
+        levelId:
+          "level-0",
+        categories:
+          [
+            "wall-span"
+          ],
+        strandKinds:
+          [
+            "capture"
+          ],
+        intactOnly:
+          true,
+        limit:
+          100
+      },
+      strand =>
+        visited.push(
+          strand.strandId
+        )
+    );
+
+  assert.equal(
+    count,
+    1
+  );
+
+  assert.deepEqual(
+    visited,
+    [
+      "span-indexed:s1"
+    ]
+  );
 });

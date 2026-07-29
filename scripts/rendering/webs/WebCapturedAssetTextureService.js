@@ -10,6 +10,9 @@ import {
   applyWebCapturedAssetTransform
 } from "./webCapturedAssetTransform.js";
 
+const LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER =
+  0.5;
+
 /** Client-local loader for transient captured-web overlay assets. */
 export class WebCapturedAssetTextureService {
   constructor({
@@ -149,11 +152,19 @@ export class WebCapturedAssetTextureService {
       presentation
     });
 
+    const fallbackInitialAlpha =
+      resolveDisplayAlpha(
+        fallbackDisplay
+      );
+
     if (
       fallbackDisplay
     ) {
       fallbackDisplay.visible =
         true;
+
+      fallbackDisplay.alpha =
+        fallbackInitialAlpha;
     }
 
     const reveal =
@@ -192,8 +203,19 @@ export class WebCapturedAssetTextureService {
             fallbackDisplay.destroyed !==
               true
           ) {
+            /*
+             * Retain a subdued procedural backing after the asynchronous WebP
+             * resolves. A successfully loaded texture object does not prove
+             * that its transparent pixels are perceptible in the current
+             * Scene, and hiding the fallback caused captures to appear briefly
+             * and then vanish. The asset remains authoritative above it.
+             */
             fallbackDisplay.visible =
-              false;
+              true;
+
+            fallbackDisplay.alpha =
+              fallbackInitialAlpha *
+              LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER;
           }
 
           display.dynamicWebsCapturedAssetLoaded =
@@ -211,6 +233,9 @@ export class WebCapturedAssetTextureService {
           ) {
             fallbackDisplay.visible =
               true;
+
+            fallbackDisplay.alpha =
+              fallbackInitialAlpha;
           }
 
           display.dynamicWebsCapturedAssetLoaded =
@@ -463,6 +488,25 @@ export class WebCapturedAssetTextureService {
   }
 }
 
+function resolveDisplayAlpha(
+  display
+) {
+  const alpha =
+    Number(
+      display?.alpha
+    );
+
+  return Number.isFinite(
+    alpha
+  )
+    ? clamp(
+        alpha,
+        0,
+        1
+      )
+    : 1;
+}
+
 function normaliseTint(
   value
 ) {
@@ -682,4 +726,5 @@ function clamp(
     )
   );
 }
+
 

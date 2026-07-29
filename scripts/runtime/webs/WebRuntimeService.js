@@ -1530,6 +1530,25 @@ export class WebRuntimeService {
     );
   }
 
+  /**
+   * Visit indexed strand entries for internal interaction services.
+   *
+   * Unlike queryStrands(), this avoids cloning and freezing geometry that is
+   * consumed immediately inside Dynamic Webs. It is intentionally not exposed
+   * through the public module API.
+   */
+  visitStrands(
+    bounds,
+    options,
+    visitor
+  ) {
+    return this.spatialIndex.visitStrands(
+      bounds,
+      options,
+      visitor
+    );
+  }
+
   /** Find metadata- and spatially-compatible web blueprints. */
   findCompatibleWebs(options = {}) {
     return this.spatialIndex.findCompatibleWebs(

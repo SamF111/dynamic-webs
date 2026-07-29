@@ -379,7 +379,7 @@ test(
 
 
 test(
-  "captured WebP display uses texture-pixel dimensions and only hides the procedural fallback after a valid transform",
+  "captured WebP display uses texture-pixel dimensions and retains a subdued procedural backing",
   () => {
     const previousCanvas =
       globalThis.canvas;
@@ -485,7 +485,12 @@ test(
 
       assert.equal(
         fallback.visible,
-        false
+        true
+      );
+
+      assert.equal(
+        fallback.alpha,
+        0.5
       );
 
       assert.equal(
@@ -761,3 +766,4 @@ test(
     }
   }
 );
+

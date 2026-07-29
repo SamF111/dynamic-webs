@@ -228,6 +228,108 @@ export class WebSpatialIndex {
     return limited;
   }
 
+  /**
+   * Visit matching strand entries without creating public deep-frozen copies.
+   *
+   * This is an internal runtime fast path for services that immediately test
+   * indexed geometry. Public API consumers continue to use queryStrands().
+   *
+   * @param {object} bounds - Query rectangle.
+   * @param {object} options - Spatial filters.
+   * @param {Function} visitor - Called once for each matching internal entry.
+   * @returns {number} Number of visited entries.
+   */
+  visitStrands(
+    bounds,
+    options = {},
+    visitor
+  ) {
+    if (
+      typeof visitor !==
+        "function"
+    ) {
+      throw new TypeError(
+        "Dynamic Webs | WebSpatialIndex.visitStrands() requires a visitor function."
+      );
+    }
+
+    const query =
+      normaliseWebSpatialQueryOptions(
+        options,
+        {
+          bounds,
+          requireBounds:
+            true
+        }
+      );
+
+    const candidateIds =
+      this.#collectCellCandidates(
+        this.strandCells,
+        query.bounds
+      );
+
+    const matches =
+      [];
+
+    for (
+      const id of
+      candidateIds
+    ) {
+      const entry =
+        this.strandEntries.get(
+          id
+        );
+
+      if (
+        !strandEntryMatchesSpatialQuery(
+          entry,
+          query
+        ) ||
+        !spatialBoundsOverlap(
+          entry.interactionBounds,
+          query.bounds
+        )
+      ) {
+        continue;
+      }
+
+      matches.push(
+        entry
+      );
+    }
+
+    matches.sort(
+      compareInternalStrandEntries
+    );
+
+    const visitCount =
+      Math.min(
+        matches.length,
+        query.limit
+      );
+
+    for (
+      let index = 0;
+      index <
+        visitCount;
+      index +=
+        1
+    ) {
+      visitor(
+        matches[index]
+      );
+    }
+
+    this.#recordQuery(
+      "strands",
+      candidateIds.size,
+      visitCount
+    );
+
+    return visitCount;
+  }
+
   /** Find web blueprints compatible with metadata and optional spatial filters. */
   findCompatibleWebs(options = {}) {
     const query = normaliseWebSpatialQueryOptions(options);
@@ -461,6 +563,37 @@ export class WebSpatialIndex {
     this.strandCells = new Map();
     this.perchCells = new Map();
   }
+}
+
+function compareInternalStrandEntries(
+  first,
+  second
+) {
+  const webComparison =
+    String(
+      first?.webId ??
+      ""
+    ).localeCompare(
+      String(
+        second?.webId ??
+        ""
+      )
+    );
+
+  if (webComparison !==
+    0) {
+    return webComparison;
+  }
+
+  return String(
+    first?.strandId ??
+    ""
+  ).localeCompare(
+    String(
+      second?.strandId ??
+      ""
+    )
+  );
 }
 
 function createWebMetadata(web) {
