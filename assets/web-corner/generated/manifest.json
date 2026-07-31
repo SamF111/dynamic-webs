@@ -4,7 +4,7 @@
     "name": "Dynamic Webs procedural corner-web asset generator",
     "version": "1.4.0",
     "masterSeed": "dynamic-webs:web-corner-assets:v3",
-    "generatedAt": "2026-07-29T06:17:11.675562+00:00",
+    "generatedAt": "2026-07-31T19:12:33.208929+00:00",
     "deterministicContent": true,
     "authoredFibreStandard": "span-visibility-v1",
     "topology": "distributed-sheet"
