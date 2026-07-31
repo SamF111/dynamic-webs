@@ -20,6 +20,19 @@ import {
 
 const DEFAULT_CELL_SIZE_PX = 200;
 
+const STRAND_VISIT_DIAGNOSTIC_COUNTER_NAMES =
+  Object.freeze([
+    "metadataRejectedCandidateCount",
+    "categoryRejectedCandidateCount",
+    "levelRejectedCandidateCount",
+    "elevationRejectedCandidateCount",
+    "intactStateRejectedCandidateCount",
+    "regionRejectedCandidateCount",
+    "boundsRejectedCandidateCount",
+    "duplicateRejectedCandidateCount",
+    "acceptedCandidateCount"
+  ]);
+
 /**
  * Runtime-only uniform-grid index for immutable generated web geometry.
  *
@@ -135,7 +148,7 @@ export class WebSpatialIndex {
     return entry ? createWebResult(entry, null) : null;
   }
 
-  /** Update one web and all owned geometry records without rebuilding cells. */
+  /** Update one web and its owned geometry without scanning unrelated entries. */
   setWebIntact(webId, intact) {
     const id = normaliseOptionalIdentifier(webId);
     const entry = id ? this.webEntries.get(id) ?? null : null;
@@ -146,12 +159,17 @@ export class WebSpatialIndex {
 
     entry.intact = nextIntact;
 
-    for (const strandEntry of this.strandEntries.values()) {
-      if (strandEntry.webId === id) strandEntry.intact = nextIntact;
+    for (const strandId of this.strandIdsByWebId.get(id) ?? []) {
+      const strandEntry = this.strandEntries.get(strandId);
+      if (!strandEntry) continue;
+
+      strandEntry.intact = nextIntact;
+      this.#setStrandInIntactPartition(strandEntry, nextIntact);
     }
 
-    for (const perchEntry of this.perchEntries.values()) {
-      if (perchEntry.webId === id) perchEntry.intact = nextIntact;
+    for (const perchEntryId of this.perchEntryIdsByWebId.get(id) ?? []) {
+      const perchEntry = this.perchEntries.get(perchEntryId);
+      if (perchEntry) perchEntry.intact = nextIntact;
     }
 
     this.snapshotRevision += 1;
@@ -185,7 +203,7 @@ export class WebSpatialIndex {
       height: 0
     }, query.maximumDistancePx);
 
-    const candidateIds = this.#collectCellCandidates(this.strandCells, queryBounds);
+    const candidateIds = this.#collectStrandCellCandidates(query, queryBounds);
     const results = [];
 
     for (const id of candidateIds) {
@@ -212,7 +230,7 @@ export class WebSpatialIndex {
       requireBounds: true
     });
 
-    const candidateIds = this.#collectCellCandidates(this.strandCells, query.bounds);
+    const candidateIds = this.#collectStrandCellCandidates(query, query.bounds);
     const results = [];
 
     for (const id of candidateIds) {
@@ -242,7 +260,8 @@ export class WebSpatialIndex {
   visitStrands(
     bounds,
     options = {},
-    visitor
+    visitor,
+    diagnostics = null
   ) {
     if (
       typeof visitor !==
@@ -252,6 +271,16 @@ export class WebSpatialIndex {
         "Dynamic Webs | WebSpatialIndex.visitStrands() requires a visitor function."
       );
     }
+
+    const diagnosticActive =
+      diagnostics &&
+      typeof diagnostics ===
+        "object";
+
+    let phaseStartedAt =
+      diagnosticActive
+        ? now()
+        : 0;
 
     const query =
       normaliseWebSpatialQueryOptions(
@@ -263,40 +292,115 @@ export class WebSpatialIndex {
         }
       );
 
-    const candidateIds =
-      this.#collectCellCandidates(
-        this.strandCells,
-        query.bounds
+    if (diagnosticActive) {
+      diagnostics.spatialNormalisationMs =
+        now() -
+        phaseStartedAt;
+
+      phaseStartedAt =
+        now();
+    }
+
+    if (diagnosticActive) {
+      initialiseStrandVisitDiagnosticCounters(
+        diagnostics
       );
+    }
+
+    const candidateIds =
+      this.#collectStrandCellCandidates(
+        query,
+        query.bounds,
+        diagnosticActive
+          ? diagnostics
+          : null
+      );
+
+    if (diagnosticActive) {
+      diagnostics.spatialCandidateCollectionMs =
+        now() -
+        phaseStartedAt;
+
+      diagnostics.cellCandidateCount =
+        candidateIds.size;
+
+      phaseStartedAt =
+        now();
+    }
 
     const matches =
       [];
 
-    for (
-      const id of
-      candidateIds
-    ) {
-      const entry =
-        this.strandEntries.get(
-          id
+    if (!diagnosticActive) {
+      for (
+        const id of
+        candidateIds
+      ) {
+        const entry =
+          this.strandEntries.get(
+            id
+          );
+
+        if (
+          !strandEntryMatchesSpatialQuery(
+            entry,
+            query
+          ) ||
+          !spatialBoundsOverlap(
+            entry.interactionBounds,
+            query.bounds
+          )
+        ) {
+          continue;
+        }
+
+        matches.push(
+          entry
+        );
+      }
+    } else {
+      for (
+        const id of
+        candidateIds
+      ) {
+        const entry =
+          this.strandEntries.get(
+            id
+          );
+
+        if (
+          !strandEntryMatchesSpatialQuery(
+            entry,
+            query,
+            diagnostics
+          )
+        ) {
+          continue;
+        }
+
+        if (
+          !spatialBoundsOverlap(
+            entry.interactionBounds,
+            query.bounds
+          )
+        ) {
+          incrementSpatialDiagnosticCounter(
+            diagnostics,
+            "boundsRejectedCandidateCount"
+          );
+
+          continue;
+        }
+
+        incrementSpatialDiagnosticCounter(
+          diagnostics,
+          "acceptedCandidateCount"
         );
 
-      if (
-        !strandEntryMatchesSpatialQuery(
-          entry,
-          query
-        ) ||
-        !spatialBoundsOverlap(
-          entry.interactionBounds,
-          query.bounds
-        )
-      ) {
-        continue;
+        matches.push(
+          entry
+        );
       }
-
-      matches.push(
-        entry
-      );
     }
 
     matches.sort(
@@ -308,6 +412,15 @@ export class WebSpatialIndex {
         matches.length,
         query.limit
       );
+
+    if (diagnosticActive) {
+      diagnostics.spatialCandidateFilterSortMs =
+        now() -
+        phaseStartedAt;
+
+      diagnostics.candidateStrandVisitCount =
+        visitCount;
+    }
 
     for (
       let index = 0;
@@ -321,11 +434,22 @@ export class WebSpatialIndex {
       );
     }
 
+    phaseStartedAt =
+      diagnosticActive
+        ? now()
+        : 0;
+
     this.#recordQuery(
       "strands",
       candidateIds.size,
       visitCount
     );
+
+    if (diagnosticActive) {
+      diagnostics.spatialTelemetryMs =
+        now() -
+        phaseStartedAt;
+    }
 
     return visitCount;
   }
@@ -434,9 +558,29 @@ export class WebSpatialIndex {
         perches: this.perchEntries.size,
         webCells: this.webCells.size,
         strandCells: this.strandCells.size,
+        strandWebKindPartitions:
+          this.strandCellsByWebKind.size,
+        strandWebKindCells:
+          countPartitionCells(
+            this.strandCellsByWebKind
+          ),
         perchCells: this.perchCells.size,
         webCellReferences: countCellReferences(this.webCells),
         strandCellReferences: countCellReferences(this.strandCells),
+        strandWebKindCellReferences:
+          countPartitionCellReferences(
+            this.strandCellsByWebKind
+          ),
+        intactStrandWebKindPartitions:
+          this.intactStrandCellsByWebKind.size,
+        intactStrandWebKindCells:
+          countPartitionCells(
+            this.intactStrandCellsByWebKind
+          ),
+        intactStrandWebKindCellReferences:
+          countPartitionCellReferences(
+            this.intactStrandCellsByWebKind
+          ),
         perchCellReferences: countCellReferences(this.perchCells)
       },
       queries: {
@@ -464,6 +608,8 @@ export class WebSpatialIndex {
     };
 
     this.webEntries.set(id, entry);
+    this.strandIdsByWebId.set(id, []);
+    this.perchEntryIdsByWebId.set(id, []);
     insertIntoCells(this.webCells, id, createSpatialCellKeys(bounds, this.cellSizePx));
 
     for (const strand of Array.isArray(web?.strands) ? web.strands : []) {
@@ -503,15 +649,49 @@ export class WebSpatialIndex {
       geometryBounds,
       interactionBounds,
       interactionWidthPx,
+      cellKeys: Object.freeze(
+        createSpatialCellKeys(
+          interactionBounds,
+          this.cellSizePx
+        )
+      ),
       intact: true
     };
 
     this.strandEntries.set(strandId, entry);
+    this.strandIdsByWebId.get(metadata.id)?.push(strandId);
+
+    const cellKeys =
+      entry.cellKeys;
+
     insertIntoCells(
       this.strandCells,
       strandId,
-      createSpatialCellKeys(interactionBounds, this.cellSizePx)
+      cellKeys
     );
+
+    let webKindCells =
+      this.strandCellsByWebKind.get(
+        entry.webKind
+      );
+
+    if (!webKindCells) {
+      webKindCells =
+        new Map();
+
+      this.strandCellsByWebKind.set(
+        entry.webKind,
+        webKindCells
+      );
+    }
+
+    insertIntoCells(
+      webKindCells,
+      strandId,
+      cellKeys
+    );
+
+    this.#setStrandInIntactPartition(entry, true);
   }
 
   #indexPerch(web, perch, metadata) {
@@ -529,6 +709,7 @@ export class WebSpatialIndex {
     };
 
     this.perchEntries.set(id, entry);
+    this.perchEntryIdsByWebId.get(metadata.id)?.push(id);
     insertIntoCells(
       this.perchCells,
       id,
@@ -536,12 +717,166 @@ export class WebSpatialIndex {
     );
   }
 
-  #collectCellCandidates(cells, bounds) {
-    const ids = new Set();
-    for (const key of createSpatialCellKeys(bounds, this.cellSizePx)) {
-      for (const id of cells.get(key) ?? []) ids.add(id);
+  /**
+   * Collect strand candidates from the complete grid, web-kind partitions,
+   * or the intact-only web-kind partitions selected by one normalised query.
+   *
+   * The hot movement path supplies both categories and intactOnly, so neither
+   * unrelated categories nor destroyed strands enter metadata filtering.
+   */
+  #collectStrandCellCandidates(
+    query,
+    bounds,
+    diagnostics = null
+  ) {
+    const webKinds =
+      query?.webKinds;
+
+    const hasWebKinds =
+      webKinds instanceof Set &&
+      webKinds.size > 0;
+
+    if (query?.intactOnly !== true && !hasWebKinds) {
+      return this.#collectCellCandidates(
+        this.strandCells,
+        bounds,
+        diagnostics
+      );
     }
+
+    const partitions =
+      query?.intactOnly === true
+        ? this.intactStrandCellsByWebKind
+        : this.strandCellsByWebKind;
+
+    const selectedWebKinds =
+      hasWebKinds
+        ? webKinds
+        : partitions.keys();
+
+    const ids =
+      new Set();
+
+    for (const webKind of selectedWebKinds) {
+      const cells =
+        partitions.get(webKind);
+
+      if (!cells) continue;
+
+      this.#collectCellCandidatesInto(
+        cells,
+        bounds,
+        ids,
+        diagnostics
+      );
+    }
+
     return ids;
+  }
+
+  #setStrandInIntactPartition(
+    entry,
+    intact
+  ) {
+    if (!entry) return;
+
+    let cells =
+      this.intactStrandCellsByWebKind.get(
+        entry.webKind
+      );
+
+    if (intact === true) {
+      if (!cells) {
+        cells = new Map();
+        this.intactStrandCellsByWebKind.set(
+          entry.webKind,
+          cells
+        );
+      }
+
+      insertIntoCells(
+        cells,
+        entry.strandId,
+        entry.cellKeys
+      );
+      return;
+    }
+
+    if (!cells) return;
+
+    removeFromCells(
+      cells,
+      entry.strandId,
+      entry.cellKeys
+    );
+
+    if (cells.size === 0) {
+      this.intactStrandCellsByWebKind.delete(
+        entry.webKind
+      );
+    }
+  }
+
+  #collectCellCandidates(
+    cells,
+    bounds,
+    diagnostics = null
+  ) {
+    const ids =
+      new Set();
+
+    this.#collectCellCandidatesInto(
+      cells,
+      bounds,
+      ids,
+      diagnostics
+    );
+
+    return ids;
+  }
+
+  #collectCellCandidatesInto(
+    cells,
+    bounds,
+    ids,
+    diagnostics = null
+  ) {
+    const cellKeys =
+      createSpatialCellKeys(
+        bounds,
+        this.cellSizePx
+      );
+
+    for (
+      const key of
+      cellKeys
+    ) {
+      for (
+        const id of
+        cells.get(
+          key
+        ) ??
+          []
+      ) {
+        if (
+          diagnostics &&
+          ids.has(
+            id
+          )
+        ) {
+          incrementSpatialDiagnosticCounter(
+            diagnostics,
+            "duplicateRejectedCandidateCount"
+          );
+
+          continue;
+        }
+
+        ids.add(
+          id
+        );
+      }
+    }
   }
 
   #recordQuery(kind, candidateCount, resultCount) {
@@ -561,8 +896,63 @@ export class WebSpatialIndex {
     this.perchEntries = new Map();
     this.webCells = new Map();
     this.strandCells = new Map();
+    this.strandCellsByWebKind = new Map();
+    this.intactStrandCellsByWebKind = new Map();
+    this.strandIdsByWebId = new Map();
+    this.perchEntryIdsByWebId = new Map();
     this.perchCells = new Map();
   }
+}
+
+function initialiseStrandVisitDiagnosticCounters(
+  diagnostics
+) {
+  for (
+    const counterName of
+    STRAND_VISIT_DIAGNOSTIC_COUNTER_NAMES
+  ) {
+    diagnostics[
+      counterName
+    ] =
+      0;
+  }
+}
+
+function incrementSpatialDiagnosticCounter(
+  diagnostics,
+  counterName,
+  amount = 1
+) {
+  if (
+    !diagnostics ||
+    typeof diagnostics !==
+      "object" ||
+    typeof counterName !==
+      "string"
+  ) {
+    return;
+  }
+
+  const current =
+    Number(
+      diagnostics[
+        counterName
+      ]
+    );
+
+  diagnostics[
+    counterName
+  ] =
+    (
+      Number.isFinite(
+        current
+      ) &&
+      current >
+        0
+        ? current
+        : 0
+    ) +
+    amount;
 }
 
 function compareInternalStrandEntries(
@@ -669,9 +1059,55 @@ function insertIntoCells(cells, id, keys) {
   }
 }
 
+function removeFromCells(cells, id, keys) {
+  for (const key of keys) {
+    const values = cells.get(key);
+    if (!values) continue;
+
+    values.delete(id);
+    if (values.size === 0) cells.delete(key);
+  }
+}
+
 function countCellReferences(cells) {
   let total = 0;
   for (const values of cells.values()) total += values.size;
+  return total;
+}
+
+function countPartitionCells(
+  partitions
+) {
+  let total =
+    0;
+
+  for (
+    const cells of
+    partitions.values()
+  ) {
+    total +=
+      cells.size;
+  }
+
+  return total;
+}
+
+function countPartitionCellReferences(
+  partitions
+) {
+  let total =
+    0;
+
+  for (
+    const cells of
+    partitions.values()
+  ) {
+    total +=
+      countCellReferences(
+        cells
+      );
+  }
+
   return total;
 }
 

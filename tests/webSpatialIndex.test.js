@@ -213,6 +213,424 @@ test("compatible web and perch queries support metadata and elevation filters", 
   assert.equal(perches[0].distancePx, 0);
 });
 
+test("category-filtered strand queries collect only matching web-kind partitions", () => {
+  const index =
+    new WebSpatialIndex({
+      cellSizePx:
+        100
+    });
+
+  index.rebuild([
+    createWeb({
+      id:
+        "span",
+      kind:
+        "wall-span",
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "ground",
+      kind:
+        "ground",
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "corner",
+      kind:
+        "wall-corner",
+      x:
+        0,
+      y:
+        0
+    })
+  ]);
+
+  const spanOnly =
+    index.queryStrands(
+      {
+        x:
+          -5,
+        y:
+          -5,
+        width:
+          60,
+        height:
+          40
+      },
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    );
+
+  assert.deepEqual(
+    spanOnly.map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span"
+    ]
+  );
+
+  assert.equal(
+    index.createDiagnosticSnapshot()
+      .queries.last.candidateCount,
+    1
+  );
+
+  const twoKinds =
+    index.queryStrands(
+      {
+        x:
+          -5,
+        y:
+          -5,
+        width:
+          60,
+        height:
+          40
+      },
+      {
+        categories: [
+          "wall-span",
+          "ground"
+        ],
+        limit:
+          20
+      }
+    );
+
+  assert.deepEqual(
+    twoKinds.map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "ground",
+      "span"
+    ]
+  );
+
+  assert.equal(
+    index.createDiagnosticSnapshot()
+      .queries.last.candidateCount,
+    2
+  );
+
+  const unfiltered =
+    index.queryStrands(
+      {
+        x:
+          -5,
+        y:
+          -5,
+        width:
+          60,
+        height:
+          40
+      },
+      {
+        limit:
+          20
+      }
+    );
+
+  assert.equal(
+    unfiltered.length,
+    3
+  );
+
+  const diagnostics =
+    index.createDiagnosticSnapshot();
+
+  assert.equal(
+    diagnostics.queries.last.candidateCount,
+    3
+  );
+
+  assert.equal(
+    diagnostics.counts.strandWebKindPartitions,
+    3
+  );
+
+  assert.equal(
+    diagnostics.counts.strandWebKindCellReferences,
+    diagnostics.counts.strandCellReferences
+  );
+
+  assert.equal(
+    diagnostics.counts.intactStrandWebKindCellReferences,
+    diagnostics.counts.strandWebKindCellReferences
+  );
+});
+
+test("intact-only strand partitions update incrementally across destroy and restore", () => {
+  const index =
+    new WebSpatialIndex({
+      cellSizePx:
+        100
+    });
+
+  index.rebuild([
+    createWeb({
+      id:
+        "span-a",
+      kind:
+        "wall-span",
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "span-b",
+      kind:
+        "wall-span",
+      x:
+        0,
+      y:
+        0
+    })
+  ]);
+
+  const bounds = {
+    x:
+      -5,
+    y:
+      -5,
+    width:
+      60,
+    height:
+      40
+  };
+
+  assert.deepEqual(
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    ).map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span-a",
+      "span-b"
+    ]
+  );
+
+  assert.equal(
+    index.setWebIntact(
+      "span-a",
+      false
+    ),
+    true
+  );
+
+  assert.deepEqual(
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    ).map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span-b"
+    ]
+  );
+
+  assert.equal(
+    index.createDiagnosticSnapshot()
+      .queries.last.candidateCount,
+    1
+  );
+
+  const includingDestroyed =
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        intactOnly:
+          false,
+        limit:
+          20
+      }
+    );
+
+  assert.deepEqual(
+    includingDestroyed.map(
+      strand =>
+        [
+          strand.webId,
+          strand.intact
+        ]
+    ),
+    [
+      [
+        "span-a",
+        false
+      ],
+      [
+        "span-b",
+        true
+      ]
+    ]
+  );
+
+  assert.equal(
+    index.createDiagnosticSnapshot()
+      .queries.last.candidateCount,
+    2
+  );
+
+  assert.deepEqual(
+    index.findPerches({
+      bounds,
+      category:
+        "wall-span"
+    }).map(
+      perch =>
+        perch.webId
+    ),
+    [
+      "span-b"
+    ]
+  );
+
+  const destroyedDiagnostics =
+    index.createDiagnosticSnapshot();
+
+  assert.equal(
+    destroyedDiagnostics.counts.intactWebs,
+    1
+  );
+
+  assert.equal(
+    destroyedDiagnostics.counts.destroyedWebs,
+    1
+  );
+
+  assert.equal(
+    destroyedDiagnostics.counts.intactStrandWebKindCellReferences <
+      destroyedDiagnostics.counts.strandWebKindCellReferences,
+    true
+  );
+
+  assert.equal(
+    index.setWebIntact(
+      "span-a",
+      true
+    ),
+    true
+  );
+
+  assert.deepEqual(
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    ).map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span-a",
+      "span-b"
+    ]
+  );
+
+  const restoredDiagnostics =
+    index.createDiagnosticSnapshot();
+
+  assert.equal(
+    restoredDiagnostics.counts.intactStrandWebKindCellReferences,
+    restoredDiagnostics.counts.strandWebKindCellReferences
+  );
+
+  assert.equal(
+    index.applyDestroyedWebIds([
+      "span-b"
+    ]),
+    true
+  );
+
+  assert.deepEqual(
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    ).map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span-a"
+    ]
+  );
+
+  assert.equal(
+    index.applyDestroyedWebIds([]),
+    true
+  );
+
+  assert.deepEqual(
+    index.queryStrands(
+      bounds,
+      {
+        categories: [
+          "wall-span"
+        ],
+        limit:
+          20
+      }
+    ).map(
+      strand =>
+        strand.webId
+    ),
+    [
+      "span-a",
+      "span-b"
+    ]
+  );
+});
+
 test("presentation snapshot refresh does not rebuild spatial geometry", () => {
   const index = new WebSpatialIndex({ cellSizePx: 50 });
   const web = createWeb({ id: "web", colour: 0xffffff });
@@ -244,3 +662,352 @@ function deepFreeze(value) {
   return Object.freeze(value);
 }
 
+test("internal strand visits expose aggregate diagnostic timing and counts", () => {
+  const index =
+    new WebSpatialIndex({
+      cellSizePx:
+        50
+    });
+
+  index.rebuild([
+    createWeb({
+      id:
+        "diagnostic-web",
+      kind:
+        "wall-span",
+      strandKind:
+        "capture",
+      x:
+        0,
+      y:
+        0
+    })
+  ]);
+
+  const diagnostics = {};
+
+  const visited =
+    index.visitStrands(
+      {
+        x:
+          0,
+        y:
+          0,
+        width:
+          40,
+        height:
+          20
+      },
+      {
+        categories: [
+          "wall-span"
+        ],
+        intactOnly:
+          true,
+        limit:
+          100
+      },
+      () => {},
+      diagnostics
+    );
+
+  assert.equal(
+    visited,
+    1
+  );
+
+  assert.equal(
+    diagnostics.cellCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.candidateStrandVisitCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.metadataRejectedCandidateCount,
+    0
+  );
+
+  assert.equal(
+    diagnostics.boundsRejectedCandidateCount,
+    0
+  );
+
+  assert.equal(
+    diagnostics.acceptedCandidateCount,
+    1
+  );
+
+  for (const key of [
+    "spatialNormalisationMs",
+    "spatialCandidateCollectionMs",
+    "spatialCandidateFilterSortMs",
+    "spatialTelemetryMs"
+  ]) {
+    assert.equal(
+      Number.isFinite(
+        diagnostics[
+          key
+        ]
+      ),
+      true
+    );
+
+    assert.equal(
+      diagnostics[
+        key
+      ] >=
+        0,
+      true
+    );
+  }
+});
+
+test("internal strand diagnostics classify candidates remaining after static partitions", () => {
+  const index =
+    new WebSpatialIndex({
+      cellSizePx:
+        200
+    });
+
+  index.rebuild([
+    createWeb({
+      id:
+        "accepted",
+      kind:
+        "wall-span",
+      levelId:
+        "level-0",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "category-rejected",
+      kind:
+        "ground",
+      levelId:
+        "level-0",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "level-rejected",
+      kind:
+        "wall-span",
+      levelId:
+        "level-10",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "elevation-rejected",
+      kind:
+        "wall-span",
+      levelId:
+        "level-0",
+      bottom:
+        10,
+      top:
+        19,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "region-rejected",
+      kind:
+        "wall-span",
+      levelId:
+        "level-0",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "blocked"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "intact-rejected",
+      kind:
+        "wall-span",
+      levelId:
+        "level-0",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        0,
+      y:
+        0
+    }),
+    createWeb({
+      id:
+        "bounds-rejected",
+      kind:
+        "wall-span",
+      levelId:
+        "level-0",
+      bottom:
+        0,
+      top:
+        9,
+      regionTags: [
+        "allowed"
+      ],
+      x:
+        100,
+      y:
+        0
+    })
+  ]);
+
+  index.setWebIntact(
+    "intact-rejected",
+    false
+  );
+
+  const diagnostics =
+    {};
+
+  const visited =
+    index.visitStrands(
+      {
+        x:
+          -5,
+        y:
+          -5,
+        width:
+          25,
+        height:
+          25
+      },
+      {
+        categories: [
+          "wall-span"
+        ],
+        levelId:
+          "level-0",
+        elevation:
+          5,
+        regionTag:
+          "allowed",
+        intactOnly:
+          true,
+        limit:
+          100
+      },
+      () => {},
+      diagnostics
+    );
+
+  assert.equal(
+    diagnostics.cellCandidateCount,
+    5
+  );
+
+  assert.equal(
+    diagnostics.metadataRejectedCandidateCount,
+    3
+  );
+
+  assert.equal(
+    diagnostics.categoryRejectedCandidateCount,
+    0
+  );
+
+  assert.equal(
+    diagnostics.levelRejectedCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.elevationRejectedCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.regionRejectedCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.intactStateRejectedCandidateCount,
+    0
+  );
+
+  assert.equal(
+    diagnostics.boundsRejectedCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.acceptedCandidateCount,
+    1
+  );
+
+  assert.equal(
+    diagnostics.metadataRejectedCandidateCount +
+      diagnostics.boundsRejectedCandidateCount +
+      diagnostics.acceptedCandidateCount,
+    diagnostics.cellCandidateCount
+  );
+
+  assert.equal(
+    diagnostics.duplicateRejectedCandidateCount >
+      0,
+    true
+  );
+
+  assert.equal(
+    visited,
+    1
+  );
+});

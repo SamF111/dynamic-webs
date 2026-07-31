@@ -1898,6 +1898,7 @@ scripts/simulation/webs/webLevelGenerationContext.js
 
 scripts/spatial/WebSpatialIndex.js
   imported by: scripts/runtime/webs/WebRuntimeService.js
+  imported by: tests/webMovementInteractions.test.js
   imported by: tests/webSpatialIndex.test.js
 
 scripts/spatial/webRegionRestrictionIndex.js
@@ -2180,16 +2181,16 @@ Hooks:
   - hook=ready, method=once, confidence=high, file=scripts/dynamic-webs.js, line=83
 
 Settings:
-  - full_key=dynamic-webs.<dynamic: definition.key>, method=register, namespace=dynamic-webs, key=<dynamic: definition.key>, confidence=low, file=scripts/config/moduleSettings.js, line=869
-  - full_key=dynamic-webs.<dynamic: definition.key>, method=register, namespace=dynamic-webs, key=<dynamic: definition.key>, confidence=low, file=scripts/config/moduleSettings.js, line=1048
-  - full_key=dynamic-webs.clearCarpetTextureCache, method=register, namespace=dynamic-webs, key=clearCarpetTextureCache, confidence=medium, file=scripts/config/moduleSettings.js, line=1084
-  - full_key=dynamic-webs.clearCarpetTextureCache, method=set, namespace=dynamic-webs, key=clearCarpetTextureCache, confidence=medium, file=scripts/config/moduleSettings.js, line=1126
-  - full_key=dynamic-webs.defaultSpanVisionMode, method=register, namespace=dynamic-webs, key=defaultSpanVisionMode, confidence=medium, file=scripts/config/moduleSettings.js, line=988
-  - full_key=dynamic-webs.defaultWebColour, method=register, namespace=dynamic-webs, key=defaultWebColour, confidence=medium, file=scripts/config/moduleSettings.js, line=903
-  - full_key=dynamic-webs.defaultWebThickness, method=register, namespace=dynamic-webs, key=defaultWebThickness, confidence=medium, file=scripts/config/moduleSettings.js, line=942
-  - full_key=dynamic-webs.levelProviderMode, method=get, namespace=dynamic-webs, key=levelProviderMode, confidence=medium, file=scripts/config/moduleSettings.js, line=1279
-  - full_key=dynamic-webs.levelProviderMode, method=register, namespace=dynamic-webs, key=levelProviderMode, confidence=medium, file=scripts/config/moduleSettings.js, line=749
-  - full_key=dynamic-webs.maximumSpanGridUnits, method=register, namespace=dynamic-webs, key=maximumSpanGridUnits, confidence=medium, file=scripts/config/moduleSettings.js, line=798
+  - full_key=dynamic-webs.<dynamic: definition.key>, method=register, namespace=dynamic-webs, key=<dynamic: definition.key>, confidence=low, file=scripts/config/moduleSettings.js, line=1265
+  - full_key=dynamic-webs.<dynamic: definition.key>, method=register, namespace=dynamic-webs, key=<dynamic: definition.key>, confidence=low, file=scripts/config/moduleSettings.js, line=1444
+  - full_key=dynamic-webs.clearCarpetTextureCache, method=register, namespace=dynamic-webs, key=clearCarpetTextureCache, confidence=medium, file=scripts/config/moduleSettings.js, line=1480
+  - full_key=dynamic-webs.clearCarpetTextureCache, method=set, namespace=dynamic-webs, key=clearCarpetTextureCache, confidence=medium, file=scripts/config/moduleSettings.js, line=1522
+  - full_key=dynamic-webs.defaultSpanVisionMode, method=register, namespace=dynamic-webs, key=defaultSpanVisionMode, confidence=medium, file=scripts/config/moduleSettings.js, line=1384
+  - full_key=dynamic-webs.defaultWebColour, method=register, namespace=dynamic-webs, key=defaultWebColour, confidence=medium, file=scripts/config/moduleSettings.js, line=1299
+  - full_key=dynamic-webs.defaultWebThickness, method=register, namespace=dynamic-webs, key=defaultWebThickness, confidence=medium, file=scripts/config/moduleSettings.js, line=1338
+  - full_key=dynamic-webs.levelProviderMode, method=get, namespace=dynamic-webs, key=levelProviderMode, confidence=medium, file=scripts/config/moduleSettings.js, line=1675
+  - full_key=dynamic-webs.levelProviderMode, method=register, namespace=dynamic-webs, key=levelProviderMode, confidence=medium, file=scripts/config/moduleSettings.js, line=1145
+  - full_key=dynamic-webs.maximumSpanGridUnits, method=register, namespace=dynamic-webs, key=maximumSpanGridUnits, confidence=medium, file=scripts/config/moduleSettings.js, line=1194
 
 Sockets:
   - channel=module.dynamic-webs, method=emit, confidence=medium, file=scripts/networking/webMutableStateSocket.js, line=239
@@ -2205,11 +2206,11 @@ globalThis writes:
   - name=Hooks, file=tests/lifecycle.test.js, line=92
   - name=Hooks, file=tests/moduleImports.test.js, line=87
   - name=Hooks, file=tests/moduleImports.test.js, line=153
-  - name=Hooks, file=tests/moduleSettings.test.js, line=60
-  - name=Hooks, file=tests/moduleSettings.test.js, line=121
-  - name=Hooks, file=tests/moduleSettings.test.js, line=178
-  - name=Hooks, file=tests/moduleSettings.test.js, line=312
-  - name=Hooks, file=tests/moduleSettings.test.js, line=378
+  - name=Hooks, file=tests/moduleSettings.test.js, line=61
+  - name=Hooks, file=tests/moduleSettings.test.js, line=123
+  - name=Hooks, file=tests/moduleSettings.test.js, line=180
+  - name=Hooks, file=tests/moduleSettings.test.js, line=392
+  - name=Hooks, file=tests/moduleSettings.test.js, line=458
   - name=Hooks, file=tests/regionConfigApplication.test.js, line=20
   - name=Hooks, file=tests/regionConfigApplication.test.js, line=35
   - name=Hooks, file=tests/regionConfigApplication.test.js, line=55
@@ -2219,25 +2220,25 @@ globalThis writes:
   - name=Hooks, file=tests/webCaptureEffectService.test.js, line=302
   - name=Hooks, file=tests/webCaptureEffectService.test.js, line=374
   - name=Hooks, file=tests/webCaptureEffectService.test.js, line=401
-  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=524
-  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=552
-  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=757
+  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=529
+  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=557
+  - name=Hooks, file=tests/webCaptureEffectService.test.js, line=762
   - name=Hooks, file=tests/webMutableStateSocket.test.js, line=164
   - name=Hooks, file=tests/webMutableStateSocket.test.js, line=191
   - name=Hooks, file=tests/webPopulationConfiguration.test.js, line=246
   - name=Hooks, file=tests/webPopulationConfiguration.test.js, line=316
   - name=Hooks, file=tests/webSpanCaveGeneration.test.js, line=138
   - name=Hooks, file=tests/webSpanCaveGeneration.test.js, line=270
-  - name=Levels, file=tests/moduleSettings.test.js, line=61
-  - name=Levels, file=tests/moduleSettings.test.js, line=283
+  - name=Levels, file=tests/moduleSettings.test.js, line=62
+  - name=Levels, file=tests/moduleSettings.test.js, line=363
   - name=PIXI, file=tests/webCaptureEffectService.test.js, line=159
   - name=PIXI, file=tests/webCaptureEffectService.test.js, line=274
   - name=PIXI, file=tests/webCaptureEffectService.test.js, line=295
   - name=PIXI, file=tests/webCaptureEffectService.test.js, line=372
   - name=PIXI, file=tests/webCaptureEffectService.test.js, line=394
-  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=522
-  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=545
-  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=755
+  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=527
+  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=550
+  - name=PIXI, file=tests/webCaptureEffectService.test.js, line=760
   - name=PIXI, file=tests/webCarpetPatchRendering.test.js, line=183
   - name=PIXI, file=tests/webCarpetPatchRendering.test.js, line=327
   - name=PIXI, file=tests/webCarpetPatchRendering.test.js, line=344
@@ -2266,13 +2267,13 @@ globalThis writes:
   - name=canvas, file=tests/foundryCompatibility.test.js, line=388
   - name=canvas, file=tests/foundryCompatibility.test.js, line=422
   - name=canvas, file=tests/lifecycle.test.js, line=91
-  - name=canvas, file=tests/moduleSettings.test.js, line=59
-  - name=canvas, file=tests/moduleSettings.test.js, line=120
-  - name=canvas, file=tests/moduleSettings.test.js, line=177
-  - name=canvas, file=tests/moduleSettings.test.js, line=210
-  - name=canvas, file=tests/moduleSettings.test.js, line=282
-  - name=canvas, file=tests/moduleSettings.test.js, line=311
-  - name=canvas, file=tests/moduleSettings.test.js, line=377
+  - name=canvas, file=tests/moduleSettings.test.js, line=60
+  - name=canvas, file=tests/moduleSettings.test.js, line=122
+  - name=canvas, file=tests/moduleSettings.test.js, line=179
+  - name=canvas, file=tests/moduleSettings.test.js, line=213
+  - name=canvas, file=tests/moduleSettings.test.js, line=362
+  - name=canvas, file=tests/moduleSettings.test.js, line=391
+  - name=canvas, file=tests/moduleSettings.test.js, line=457
   - name=canvas, file=tests/publicApi.test.js, line=255
   - name=canvas, file=tests/publicApi.test.js, line=290
   - name=canvas, file=tests/sceneConfigWebPopulations.test.js, line=19
@@ -2292,9 +2293,9 @@ globalThis writes:
   - name=canvas, file=tests/webCaptureEffectService.test.js, line=297
   - name=canvas, file=tests/webCaptureEffectService.test.js, line=370
   - name=canvas, file=tests/webCaptureEffectService.test.js, line=396
-  - name=canvas, file=tests/webCaptureEffectService.test.js, line=520
-  - name=canvas, file=tests/webCaptureEffectService.test.js, line=547
-  - name=canvas, file=tests/webCaptureEffectService.test.js, line=753
+  - name=canvas, file=tests/webCaptureEffectService.test.js, line=525
+  - name=canvas, file=tests/webCaptureEffectService.test.js, line=552
+  - name=canvas, file=tests/webCaptureEffectService.test.js, line=758
   - name=canvas, file=tests/webCarpetPatchRendering.test.js, line=193
   - name=canvas, file=tests/webCarpetPatchRendering.test.js, line=328
   - name=canvas, file=tests/webCarpetPatchRendering.test.js, line=354
@@ -2339,9 +2340,9 @@ globalThis writes:
   - name=foundry, file=tests/regionConfigApplication.test.js, line=73
   - name=foundry, file=tests/settingsConfigMaintenanceControls.test.js, line=100
   - name=foundry, file=tests/settingsConfigMaintenanceControls.test.js, line=111
-  - name=foundry, file=tests/settingsConfigMaintenanceControls.test.js, line=246
-  - name=foundry, file=tests/webCaptureEffectService.test.js, line=555
-  - name=foundry, file=tests/webCaptureEffectService.test.js, line=759
+  - name=foundry, file=tests/settingsConfigMaintenanceControls.test.js, line=249
+  - name=foundry, file=tests/webCaptureEffectService.test.js, line=560
+  - name=foundry, file=tests/webCaptureEffectService.test.js, line=764
   - name=foundry, file=tests/webCarpetPatchRendering.test.js, line=198
   - name=foundry, file=tests/webCarpetPatchRendering.test.js, line=329
   - name=foundry, file=tests/webCarpetPatchRendering.test.js, line=359
@@ -2349,22 +2350,22 @@ globalThis writes:
   - name=game, file=tests/baselineDiagnosticReport.test.js, line=236
   - name=game, file=tests/baselineDiagnosticReport.test.js, line=378
   - name=game, file=tests/lifecycle.test.js, line=83
-  - name=game, file=tests/moduleSettings.test.js, line=58
-  - name=game, file=tests/moduleSettings.test.js, line=110
-  - name=game, file=tests/moduleSettings.test.js, line=171
-  - name=game, file=tests/moduleSettings.test.js, line=206
-  - name=game, file=tests/moduleSettings.test.js, line=278
-  - name=game, file=tests/moduleSettings.test.js, line=305
-  - name=game, file=tests/moduleSettings.test.js, line=371
+  - name=game, file=tests/moduleSettings.test.js, line=59
+  - name=game, file=tests/moduleSettings.test.js, line=112
+  - name=game, file=tests/moduleSettings.test.js, line=173
+  - name=game, file=tests/moduleSettings.test.js, line=208
+  - name=game, file=tests/moduleSettings.test.js, line=358
+  - name=game, file=tests/moduleSettings.test.js, line=385
+  - name=game, file=tests/moduleSettings.test.js, line=451
   - name=game, file=tests/publicApi.test.js, line=259
   - name=game, file=tests/publicApi.test.js, line=289
   - name=game, file=tests/sceneConfigWebPopulations.test.js, line=12
   - name=game, file=tests/sceneConfigWebPopulations.test.js, line=21
   - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=101
   - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=136
-  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=190
-  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=220
-  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=247
+  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=193
+  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=223
+  - name=game, file=tests/settingsConfigMaintenanceControls.test.js, line=250
   - name=game, file=tests/tokenSpanWebDestruction.test.js, line=49
   - name=game, file=tests/tokenSpanWebDestruction.test.js, line=74
   - name=game, file=tests/tokenSpanWebDestruction.test.js, line=148
@@ -2414,14 +2415,16 @@ globalThis writes:
   - name=loadTemplates, file=tests/regionConfigApplication.test.js, line=36
   - name=loadTemplates, file=tests/regionConfigApplication.test.js, line=54
   - name=loadTemplates, file=tests/regionConfigApplication.test.js, line=74
+  - name=localStorage, file=tests/moduleSettings.test.js, line=63
+  - name=localStorage, file=tests/moduleSettings.test.js, line=225
   - name=setTimeout, file=scripts/ui/regionConfigApplication.js, line=218
   - name=setTimeout, file=scripts/ui/regionConfigApplication.js, line=369
   - name=setTimeout, file=tests/lifecycle.test.js, line=101
   - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=102
   - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=137
-  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=191
-  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=221
-  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=248
+  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=194
+  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=224
+  - name=ui, file=tests/settingsConfigMaintenanceControls.test.js, line=251
 
 Ticker usage:
   - target=ticker, method=add, file=scripts/interactions/TokenSpanWebInteractionController.js, line=455
@@ -3821,61 +3824,62 @@ Imports:
     kind: static import
     resolved: scripts/ui/settingsConfigMaintenanceControls.js
     imported names:
+      - SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR
       - activateSettingsConfigMaintenanceControls
 
 Exports:
   default export: False
   functions:
-    - registerModuleSettings line 227 [export function]
+    - registerModuleSettings line 298 [export function]
       comment: Register GM-facing world settings in Foundry's standard Settings Configuration.
-    - getConfiguredWebLevelProviderMode line 312 [export function]
+    - getConfiguredWebLevelProviderMode line 383 [export function]
       comment: <missing>
-    - getConfiguredMaximumSpanGridUnits line 316 [export function]
+    - getConfiguredMaximumSpanGridUnits line 387 [export function]
       comment: <missing>
-    - getConfiguredDefaultWebPopulationSettings line 320 [export function]
+    - getConfiguredDefaultWebPopulationSettings line 391 [export function]
       comment: <missing>
-    - getConfiguredDefaultSpanWebBehaviourSettings line 324 [export function]
+    - getConfiguredDefaultSpanWebBehaviourSettings line 395 [export function]
       comment: <missing>
-    - shouldShowWebLevelProviderSetting line 328 [export function]
+    - shouldShowWebLevelProviderSetting line 399 [export function]
       comment: <missing>
-    - createAvailableWebLevelProviderChoices line 333 [export function]
+    - createAvailableWebLevelProviderChoices line 404 [export function]
       comment: <missing>
-    - createWebLevelProviderHint line 366 [export function]
+    - createWebLevelProviderHint line 437 [export function]
       comment: <missing>
-    - normaliseConfiguredWebLevelProviderMode line 386 [export function]
+    - normaliseConfiguredWebLevelProviderMode line 457 [export function]
       comment: <missing>
-    - normaliseConfiguredMaximumSpanGridUnits line 429 [export function]
+    - normaliseConfiguredMaximumSpanGridUnits line 500 [export function]
       comment: <missing>
-    - resetModuleSettingsRegistrationForTests line 468 [export function]
+    - resetModuleSettingsRegistrationForTests line 539 [export function]
       comment: <missing>
-    - applyModuleSettingsCategories line 496 [export function]
-      comment: Insert readable headings into Foundry's standard module-settings form. This keeps Foundry's own SettingsConfig application, form submission, permissions and reset behaviour. Dynamic Webs only adds non-interactive headings before the first setting in each group.
+    - applyModuleSettingsCategories line 571 [export function]
+      comment: Group Dynamic Webs settings into Ambient Critters-style collapsible sections. Foundry still owns form submission, permissions, reset behaviour, and setting controls. Dynamic Webs only moves its existing rows into labelled details blocks and adds its immediate maintenance controls to the final section. @param {object} html - Rendered SettingsConfig HTML. @param {object} maintenanceActions - Immediate maintenance callbacks. @returns {number} Number of groups created.
   constants:
-    - MODULE_SETTING_KEYS line 57 [export const]
+    - MODULE_SETTING_KEYS line 58 [export const]
       comment: <missing>
-    - DEFAULT_WEB_LEVEL_PROVIDER_MODE line 87 [export const]
+    - DEFAULT_WEB_LEVEL_PROVIDER_MODE line 88 [export const]
       comment: <missing>
-    - MINIMUM_MAXIMUM_SPAN_GRID_UNITS line 90 [export const]
+    - MINIMUM_MAXIMUM_SPAN_GRID_UNITS line 91 [export const]
       comment: <missing>
-    - MAXIMUM_MAXIMUM_SPAN_GRID_UNITS line 93 [export const]
+    - MAXIMUM_MAXIMUM_SPAN_GRID_UNITS line 94 [export const]
       comment: <missing>
-    - MAXIMUM_SPAN_GRID_UNITS_STEP line 96 [export const]
+    - MAXIMUM_SPAN_GRID_UNITS_STEP line 97 [export const]
       comment: <missing>
-    - DEFAULT_MAXIMUM_SPAN_GRID_UNITS line 99 [export const]
+    - DEFAULT_MAXIMUM_SPAN_GRID_UNITS line 100 [export const]
       comment: <missing>
-    - LEVEL_PROVIDER_MODE_CHANGED_HOOK line 102 [export const]
+    - LEVEL_PROVIDER_MODE_CHANGED_HOOK line 103 [export const]
       comment: <missing>
-    - CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK line 105 [export const]
+    - CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK line 106 [export const]
       comment: <missing>
-    - MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK line 108 [export const]
+    - MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK line 109 [export const]
       comment: <missing>
-    - DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK line 111 [export const]
+    - DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK line 112 [export const]
       comment: <missing>
-    - DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK line 114 [export const]
+    - DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK line 115 [export const]
       comment: <missing>
-    - WEB_LEVEL_PROVIDER_SETTING_LABELS line 117 [export const]
+    - WEB_LEVEL_PROVIDER_SETTING_LABELS line 118 [export const]
       comment: <missing>
-    - MODULE_SETTINGS_CATEGORY_DEFINITIONS line 127 [export const]
+    - MODULE_SETTINGS_CATEGORY_DEFINITIONS line 134 [export const]
       comment: <missing>
   classes:
     - <none>
@@ -3885,36 +3889,62 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - registerDefaultSettingsCategorisationHook line 590 [internal top-level function]
+    - createModuleSettingsGroups line 691 [internal top-level function]
+      comment: Resolve each configured group and its currently rendered rows. Groups with no visible rows are omitted. This naturally hides Level Awareness in Foundry v14, where the provider setting remains registered but is not rendered. @param {HTMLElement} root - SettingsConfig root. @returns {object[]} Group descriptors with DOM rows.
+    - createModuleSettingsGroupElement line 748 [internal top-level function]
+      comment: Create one collapsible settings group. @param {object} options - Element creation values. @returns {HTMLElement} Details element.
+    - readModuleSettingsGroupState line 850 [internal top-level function]
+      comment: @returns {Record<string, boolean>} Persisted local group state.
+    - resolveModuleSettingsGroupOpenState line 878 [internal top-level function]
+      comment: Resolve one group's persisted or authored open state.
+    - persistModuleSettingsGroupOpenState line 895 [internal top-level function]
+      comment: Persist one group's open state locally.
+    - applySettingsContainerStyles line 919 [internal top-level function]
       comment: <missing>
-    - disableUnavailableLevelProviderControl line 628 [internal top-level function]
+    - applySettingsGroupStyles line 930 [internal top-level function]
       comment: <missing>
-    - findSettingsControl line 667 [internal top-level function]
+    - applySettingsSummaryStyles line 943 [internal top-level function]
       comment: <missing>
-    - resolveSettingsRow line 695 [internal top-level function]
+    - applySettingsDescriptionStyles line 956 [internal top-level function]
       comment: <missing>
-    - resolveSettingsConfigRoot line 708 [internal top-level function]
+    - applySettingsBodyStyles line 967 [internal top-level function]
       comment: <missing>
-    - escapeAttributeSelectorValue line 732 [internal top-level function]
+    - registerDefaultSettingsCategorisationHook line 974 [internal top-level function]
+      comment: <missing>
+    - disableUnavailableLevelProviderControl line 1012 [internal top-level function]
+      comment: <missing>
+    - findSettingsRow line 1051 [internal top-level function]
+      comment: <missing>
+    - findSettingsControl line 1063 [internal top-level function]
+      comment: <missing>
+    - resolveSettingsRow line 1091 [internal top-level function]
+      comment: <missing>
+    - resolveSettingsConfigRoot line 1104 [internal top-level function]
+      comment: <missing>
+    - escapeAttributeSelectorValue line 1128 [internal top-level function]
       comment: <missing>
   constants:
-    - DEFAULT_DENSITY_SETTING_DEFINITIONS line 156 [internal top-level const]
+    - SETTINGS_GROUP_STATE_STORAGE_KEY line 128 [internal top-level const]
       comment: <missing>
-    - AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS line 192 [internal top-level const]
+    - SETTINGS_GROUPS_SELECTOR line 131 [internal top-level const]
       comment: <missing>
-    - AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS line 202 [internal top-level const]
+    - DEFAULT_DENSITY_SETTING_DEFINITIONS line 227 [internal top-level const]
       comment: <missing>
-    - settingsRegistered line 207 [internal top-level let]
+    - AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS line 263 [internal top-level const]
       comment: <missing>
-    - settingsConfigHookRegistered line 210 [internal top-level let]
+    - AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS line 273 [internal top-level const]
       comment: <missing>
-    - cachedWebLevelProviderMode line 213 [internal top-level let]
+    - settingsRegistered line 278 [internal top-level let]
       comment: <missing>
-    - cachedMaximumSpanGridUnits line 216 [internal top-level let]
+    - settingsConfigHookRegistered line 281 [internal top-level let]
       comment: <missing>
-    - cachedDefaultWebPopulationSettings line 219 [internal top-level let]
+    - cachedWebLevelProviderMode line 284 [internal top-level let]
       comment: <missing>
-    - cachedDefaultSpanWebBehaviourSettings line 222 [internal top-level let]
+    - cachedMaximumSpanGridUnits line 287 [internal top-level let]
+      comment: <missing>
+    - cachedDefaultWebPopulationSettings line 290 [internal top-level let]
+      comment: <missing>
+    - cachedDefaultSpanWebBehaviourSettings line 293 [internal top-level let]
       comment: <missing>
   classes:
     - <none>
@@ -6720,7 +6750,7 @@ Exports:
   constants:
     - <none>
   classes:
-    - WebMovementInteractionService line 11 [export class]
+    - WebMovementInteractionService line 38 [export class]
       comment: Generic movement query over currently intact wall-span web geometry.
   named exports/re-exports:
     - <none>
@@ -6728,9 +6758,25 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - <none>
+    - createMovementQueryDiagnostics line 343 [internal top-level function]
+      comment: <missing>
+    - mergeSpatialDiagnostics line 380 [internal top-level function]
+      comment: <missing>
+    - emitMovementQueryDiagnostics line 424 [internal top-level function]
+      comment: <missing>
+    - readMovementDiagnosticTime line 449 [internal top-level function]
+      comment: <missing>
+    - normaliseMovementDiagnosticNumber line 461 [internal top-level function]
+      comment: <missing>
+    - normaliseMovementDiagnosticInteger line 478 [internal top-level function]
+      comment: <missing>
   constants:
-    - <none>
+    - EMPTY_MOVEMENT_INTERACTION_RESULT line 9 [internal top-level const]
+      comment: <missing>
+    - MOVEMENT_DIAGNOSTIC_PHASE_NAMES line 12 [internal top-level const]
+      comment: <missing>
+    - MOVEMENT_DIAGNOSTIC_COUNTER_NAMES line 24 [internal top-level const]
+      comment: <missing>
   classes:
     - <none>
 
@@ -7248,7 +7294,7 @@ Exports:
   constants:
     - <none>
   classes:
-    - WebCapturedAssetTextureService line 14 [export class]
+    - WebCapturedAssetTextureService line 17 [export class]
       comment: Client-local loader for transient captured-web overlay assets.
   named exports/re-exports:
     - <none>
@@ -7256,26 +7302,29 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - normaliseTint line 465 [internal top-level function]
+    - resolveDisplayAlpha line 490 [internal top-level function]
       comment: <missing>
-    - normaliseUnitMultiplier line 484 [internal top-level function]
+    - normaliseTint line 509 [internal top-level function]
       comment: <missing>
-    - requireWebpPath line 503 [internal top-level function]
+    - normaliseUnitMultiplier line 528 [internal top-level function]
       comment: <missing>
-    - getFoundryTexture line 525 [internal top-level function]
+    - requireWebpPath line 547 [internal top-level function]
       comment: <missing>
-    - loadFoundryTexture line 547 [internal top-level function]
+    - getFoundryTexture line 569 [internal top-level function]
       comment: <missing>
-    - normaliseLoadedTexture line 579 [internal top-level function]
+    - loadFoundryTexture line 591 [internal top-level function]
       comment: <missing>
-    - resolveTextureDimensions line 618 [internal top-level function]
+    - normaliseLoadedTexture line 623 [internal top-level function]
       comment: <missing>
-    - firstPositiveNumber line 648 [internal top-level function]
+    - resolveTextureDimensions line 662 [internal top-level function]
       comment: <missing>
-    - clamp line 671 [internal top-level function]
+    - firstPositiveNumber line 692 [internal top-level function]
+      comment: <missing>
+    - clamp line 715 [internal top-level function]
       comment: <missing>
   constants:
-    - <none>
+    - LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER line 12 [internal top-level const]
+      comment: <missing>
   classes:
     - <none>
 
@@ -8373,33 +8422,33 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - filterIntactWebs line 2273 [internal top-level function]
+    - filterIntactWebs line 2294 [internal top-level function]
       comment: <missing>
-    - createRenderingConfiguration line 2295 [internal top-level function]
+    - createRenderingConfiguration line 2316 [internal top-level function]
       comment: <missing>
-    - createSceneGeometrySummary line 2308 [internal top-level function]
+    - createSceneGeometrySummary line 2329 [internal top-level function]
       comment: <missing>
-    - resolveRuntimeLevelVisibility line 2372 [internal top-level function]
+    - resolveRuntimeLevelVisibility line 2393 [internal top-level function]
       comment: <missing>
-    - levelVisibilityEquals line 2410 [internal top-level function]
+    - levelVisibilityEquals line 2431 [internal top-level function]
       comment: <missing>
-    - resolveSpatialCellSize line 2449 [internal top-level function]
+    - resolveSpatialCellSize line 2470 [internal top-level function]
       comment: <missing>
-    - normaliseCategoryDensityMap line 2477 [internal top-level function]
+    - normaliseCategoryDensityMap line 2498 [internal top-level function]
       comment: <missing>
-    - normaliseCategoryDensitySourceMap line 2496 [internal top-level function]
+    - normaliseCategoryDensitySourceMap line 2517 [internal top-level function]
       comment: <missing>
-    - normaliseOptionalIdentifier line 2515 [internal top-level function]
+    - normaliseOptionalIdentifier line 2536 [internal top-level function]
       comment: <missing>
-    - createEmptyMutableStatePersistenceDiagnostics line 2534 [internal top-level function]
+    - createEmptyMutableStatePersistenceDiagnostics line 2555 [internal top-level function]
       comment: <missing>
-    - mutableStateMatchesPersistentState line 2567 [internal top-level function]
+    - mutableStateMatchesPersistentState line 2588 [internal top-level function]
       comment: <missing>
-    - createMutableStateDifference line 2608 [internal top-level function]
+    - createMutableStateDifference line 2629 [internal top-level function]
       comment: <missing>
-    - resolveSceneDocument line 2681 [internal top-level function]
+    - resolveSceneDocument line 2702 [internal top-level function]
       comment: <missing>
-    - deepFreezeClone line 2711 [internal top-level function]
+    - deepFreezeClone line 2732 [internal top-level function]
       comment: <missing>
   constants:
     - <none>
@@ -9696,27 +9745,29 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - createWebMetadata line 465 [internal top-level function]
+    - compareInternalStrandEntries line 619 [internal top-level function]
       comment: <missing>
-    - createWebResult line 478 [internal top-level function]
+    - createWebMetadata line 650 [internal top-level function]
       comment: <missing>
-    - createStrandResult line 486 [internal top-level function]
+    - createWebResult line 663 [internal top-level function]
       comment: <missing>
-    - createPerchResult line 508 [internal top-level function]
+    - createStrandResult line 671 [internal top-level function]
       comment: <missing>
-    - insertIntoCells line 527 [internal top-level function]
+    - createPerchResult line 693 [internal top-level function]
       comment: <missing>
-    - countCellReferences line 538 [internal top-level function]
+    - insertIntoCells line 712 [internal top-level function]
       comment: <missing>
-    - pointInsideBounds line 544 [internal top-level function]
+    - countCellReferences line 723 [internal top-level function]
       comment: <missing>
-    - requireIdentifier line 550 [internal top-level function]
+    - pointInsideBounds line 729 [internal top-level function]
       comment: <missing>
-    - normaliseOptionalIdentifier line 556 [internal top-level function]
+    - requireIdentifier line 735 [internal top-level function]
       comment: <missing>
-    - normalisePositiveNumber line 561 [internal top-level function]
+    - normaliseOptionalIdentifier line 741 [internal top-level function]
       comment: <missing>
-    - now line 569 [internal top-level function]
+    - normalisePositiveNumber line 746 [internal top-level function]
+      comment: <missing>
+    - now line 754 [internal top-level function]
       comment: <missing>
   constants:
     - DEFAULT_CELL_SIZE_PX line 20 [internal top-level const]
@@ -10450,16 +10501,17 @@ Imports:
 Exports:
   default export: False
   functions:
-    - activateSettingsConfigMaintenanceControls line 13 [export function]
+    - activateSettingsConfigMaintenanceControls line 16 [export function]
       comment: Add immediate maintenance buttons to Foundry's standard Configure Settings form.
-    - confirmRestoreAllDestroyedSpanWebsAction line 135 [export function]
+    - confirmRestoreAllDestroyedSpanWebsAction line 138 [export function]
       comment: Confirm the world-wide restorative mutable-state action.
-    - confirmCleanupAction line 145 [export function]
+    - confirmCleanupAction line 148 [export function]
       comment: Ask for ordinary destructive-action confirmation through Foundry's V2 dialog API.
-    - confirmUninstallAction line 155 [export function]
+    - confirmUninstallAction line 158 [export function]
       comment: Require the GM to type UNINSTALL through Foundry's V2 input dialog.
   constants:
-    - <none>
+    - SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR line 8 [export const]
+      comment: <missing>
   classes:
     - <none>
   named exports/re-exports:
@@ -10468,22 +10520,22 @@ Exports:
 Internal symbols:
   note: Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural.
   functions:
-    - createButton line 202 [internal top-level function]
+    - createButton line 205 [internal top-level function]
       comment: <missing>
-    - runButtonAction line 210 [internal top-level function]
+    - runButtonAction line 213 [internal top-level function]
       comment: <missing>
-    - confirmWithDialogV2 line 248 [internal top-level function]
+    - confirmWithDialogV2 line 251 [internal top-level function]
       comment: <missing>
-    - resolveDialogV2 line 284 [internal top-level function]
+    - resolveDialogV2 line 287 [internal top-level function]
       comment: <missing>
-    - readDialogInputValue line 292 [internal top-level function]
+    - readDialogInputValue line 295 [internal top-level function]
       comment: <missing>
-    - notify line 331 [internal top-level function]
+    - notify line 334 [internal top-level function]
       comment: <missing>
   constants:
     - CONTROLS_ATTRIBUTE line 5 [internal top-level const]
       comment: <missing>
-    - UNINSTALL_CONFIRMATION_TEXT line 8 [internal top-level const]
+    - UNINSTALL_CONFIRMATION_TEXT line 11 [internal top-level const]
       comment: <missing>
   classes:
     - <none>
@@ -10980,11 +11032,11 @@ Internal symbols:
   functions:
     - preserveGlobals line 46 [internal top-level function]
       comment: <missing>
-    - restoreGlobals line 55 [internal top-level function]
+    - restoreGlobals line 56 [internal top-level function]
       comment: <missing>
-    - createSettingsHarness line 63 [internal top-level function]
+    - createSettingsHarness line 65 [internal top-level function]
       comment: <missing>
-    - findRegistration line 96 [internal top-level function]
+    - findRegistration line 98 [internal top-level function]
       comment: <missing>
   constants:
     - EXPECTED_SETTING_KEYS line 31 [internal top-level const]
@@ -12917,6 +12969,11 @@ Imports:
     imported names:
       - segmentToSegmentDistance
       - sweptMovementIntersectsPolyline
+  - ../scripts/spatial/WebSpatialIndex.js [internal resolved] line 12
+    kind: static import
+    resolved: scripts/spatial/WebSpatialIndex.js
+    imported names:
+      - WebSpatialIndex
 
 Exports:
   default export: False
@@ -14167,29 +14224,29 @@ Exported symbols missing comments:
 - scripts/api/populationApi.js:15 getPublicSceneWebPopulations [functions]
 - scripts/api/populationApi.js:22 getPublicSceneWebPopulation [functions]
 - scripts/api/populationApi.js:28 setPublicSceneWebPopulations [functions]
-- scripts/config/moduleSettings.js:312 getConfiguredWebLevelProviderMode [functions]
-- scripts/config/moduleSettings.js:316 getConfiguredMaximumSpanGridUnits [functions]
-- scripts/config/moduleSettings.js:320 getConfiguredDefaultWebPopulationSettings [functions]
-- scripts/config/moduleSettings.js:324 getConfiguredDefaultSpanWebBehaviourSettings [functions]
-- scripts/config/moduleSettings.js:328 shouldShowWebLevelProviderSetting [functions]
-- scripts/config/moduleSettings.js:333 createAvailableWebLevelProviderChoices [functions]
-- scripts/config/moduleSettings.js:366 createWebLevelProviderHint [functions]
-- scripts/config/moduleSettings.js:386 normaliseConfiguredWebLevelProviderMode [functions]
-- scripts/config/moduleSettings.js:429 normaliseConfiguredMaximumSpanGridUnits [functions]
-- scripts/config/moduleSettings.js:468 resetModuleSettingsRegistrationForTests [functions]
-- scripts/config/moduleSettings.js:57 MODULE_SETTING_KEYS [constants]
-- scripts/config/moduleSettings.js:87 DEFAULT_WEB_LEVEL_PROVIDER_MODE [constants]
-- scripts/config/moduleSettings.js:90 MINIMUM_MAXIMUM_SPAN_GRID_UNITS [constants]
-- scripts/config/moduleSettings.js:93 MAXIMUM_MAXIMUM_SPAN_GRID_UNITS [constants]
-- scripts/config/moduleSettings.js:96 MAXIMUM_SPAN_GRID_UNITS_STEP [constants]
-- scripts/config/moduleSettings.js:99 DEFAULT_MAXIMUM_SPAN_GRID_UNITS [constants]
-- scripts/config/moduleSettings.js:102 LEVEL_PROVIDER_MODE_CHANGED_HOOK [constants]
-- scripts/config/moduleSettings.js:105 CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK [constants]
-- scripts/config/moduleSettings.js:108 MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK [constants]
-- scripts/config/moduleSettings.js:111 DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK [constants]
-- scripts/config/moduleSettings.js:114 DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK [constants]
-- scripts/config/moduleSettings.js:117 WEB_LEVEL_PROVIDER_SETTING_LABELS [constants]
-- scripts/config/moduleSettings.js:127 MODULE_SETTINGS_CATEGORY_DEFINITIONS [constants]
+- scripts/config/moduleSettings.js:383 getConfiguredWebLevelProviderMode [functions]
+- scripts/config/moduleSettings.js:387 getConfiguredMaximumSpanGridUnits [functions]
+- scripts/config/moduleSettings.js:391 getConfiguredDefaultWebPopulationSettings [functions]
+- scripts/config/moduleSettings.js:395 getConfiguredDefaultSpanWebBehaviourSettings [functions]
+- scripts/config/moduleSettings.js:399 shouldShowWebLevelProviderSetting [functions]
+- scripts/config/moduleSettings.js:404 createAvailableWebLevelProviderChoices [functions]
+- scripts/config/moduleSettings.js:437 createWebLevelProviderHint [functions]
+- scripts/config/moduleSettings.js:457 normaliseConfiguredWebLevelProviderMode [functions]
+- scripts/config/moduleSettings.js:500 normaliseConfiguredMaximumSpanGridUnits [functions]
+- scripts/config/moduleSettings.js:539 resetModuleSettingsRegistrationForTests [functions]
+- scripts/config/moduleSettings.js:58 MODULE_SETTING_KEYS [constants]
+- scripts/config/moduleSettings.js:88 DEFAULT_WEB_LEVEL_PROVIDER_MODE [constants]
+- scripts/config/moduleSettings.js:91 MINIMUM_MAXIMUM_SPAN_GRID_UNITS [constants]
+- scripts/config/moduleSettings.js:94 MAXIMUM_MAXIMUM_SPAN_GRID_UNITS [constants]
+- scripts/config/moduleSettings.js:97 MAXIMUM_SPAN_GRID_UNITS_STEP [constants]
+- scripts/config/moduleSettings.js:100 DEFAULT_MAXIMUM_SPAN_GRID_UNITS [constants]
+- scripts/config/moduleSettings.js:103 LEVEL_PROVIDER_MODE_CHANGED_HOOK [constants]
+- scripts/config/moduleSettings.js:106 CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK [constants]
+- scripts/config/moduleSettings.js:109 MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK [constants]
+- scripts/config/moduleSettings.js:112 DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK [constants]
+- scripts/config/moduleSettings.js:115 DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK [constants]
+- scripts/config/moduleSettings.js:118 WEB_LEVEL_PROVIDER_SETTING_LABELS [constants]
+- scripts/config/moduleSettings.js:134 MODULE_SETTINGS_CATEGORY_DEFINITIONS [constants]
 - scripts/config/regionTagConfiguration.js:16 getDynamicWebRegionTags [functions]
 - scripts/config/regionTagConfiguration.js:25 getRegionTags [functions]
 - scripts/config/regionTagConfiguration.js:35 normaliseRegionTags [functions]
@@ -14365,6 +14422,7 @@ Exported symbols missing comments:
 - scripts/ui/sceneConfigPopulationSummaries.js:7 updateWebPopulationCardPresentation [functions]
 - scripts/ui/sceneConfigRegionTagControls.js:4 updateSceneConfigRegionTagValidity [functions]
 - scripts/ui/sceneConfigTemplateContext.js:56 createSceneConfigTemplateContext [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:8 SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR [constants]
 
 Internal symbols missing comments:
 - scripts/api/captureApi.js:71 requireCaptureRuntimeService [functions]
@@ -14375,21 +14433,29 @@ Internal symbols missing comments:
 - scripts/api/spatialApi.js:39 requireSpatialRuntimeService [functions]
 - scripts/api/webApi.js:61 requireWebRuntimeService [functions]
 - scripts/api/webApi.js:88 validateRuntime [functions]
-- scripts/config/moduleSettings.js:590 registerDefaultSettingsCategorisationHook [functions]
-- scripts/config/moduleSettings.js:628 disableUnavailableLevelProviderControl [functions]
-- scripts/config/moduleSettings.js:667 findSettingsControl [functions]
-- scripts/config/moduleSettings.js:695 resolveSettingsRow [functions]
-- scripts/config/moduleSettings.js:708 resolveSettingsConfigRoot [functions]
-- scripts/config/moduleSettings.js:732 escapeAttributeSelectorValue [functions]
-- scripts/config/moduleSettings.js:156 DEFAULT_DENSITY_SETTING_DEFINITIONS [constants]
-- scripts/config/moduleSettings.js:192 AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS [constants]
-- scripts/config/moduleSettings.js:202 AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS [constants]
-- scripts/config/moduleSettings.js:207 settingsRegistered [constants]
-- scripts/config/moduleSettings.js:210 settingsConfigHookRegistered [constants]
-- scripts/config/moduleSettings.js:213 cachedWebLevelProviderMode [constants]
-- scripts/config/moduleSettings.js:216 cachedMaximumSpanGridUnits [constants]
-- scripts/config/moduleSettings.js:219 cachedDefaultWebPopulationSettings [constants]
-- scripts/config/moduleSettings.js:222 cachedDefaultSpanWebBehaviourSettings [constants]
+- scripts/config/moduleSettings.js:919 applySettingsContainerStyles [functions]
+- scripts/config/moduleSettings.js:930 applySettingsGroupStyles [functions]
+- scripts/config/moduleSettings.js:943 applySettingsSummaryStyles [functions]
+- scripts/config/moduleSettings.js:956 applySettingsDescriptionStyles [functions]
+- scripts/config/moduleSettings.js:967 applySettingsBodyStyles [functions]
+- scripts/config/moduleSettings.js:974 registerDefaultSettingsCategorisationHook [functions]
+- scripts/config/moduleSettings.js:1012 disableUnavailableLevelProviderControl [functions]
+- scripts/config/moduleSettings.js:1051 findSettingsRow [functions]
+- scripts/config/moduleSettings.js:1063 findSettingsControl [functions]
+- scripts/config/moduleSettings.js:1091 resolveSettingsRow [functions]
+- scripts/config/moduleSettings.js:1104 resolveSettingsConfigRoot [functions]
+- scripts/config/moduleSettings.js:1128 escapeAttributeSelectorValue [functions]
+- scripts/config/moduleSettings.js:128 SETTINGS_GROUP_STATE_STORAGE_KEY [constants]
+- scripts/config/moduleSettings.js:131 SETTINGS_GROUPS_SELECTOR [constants]
+- scripts/config/moduleSettings.js:227 DEFAULT_DENSITY_SETTING_DEFINITIONS [constants]
+- scripts/config/moduleSettings.js:263 AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS [constants]
+- scripts/config/moduleSettings.js:273 AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS [constants]
+- scripts/config/moduleSettings.js:278 settingsRegistered [constants]
+- scripts/config/moduleSettings.js:281 settingsConfigHookRegistered [constants]
+- scripts/config/moduleSettings.js:284 cachedWebLevelProviderMode [constants]
+- scripts/config/moduleSettings.js:287 cachedMaximumSpanGridUnits [constants]
+- scripts/config/moduleSettings.js:290 cachedDefaultWebPopulationSettings [constants]
+- scripts/config/moduleSettings.js:293 cachedDefaultSpanWebBehaviourSettings [constants]
 - scripts/config/regionTagConfiguration.js:147 readRegionTagFlag [functions]
 - scripts/config/regionTagConfiguration.js:159 resolveRegionDocumentLike [functions]
 - scripts/config/regionTagConfiguration.js:169 collectRawValues [functions]
@@ -14709,6 +14775,15 @@ Internal symbols missing comments:
 - scripts/interactions/WebCaptureEffectService.js:1555 deepFreeze [functions]
 - scripts/interactions/WebCaptureEffectService.js:30 CAPTURE_SORT_LAYER_OFFSET [constants]
 - scripts/interactions/webInteractionContract.js:71 deepFreeze [functions]
+- scripts/interactions/WebMovementInteractionService.js:343 createMovementQueryDiagnostics [functions]
+- scripts/interactions/WebMovementInteractionService.js:380 mergeSpatialDiagnostics [functions]
+- scripts/interactions/WebMovementInteractionService.js:424 emitMovementQueryDiagnostics [functions]
+- scripts/interactions/WebMovementInteractionService.js:449 readMovementDiagnosticTime [functions]
+- scripts/interactions/WebMovementInteractionService.js:461 normaliseMovementDiagnosticNumber [functions]
+- scripts/interactions/WebMovementInteractionService.js:478 normaliseMovementDiagnosticInteger [functions]
+- scripts/interactions/WebMovementInteractionService.js:9 EMPTY_MOVEMENT_INTERACTION_RESULT [constants]
+- scripts/interactions/WebMovementInteractionService.js:12 MOVEMENT_DIAGNOSTIC_PHASE_NAMES [constants]
+- scripts/interactions/WebMovementInteractionService.js:24 MOVEMENT_DIAGNOSTIC_COUNTER_NAMES [constants]
 - scripts/interactions/WebMutableStateService.js:626 normalisePersistentSnapshot [functions]
 - scripts/interactions/WebMutableStateService.js:668 createMutationSnapshot [functions]
 - scripts/interactions/WebMutableStateService.js:697 normaliseIdentifierList [functions]
@@ -14761,15 +14836,17 @@ Internal symbols missing comments:
 - scripts/networking/webMutableStateSocket.js:30 registration [constants]
 - scripts/networking/webMutableStateSocket.js:33 movementRequestSequence [constants]
 - scripts/networking/webMutableStateSocket.js:36 processedMovementRequestIds [constants]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:465 normaliseTint [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:484 normaliseUnitMultiplier [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:503 requireWebpPath [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:525 getFoundryTexture [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:547 loadFoundryTexture [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:579 normaliseLoadedTexture [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:618 resolveTextureDimensions [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:648 firstPositiveNumber [functions]
-- scripts/rendering/webs/WebCapturedAssetTextureService.js:671 clamp [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:490 resolveDisplayAlpha [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:509 normaliseTint [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:528 normaliseUnitMultiplier [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:547 requireWebpPath [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:569 getFoundryTexture [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:591 loadFoundryTexture [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:623 normaliseLoadedTexture [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:662 resolveTextureDimensions [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:692 firstPositiveNumber [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:715 clamp [functions]
+- scripts/rendering/webs/WebCapturedAssetTextureService.js:12 LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER [constants]
 - scripts/rendering/webs/webCapturedAssetTransform.js:219 resolvePositiveDimension [functions]
 - scripts/rendering/webs/webCapturedAssetTransform.js:269 requirePoint [functions]
 - scripts/rendering/webs/webCapturedAssetTransform.js:302 requirePositiveNumber [functions]
@@ -14885,20 +14962,20 @@ Internal symbols missing comments:
 - scripts/rendering/webs/webSpanAssetTransform.js:4 QUAD_POINT_NAMES [constants]
 - scripts/runtime/runtimeRegistry.js:8 runtimeReference [constants]
 - scripts/runtime/webs/webLevelVisibilityState.js:43 normaliseOptionalString [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2273 filterIntactWebs [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2295 createRenderingConfiguration [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2308 createSceneGeometrySummary [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2372 resolveRuntimeLevelVisibility [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2410 levelVisibilityEquals [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2449 resolveSpatialCellSize [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2477 normaliseCategoryDensityMap [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2496 normaliseCategoryDensitySourceMap [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2515 normaliseOptionalIdentifier [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2534 createEmptyMutableStatePersistenceDiagnostics [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2567 mutableStateMatchesPersistentState [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2608 createMutableStateDifference [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2681 resolveSceneDocument [functions]
-- scripts/runtime/webs/WebRuntimeService.js:2711 deepFreezeClone [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2294 filterIntactWebs [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2316 createRenderingConfiguration [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2329 createSceneGeometrySummary [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2393 resolveRuntimeLevelVisibility [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2431 levelVisibilityEquals [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2470 resolveSpatialCellSize [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2498 normaliseCategoryDensityMap [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2517 normaliseCategoryDensitySourceMap [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2536 normaliseOptionalIdentifier [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2555 createEmptyMutableStatePersistenceDiagnostics [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2588 mutableStateMatchesPersistentState [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2629 createMutableStateDifference [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2702 resolveSceneDocument [functions]
+- scripts/runtime/webs/WebRuntimeService.js:2732 deepFreezeClone [functions]
 - scripts/runtime/webs/webRuntimeState.js:259 createEmptyCounts [functions]
 - scripts/runtime/webs/webRuntimeState.js:298 normaliseOptionalObject [functions]
 - scripts/runtime/webs/webRuntimeState.js:317 normaliseOptionalArray [functions]
@@ -15051,17 +15128,18 @@ Internal symbols missing comments:
 - scripts/spatial/webSpatialGeometry.js:206 normalisePositiveNumber [functions]
 - scripts/spatial/webSpatialGeometry.js:214 optionalFinite [functions]
 - scripts/spatial/webSpatialGeometry.js:1 EPSILON [constants]
-- scripts/spatial/WebSpatialIndex.js:465 createWebMetadata [functions]
-- scripts/spatial/WebSpatialIndex.js:478 createWebResult [functions]
-- scripts/spatial/WebSpatialIndex.js:486 createStrandResult [functions]
-- scripts/spatial/WebSpatialIndex.js:508 createPerchResult [functions]
-- scripts/spatial/WebSpatialIndex.js:527 insertIntoCells [functions]
-- scripts/spatial/WebSpatialIndex.js:538 countCellReferences [functions]
-- scripts/spatial/WebSpatialIndex.js:544 pointInsideBounds [functions]
-- scripts/spatial/WebSpatialIndex.js:550 requireIdentifier [functions]
-- scripts/spatial/WebSpatialIndex.js:556 normaliseOptionalIdentifier [functions]
-- scripts/spatial/WebSpatialIndex.js:561 normalisePositiveNumber [functions]
-- scripts/spatial/WebSpatialIndex.js:569 now [functions]
+- scripts/spatial/WebSpatialIndex.js:619 compareInternalStrandEntries [functions]
+- scripts/spatial/WebSpatialIndex.js:650 createWebMetadata [functions]
+- scripts/spatial/WebSpatialIndex.js:663 createWebResult [functions]
+- scripts/spatial/WebSpatialIndex.js:671 createStrandResult [functions]
+- scripts/spatial/WebSpatialIndex.js:693 createPerchResult [functions]
+- scripts/spatial/WebSpatialIndex.js:712 insertIntoCells [functions]
+- scripts/spatial/WebSpatialIndex.js:723 countCellReferences [functions]
+- scripts/spatial/WebSpatialIndex.js:729 pointInsideBounds [functions]
+- scripts/spatial/WebSpatialIndex.js:735 requireIdentifier [functions]
+- scripts/spatial/WebSpatialIndex.js:741 normaliseOptionalIdentifier [functions]
+- scripts/spatial/WebSpatialIndex.js:746 normalisePositiveNumber [functions]
+- scripts/spatial/WebSpatialIndex.js:754 now [functions]
 - scripts/spatial/WebSpatialIndex.js:20 DEFAULT_CELL_SIZE_PX [constants]
 - scripts/spatial/webSpatialQueries.js:133 normaliseIdentifierSet [functions]
 - scripts/spatial/webSpatialQueries.js:145 normaliseLimit [functions]
@@ -15116,14 +15194,14 @@ Internal symbols missing comments:
 - scripts/ui/sceneConfigTemplateContext.js:330 createSpanBehaviourSummary [functions]
 - scripts/ui/sceneConfigTemplateContext.js:48 DENSITY_LABELS [constants]
 - scripts/ui/sceneConfigTemplateContext.js:52 COLOUR_LABELS [constants]
-- scripts/ui/settingsConfigMaintenanceControls.js:202 createButton [functions]
-- scripts/ui/settingsConfigMaintenanceControls.js:210 runButtonAction [functions]
-- scripts/ui/settingsConfigMaintenanceControls.js:248 confirmWithDialogV2 [functions]
-- scripts/ui/settingsConfigMaintenanceControls.js:284 resolveDialogV2 [functions]
-- scripts/ui/settingsConfigMaintenanceControls.js:292 readDialogInputValue [functions]
-- scripts/ui/settingsConfigMaintenanceControls.js:331 notify [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:205 createButton [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:213 runButtonAction [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:251 confirmWithDialogV2 [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:287 resolveDialogV2 [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:295 readDialogInputValue [functions]
+- scripts/ui/settingsConfigMaintenanceControls.js:334 notify [functions]
 - scripts/ui/settingsConfigMaintenanceControls.js:5 CONTROLS_ATTRIBUTE [constants]
-- scripts/ui/settingsConfigMaintenanceControls.js:8 UNINSTALL_CONFIRMATION_TEXT [constants]
+- scripts/ui/settingsConfigMaintenanceControls.js:11 UNINSTALL_CONFIRMATION_TEXT [constants]
 - scripts/util/seededRandom.js:102 normaliseSeed [functions]
 - tests/dataContracts.test.js:149 clone [functions]
 - tests/dataContracts.test.js:9 VALID_DEFAULTS [constants]
@@ -15137,9 +15215,9 @@ Internal symbols missing comments:
 - tests/moduleImports.test.js:161 collectJavaScriptFiles [functions]
 - tests/moduleImports.test.js:17 projectRoot [constants]
 - tests/moduleSettings.test.js:46 preserveGlobals [functions]
-- tests/moduleSettings.test.js:55 restoreGlobals [functions]
-- tests/moduleSettings.test.js:63 createSettingsHarness [functions]
-- tests/moduleSettings.test.js:96 findRegistration [functions]
+- tests/moduleSettings.test.js:56 restoreGlobals [functions]
+- tests/moduleSettings.test.js:65 createSettingsHarness [functions]
+- tests/moduleSettings.test.js:98 findRegistration [functions]
 - tests/moduleSettings.test.js:31 EXPECTED_SETTING_KEYS [constants]
 - tests/publicApi.test.js:7 createEnvironment [functions]
 - tests/regionConfigApplication.test.js:97 createTabElement [functions]

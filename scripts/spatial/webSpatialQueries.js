@@ -69,7 +69,85 @@ export function normaliseWebSpatialQueryOptions(value = {}, {
 }
 
 /** Return whether one indexed web matches shared query filters. */
-export function webEntryMatchesSpatialQuery(entry, options) {
+export function webEntryMatchesSpatialQuery(
+  entry,
+  options,
+  diagnostics = null
+) {
+  return diagnostics
+    ? webEntryMatchesSpatialQueryWithDiagnostics(
+        entry,
+        options,
+        diagnostics
+      )
+    : webEntryMatchesSpatialQueryWithoutDiagnostics(
+        entry,
+        options
+      );
+}
+
+/** Return whether one indexed strand matches shared query filters. */
+export function strandEntryMatchesSpatialQuery(
+  entry,
+  options,
+  diagnostics = null
+) {
+  if (!diagnostics) {
+    return (
+      webEntryMatchesSpatialQueryWithoutDiagnostics(
+        entry,
+        options
+      ) &&
+      (
+        options.strandKinds.size ===
+          0 ||
+        options.strandKinds.has(
+          entry.strandKind
+        )
+      ) &&
+      entry.interactionWidthPx >=
+        options.minimumInteractionWidthPx
+    );
+  }
+
+  if (
+    !webEntryMatchesSpatialQueryWithDiagnostics(
+      entry,
+      options,
+      diagnostics
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    options.strandKinds.size >
+      0 &&
+    !options.strandKinds.has(
+      entry.strandKind
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics
+    );
+  }
+
+  if (
+    entry.interactionWidthPx <
+      options.minimumInteractionWidthPx
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics
+    );
+  }
+
+  return true;
+}
+
+function webEntryMatchesSpatialQueryWithoutDiagnostics(
+  entry,
+  options
+) {
   if (!entry || !options) return false;
 
   if (options.levelIds.size > 0 && !options.levelIds.has(entry.levelId)) return false;
@@ -89,11 +167,126 @@ export function webEntryMatchesSpatialQuery(entry, options) {
   return true;
 }
 
-/** Return whether one indexed strand matches shared query filters. */
-export function strandEntryMatchesSpatialQuery(entry, options) {
-  return webEntryMatchesSpatialQuery(entry, options) &&
-    (options.strandKinds.size === 0 || options.strandKinds.has(entry.strandKind)) &&
-    entry.interactionWidthPx >= options.minimumInteractionWidthPx;
+function webEntryMatchesSpatialQueryWithDiagnostics(
+  entry,
+  options,
+  diagnostics
+) {
+  if (
+    !entry ||
+    !options
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics
+    );
+  }
+
+  if (
+    options.levelIds.size >
+      0 &&
+    !options.levelIds.has(
+      entry.levelId
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "levelRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.populationIds.size >
+      0 &&
+    !options.populationIds.has(
+      entry.populationId
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics
+    );
+  }
+
+  if (
+    options.webKinds.size >
+      0 &&
+    !options.webKinds.has(
+      entry.webKind
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "categoryRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.regionIds.size >
+      0 &&
+    !hasAny(
+      entry.regionIds,
+      options.regionIds
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "regionRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.regionTags.size >
+      0 &&
+    !hasAny(
+      entry.regionTags,
+      options.regionTags
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "regionRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.elevation !==
+      null &&
+    !spatialElevationBandContains(
+      entry.elevationBand,
+      options.elevation
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "elevationRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.elevationBand &&
+    !spatialElevationBandsOverlap(
+      entry.elevationBand,
+      options.elevationBand
+    )
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "elevationRejectedCandidateCount"
+    );
+  }
+
+  if (
+    options.intactOnly ===
+      true &&
+    entry.intact !==
+      true
+  ) {
+    return rejectSpatialMetadataCandidate(
+      diagnostics,
+      "intactStateRejectedCandidateCount"
+    );
+  }
+
+  return true;
 }
 
 /** Return whether one indexed perch matches shared query filters. */
@@ -184,7 +377,64 @@ function normaliseElevationBand(value) {
   return Object.freeze({ bottom, top });
 }
 
+function rejectSpatialMetadataCandidate(
+  diagnostics,
+  reasonCounterName = null
+) {
+  incrementSpatialDiagnosticCounter(
+    diagnostics,
+    "metadataRejectedCandidateCount"
+  );
+
+  if (reasonCounterName) {
+    incrementSpatialDiagnosticCounter(
+      diagnostics,
+      reasonCounterName
+    );
+  }
+
+  return false;
+}
+
+function incrementSpatialDiagnosticCounter(
+  diagnostics,
+  counterName,
+  amount = 1
+) {
+  if (
+    !diagnostics ||
+    typeof diagnostics !==
+      "object" ||
+    typeof counterName !==
+      "string"
+  ) {
+    return;
+  }
+
+  const current =
+    Number(
+      diagnostics[
+        counterName
+      ]
+    );
+
+  diagnostics[
+    counterName
+  ] =
+    (
+      Number.isFinite(
+        current
+      ) &&
+      current >
+        0
+        ? current
+        : 0
+    ) +
+    amount;
+}
+
 function hasAny(values, expected) {
   return (Array.isArray(values) ? values : []).some((value) => expected.has(String(value)));
 }
+
 

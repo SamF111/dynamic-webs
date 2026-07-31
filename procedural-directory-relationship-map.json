@@ -2008,6 +2008,7 @@
     ],
     "scripts/spatial/WebSpatialIndex.js": [
       "scripts/runtime/webs/WebRuntimeService.js",
+      "tests/webMovementInteractions.test.js",
       "tests/webSpatialIndex.test.js"
     ],
     "scripts/spatial/webRegionRestrictionIndex.js": [
@@ -3146,8 +3147,9 @@
           "line": 53,
           "kind": "static import",
           "source": "../ui/settingsConfigMaintenanceControls.js",
-          "import_text": "{ activateSettingsConfigMaintenanceControls }",
+          "import_text": "{ SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR, activateSettingsConfigMaintenanceControls }",
           "imported_names": [
+            "SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR",
             "activateSettingsConfigMaintenanceControls"
           ],
           "status": "internal resolved",
@@ -3159,153 +3161,153 @@
         "functions": [
           {
             "name": "registerModuleSettings",
-            "line": 227,
+            "line": 298,
             "style": "export function",
             "comment": "Register GM-facing world settings in Foundry's standard Settings Configuration."
           },
           {
             "name": "getConfiguredWebLevelProviderMode",
-            "line": 312,
+            "line": 383,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "getConfiguredMaximumSpanGridUnits",
-            "line": 316,
+            "line": 387,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "getConfiguredDefaultWebPopulationSettings",
-            "line": 320,
+            "line": 391,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "getConfiguredDefaultSpanWebBehaviourSettings",
-            "line": 324,
+            "line": 395,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "shouldShowWebLevelProviderSetting",
-            "line": 328,
+            "line": 399,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "createAvailableWebLevelProviderChoices",
-            "line": 333,
+            "line": 404,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "createWebLevelProviderHint",
-            "line": 366,
+            "line": 437,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "normaliseConfiguredWebLevelProviderMode",
-            "line": 386,
+            "line": 457,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "normaliseConfiguredMaximumSpanGridUnits",
-            "line": 429,
+            "line": 500,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "resetModuleSettingsRegistrationForTests",
-            "line": 468,
+            "line": 539,
             "style": "export function",
             "comment": ""
           },
           {
             "name": "applyModuleSettingsCategories",
-            "line": 496,
+            "line": 571,
             "style": "export function",
-            "comment": "Insert readable headings into Foundry's standard module-settings form. This keeps Foundry's own SettingsConfig application, form submission, permissions and reset behaviour. Dynamic Webs only adds non-interactive headings before the first setting in each group."
+            "comment": "Group Dynamic Webs settings into Ambient Critters-style collapsible sections. Foundry still owns form submission, permissions, reset behaviour, and setting controls. Dynamic Webs only moves its existing rows into labelled details blocks and adds its immediate maintenance controls to the final section. @param {object} html - Rendered SettingsConfig HTML. @param {object} maintenanceActions - Immediate maintenance callbacks. @returns {number} Number of groups created."
           }
         ],
         "constants": [
           {
             "name": "MODULE_SETTING_KEYS",
-            "line": 57,
+            "line": 58,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "DEFAULT_WEB_LEVEL_PROVIDER_MODE",
-            "line": 87,
+            "line": 88,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "MINIMUM_MAXIMUM_SPAN_GRID_UNITS",
-            "line": 90,
+            "line": 91,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "MAXIMUM_MAXIMUM_SPAN_GRID_UNITS",
-            "line": 93,
+            "line": 94,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "MAXIMUM_SPAN_GRID_UNITS_STEP",
-            "line": 96,
+            "line": 97,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "DEFAULT_MAXIMUM_SPAN_GRID_UNITS",
-            "line": 99,
+            "line": 100,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "LEVEL_PROVIDER_MODE_CHANGED_HOOK",
-            "line": 102,
+            "line": 103,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK",
-            "line": 105,
+            "line": 106,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK",
-            "line": 108,
+            "line": 109,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK",
-            "line": 111,
+            "line": 112,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK",
-            "line": 114,
+            "line": 115,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "WEB_LEVEL_PROVIDER_SETTING_LABELS",
-            "line": 117,
+            "line": 118,
             "style": "export const",
             "comment": ""
           },
           {
             "name": "MODULE_SETTINGS_CATEGORY_DEFINITIONS",
-            "line": 127,
+            "line": 134,
             "style": "export const",
             "comment": ""
           }
@@ -3318,94 +3320,172 @@
       "internal_symbols": {
         "functions": [
           {
+            "name": "createModuleSettingsGroups",
+            "line": 691,
+            "style": "internal top-level function",
+            "comment": "Resolve each configured group and its currently rendered rows. Groups with no visible rows are omitted. This naturally hides Level Awareness in Foundry v14, where the provider setting remains registered but is not rendered. @param {HTMLElement} root - SettingsConfig root. @returns {object[]} Group descriptors with DOM rows."
+          },
+          {
+            "name": "createModuleSettingsGroupElement",
+            "line": 748,
+            "style": "internal top-level function",
+            "comment": "Create one collapsible settings group. @param {object} options - Element creation values. @returns {HTMLElement} Details element."
+          },
+          {
+            "name": "readModuleSettingsGroupState",
+            "line": 850,
+            "style": "internal top-level function",
+            "comment": "@returns {Record<string, boolean>} Persisted local group state."
+          },
+          {
+            "name": "resolveModuleSettingsGroupOpenState",
+            "line": 878,
+            "style": "internal top-level function",
+            "comment": "Resolve one group's persisted or authored open state."
+          },
+          {
+            "name": "persistModuleSettingsGroupOpenState",
+            "line": 895,
+            "style": "internal top-level function",
+            "comment": "Persist one group's open state locally."
+          },
+          {
+            "name": "applySettingsContainerStyles",
+            "line": 919,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "applySettingsGroupStyles",
+            "line": 930,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "applySettingsSummaryStyles",
+            "line": 943,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "applySettingsDescriptionStyles",
+            "line": 956,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "applySettingsBodyStyles",
+            "line": 967,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
             "name": "registerDefaultSettingsCategorisationHook",
-            "line": 590,
+            "line": 974,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "disableUnavailableLevelProviderControl",
-            "line": 628,
+            "line": 1012,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "findSettingsRow",
+            "line": 1051,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "findSettingsControl",
-            "line": 667,
+            "line": 1063,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveSettingsRow",
-            "line": 695,
+            "line": 1091,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveSettingsConfigRoot",
-            "line": 708,
+            "line": 1104,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "escapeAttributeSelectorValue",
-            "line": 732,
+            "line": 1128,
             "style": "internal top-level function",
             "comment": ""
           }
         ],
         "constants": [
           {
+            "name": "SETTINGS_GROUP_STATE_STORAGE_KEY",
+            "line": 128,
+            "style": "internal top-level const",
+            "comment": ""
+          },
+          {
+            "name": "SETTINGS_GROUPS_SELECTOR",
+            "line": 131,
+            "style": "internal top-level const",
+            "comment": ""
+          },
+          {
             "name": "DEFAULT_DENSITY_SETTING_DEFINITIONS",
-            "line": 156,
+            "line": 227,
             "style": "internal top-level const",
             "comment": ""
           },
           {
             "name": "AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS",
-            "line": 192,
+            "line": 263,
             "style": "internal top-level const",
             "comment": ""
           },
           {
             "name": "AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS",
-            "line": 202,
+            "line": 273,
             "style": "internal top-level const",
             "comment": ""
           },
           {
             "name": "settingsRegistered",
-            "line": 207,
+            "line": 278,
             "style": "internal top-level let",
             "comment": ""
           },
           {
             "name": "settingsConfigHookRegistered",
-            "line": 210,
+            "line": 281,
             "style": "internal top-level let",
             "comment": ""
           },
           {
             "name": "cachedWebLevelProviderMode",
-            "line": 213,
+            "line": 284,
             "style": "internal top-level let",
             "comment": ""
           },
           {
             "name": "cachedMaximumSpanGridUnits",
-            "line": 216,
+            "line": 287,
             "style": "internal top-level let",
             "comment": ""
           },
           {
             "name": "cachedDefaultWebPopulationSettings",
-            "line": 219,
+            "line": 290,
             "style": "internal top-level let",
             "comment": ""
           },
           {
             "name": "cachedDefaultSpanWebBehaviourSettings",
-            "line": 222,
+            "line": 293,
             "style": "internal top-level let",
             "comment": ""
           }
@@ -9095,7 +9175,7 @@
         "classes": [
           {
             "name": "WebMovementInteractionService",
-            "line": 11,
+            "line": 38,
             "style": "export class",
             "comment": "Generic movement query over currently intact wall-span web geometry."
           }
@@ -9105,8 +9185,64 @@
       },
       "internal_symbols_reported": true,
       "internal_symbols": {
-        "functions": [],
-        "constants": [],
+        "functions": [
+          {
+            "name": "createMovementQueryDiagnostics",
+            "line": 343,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "mergeSpatialDiagnostics",
+            "line": 380,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "emitMovementQueryDiagnostics",
+            "line": 424,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "readMovementDiagnosticTime",
+            "line": 449,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "normaliseMovementDiagnosticNumber",
+            "line": 461,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "normaliseMovementDiagnosticInteger",
+            "line": 478,
+            "style": "internal top-level function",
+            "comment": ""
+          }
+        ],
+        "constants": [
+          {
+            "name": "EMPTY_MOVEMENT_INTERACTION_RESULT",
+            "line": 9,
+            "style": "internal top-level const",
+            "comment": ""
+          },
+          {
+            "name": "MOVEMENT_DIAGNOSTIC_PHASE_NAMES",
+            "line": 12,
+            "style": "internal top-level const",
+            "comment": ""
+          },
+          {
+            "name": "MOVEMENT_DIAGNOSTIC_COUNTER_NAMES",
+            "line": 24,
+            "style": "internal top-level const",
+            "comment": ""
+          }
+        ],
         "classes": [],
         "note": "Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural."
       }
@@ -10103,7 +10239,7 @@
         "classes": [
           {
             "name": "WebCapturedAssetTextureService",
-            "line": 14,
+            "line": 17,
             "style": "export class",
             "comment": "Client-local loader for transient captured-web overlay assets."
           }
@@ -10115,61 +10251,74 @@
       "internal_symbols": {
         "functions": [
           {
+            "name": "resolveDisplayAlpha",
+            "line": 490,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
             "name": "normaliseTint",
-            "line": 465,
+            "line": 509,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normaliseUnitMultiplier",
-            "line": 484,
+            "line": 528,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "requireWebpPath",
-            "line": 503,
-            "style": "internal top-level function",
-            "comment": ""
-          },
-          {
-            "name": "getFoundryTexture",
-            "line": 525,
-            "style": "internal top-level function",
-            "comment": ""
-          },
-          {
-            "name": "loadFoundryTexture",
             "line": 547,
             "style": "internal top-level function",
             "comment": ""
           },
           {
+            "name": "getFoundryTexture",
+            "line": 569,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
+            "name": "loadFoundryTexture",
+            "line": 591,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
             "name": "normaliseLoadedTexture",
-            "line": 579,
+            "line": 623,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveTextureDimensions",
-            "line": 618,
+            "line": 662,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "firstPositiveNumber",
-            "line": 648,
+            "line": 692,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "clamp",
-            "line": 671,
+            "line": 715,
             "style": "internal top-level function",
             "comment": ""
           }
         ],
-        "constants": [],
+        "constants": [
+          {
+            "name": "LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER",
+            "line": 12,
+            "style": "internal top-level const",
+            "comment": ""
+          }
+        ],
         "classes": [],
         "note": "Internal symbol reporting is top-level only. Local variables inside functions are deliberately suppressed to keep the report architectural."
       }
@@ -12286,85 +12435,85 @@
         "functions": [
           {
             "name": "filterIntactWebs",
-            "line": 2273,
+            "line": 2294,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createRenderingConfiguration",
-            "line": 2295,
+            "line": 2316,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createSceneGeometrySummary",
-            "line": 2308,
+            "line": 2329,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveRuntimeLevelVisibility",
-            "line": 2372,
+            "line": 2393,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "levelVisibilityEquals",
-            "line": 2410,
+            "line": 2431,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveSpatialCellSize",
-            "line": 2449,
+            "line": 2470,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normaliseCategoryDensityMap",
-            "line": 2477,
+            "line": 2498,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normaliseCategoryDensitySourceMap",
-            "line": 2496,
+            "line": 2517,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normaliseOptionalIdentifier",
-            "line": 2515,
+            "line": 2536,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createEmptyMutableStatePersistenceDiagnostics",
-            "line": 2534,
+            "line": 2555,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "mutableStateMatchesPersistentState",
-            "line": 2567,
+            "line": 2588,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createMutableStateDifference",
-            "line": 2608,
+            "line": 2629,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveSceneDocument",
-            "line": 2681,
+            "line": 2702,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "deepFreezeClone",
-            "line": 2711,
+            "line": 2732,
             "style": "internal top-level function",
             "comment": ""
           }
@@ -14953,68 +15102,74 @@
       "internal_symbols": {
         "functions": [
           {
+            "name": "compareInternalStrandEntries",
+            "line": 619,
+            "style": "internal top-level function",
+            "comment": ""
+          },
+          {
             "name": "createWebMetadata",
-            "line": 465,
+            "line": 650,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createWebResult",
-            "line": 478,
+            "line": 663,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createStrandResult",
-            "line": 486,
+            "line": 671,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createPerchResult",
-            "line": 508,
+            "line": 693,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "insertIntoCells",
-            "line": 527,
+            "line": 712,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "countCellReferences",
-            "line": 538,
+            "line": 723,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "pointInsideBounds",
-            "line": 544,
+            "line": 729,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "requireIdentifier",
-            "line": 550,
+            "line": 735,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normaliseOptionalIdentifier",
-            "line": 556,
+            "line": 741,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "normalisePositiveNumber",
-            "line": 561,
+            "line": 746,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "now",
-            "line": 569,
+            "line": 754,
             "style": "internal top-level function",
             "comment": ""
           }
@@ -16401,30 +16556,37 @@
         "functions": [
           {
             "name": "activateSettingsConfigMaintenanceControls",
-            "line": 13,
+            "line": 16,
             "style": "export function",
             "comment": "Add immediate maintenance buttons to Foundry's standard Configure Settings form."
           },
           {
             "name": "confirmRestoreAllDestroyedSpanWebsAction",
-            "line": 135,
+            "line": 138,
             "style": "export function",
             "comment": "Confirm the world-wide restorative mutable-state action."
           },
           {
             "name": "confirmCleanupAction",
-            "line": 145,
+            "line": 148,
             "style": "export function",
             "comment": "Ask for ordinary destructive-action confirmation through Foundry's V2 dialog API."
           },
           {
             "name": "confirmUninstallAction",
-            "line": 155,
+            "line": 158,
             "style": "export function",
             "comment": "Require the GM to type UNINSTALL through Foundry's V2 input dialog."
           }
         ],
-        "constants": [],
+        "constants": [
+          {
+            "name": "SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR",
+            "line": 8,
+            "style": "export const",
+            "comment": ""
+          }
+        ],
         "classes": [],
         "named_exports": [],
         "has_default_export": false
@@ -16434,37 +16596,37 @@
         "functions": [
           {
             "name": "createButton",
-            "line": 202,
+            "line": 205,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "runButtonAction",
-            "line": 210,
+            "line": 213,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "confirmWithDialogV2",
-            "line": 248,
+            "line": 251,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "resolveDialogV2",
-            "line": 284,
+            "line": 287,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "readDialogInputValue",
-            "line": 292,
+            "line": 295,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "notify",
-            "line": 331,
+            "line": 334,
             "style": "internal top-level function",
             "comment": ""
           }
@@ -16478,7 +16640,7 @@
           },
           {
             "name": "UNINSTALL_CONFIRMATION_TEXT",
-            "line": 8,
+            "line": 11,
             "style": "internal top-level const",
             "comment": ""
           }
@@ -17273,19 +17435,19 @@
           },
           {
             "name": "restoreGlobals",
-            "line": 55,
+            "line": 56,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "createSettingsHarness",
-            "line": 63,
+            "line": 65,
             "style": "internal top-level function",
             "comment": ""
           },
           {
             "name": "findRegistration",
-            "line": 96,
+            "line": 98,
             "style": "internal top-level function",
             "comment": ""
           }
@@ -20627,6 +20789,18 @@
           "status": "internal resolved",
           "resolved": "scripts/interactions/spanWebMovementGeometry.js",
           "ambiguous_candidates": []
+        },
+        {
+          "line": 12,
+          "kind": "static import",
+          "source": "../scripts/spatial/WebSpatialIndex.js",
+          "import_text": "{ WebSpatialIndex }",
+          "imported_names": [
+            "WebSpatialIndex"
+          ],
+          "status": "internal resolved",
+          "resolved": "scripts/spatial/WebSpatialIndex.js",
+          "ambiguous_candidates": []
         }
       ],
       "exports": {
@@ -22568,19 +22742,19 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1745
+          "line": 1766
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2020
+          "line": 2041
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2122
+          "line": 2143
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2682
+          "line": 2703
         }
       ],
       "scripts/api/interactionApi.js::queryPublicWebMovementIntersections": [
@@ -22778,23 +22952,23 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 132
+          "line": 134
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 137
+          "line": 139
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 181
+          "line": 183
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 320
+          "line": 400
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 386
+          "line": 466
         },
         {
           "file": "tests/webPopulationConfiguration.test.js",
@@ -22808,7 +22982,7 @@
       "scripts/config/moduleSettings.js::getConfiguredWebLevelProviderMode": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 313
+          "line": 384
         },
         {
           "file": "scripts/foundry/webLevelProvider.js",
@@ -22816,17 +22990,17 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 156
+          "line": 158
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 160
+          "line": 162
         }
       ],
       "scripts/config/moduleSettings.js::getConfiguredMaximumSpanGridUnits": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 317
+          "line": 388
         },
         {
           "file": "scripts/config/sceneSpanWebBehaviourConfiguration.js",
@@ -22838,13 +23012,13 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 327
+          "line": 407
         }
       ],
       "scripts/config/moduleSettings.js::getConfiguredDefaultWebPopulationSettings": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 321
+          "line": 392
         },
         {
           "file": "scripts/config/sceneWebPopulationConfiguration.js",
@@ -22856,13 +23030,13 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 333
+          "line": 413
         }
       ],
       "scripts/config/moduleSettings.js::getConfiguredDefaultSpanWebBehaviourSettings": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 325
+          "line": 396
         },
         {
           "file": "scripts/config/sceneSpanWebBehaviourConfiguration.js",
@@ -22874,83 +23048,21 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 342
+          "line": 422
         }
       ],
       "scripts/config/moduleSettings.js::shouldShowWebLevelProviderSetting": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 329
+          "line": 400
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 633
+          "line": 1017
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 760
-        },
-        {
-          "file": "tests/moduleSettings.test.js",
-          "line": 192
-        },
-        {
-          "file": "tests/moduleSettings.test.js",
-          "line": 285
-        }
-      ],
-      "scripts/config/moduleSettings.js::createAvailableWebLevelProviderChoices": [
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 334
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 635
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 764
-        },
-        {
-          "file": "tests/moduleSettings.test.js",
-          "line": 286
-        }
-      ],
-      "scripts/config/moduleSettings.js::createWebLevelProviderHint": [
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 367
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 756
-        },
-        {
-          "file": "tests/moduleSettings.test.js",
-          "line": 197
-        },
-        {
-          "file": "tests/moduleSettings.test.js",
-          "line": 289
-        }
-      ],
-      "scripts/config/moduleSettings.js::normaliseConfiguredWebLevelProviderMode": [
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 387
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 770
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 1278
-        },
-        {
-          "file": "scripts/config/moduleSettings.js",
-          "line": 1303
+          "line": 1156
         },
         {
           "file": "tests/moduleSettings.test.js",
@@ -22958,21 +23070,83 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 291
+          "line": 365
+        }
+      ],
+      "scripts/config/moduleSettings.js::createAvailableWebLevelProviderChoices": [
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 405
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1019
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1160
+        },
+        {
+          "file": "tests/moduleSettings.test.js",
+          "line": 366
+        }
+      ],
+      "scripts/config/moduleSettings.js::createWebLevelProviderHint": [
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 438
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1152
+        },
+        {
+          "file": "tests/moduleSettings.test.js",
+          "line": 199
+        },
+        {
+          "file": "tests/moduleSettings.test.js",
+          "line": 369
+        }
+      ],
+      "scripts/config/moduleSettings.js::normaliseConfiguredWebLevelProviderMode": [
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 458
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1166
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1674
+        },
+        {
+          "file": "scripts/config/moduleSettings.js",
+          "line": 1699
+        },
+        {
+          "file": "tests/moduleSettings.test.js",
+          "line": 196
+        },
+        {
+          "file": "tests/moduleSettings.test.js",
+          "line": 371
         }
       ],
       "scripts/config/moduleSettings.js::normaliseConfiguredMaximumSpanGridUnits": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 430
+          "line": 501
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 825
+          "line": 1221
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1312
+          "line": 1708
         },
         {
           "file": "scripts/config/sceneSpanWebBehaviourConfiguration.js",
@@ -22988,29 +23162,29 @@
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 408
+          "line": 488
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 409
+          "line": 489
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 410
+          "line": 490
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 411
+          "line": 491
         }
       ],
       "scripts/config/moduleSettings.js::resetModuleSettingsRegistrationForTests": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 469
+          "line": 540
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 57
+          "line": 58
         },
         {
           "file": "tests/webPopulationConfiguration.test.js",
@@ -23032,15 +23206,15 @@
       "scripts/config/moduleSettings.js::applyModuleSettingsCategories": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 616
+          "line": 1000
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 260
+          "line": 315
         },
         {
           "file": "tests/moduleSettings.test.js",
-          "line": 268
+          "line": 348
         }
       ],
       "scripts/config/regionTagConfiguration.js::getDynamicWebRegionTags": [
@@ -23746,7 +23920,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1864
+          "line": 1885
         },
         {
           "file": "tests/sceneWebMutableStateConfiguration.test.js",
@@ -23950,7 +24124,7 @@
       "scripts/config/sceneWebThicknessConfiguration.js::normaliseSceneWebThickness": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1444
+          "line": 1840
         },
         {
           "file": "scripts/config/sceneWebPopulationConfiguration.js",
@@ -23982,7 +24156,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2303
+          "line": 2324
         },
         {
           "file": "scripts/ui/sceneConfigPopulationSerialization.js",
@@ -24046,11 +24220,11 @@
       "scripts/config/spanWebBehaviourContract.js::normaliseSpanWebVisionMode": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1228
+          "line": 1624
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1508
+          "line": 1904
         },
         {
           "file": "scripts/config/sceneSpanWebBehaviourConfiguration.js",
@@ -24068,19 +24242,19 @@
       "scripts/config/spanWebBehaviourContract.js::normaliseSpanWebBehaviourBoolean": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1236
+          "line": 1632
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1244
+          "line": 1640
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1519
+          "line": 1915
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1530
+          "line": 1926
         },
         {
           "file": "scripts/config/sceneSpanWebBehaviourConfiguration.js",
@@ -24661,7 +24835,7 @@
       "scripts/diagnostics/determinismDiagnostics.js::runDeterminismDiagnostic": [
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1601
+          "line": 1622
         },
         {
           "file": "tests/determinismDiagnostics.test.js",
@@ -24701,7 +24875,7 @@
       "scripts/diagnostics/diagnosticReporter.js::reportDiagnostic": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1285
+          "line": 1681
         },
         {
           "file": "scripts/dynamic-webs.js",
@@ -24729,7 +24903,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1931
+          "line": 1952
         },
         {
           "file": "scripts/ui/regionConfigApplication.js",
@@ -24973,19 +25147,19 @@
       "scripts/foundry/foundryVersionCompatibility.js::detectFoundryMajorVersion": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 330
+          "line": 401
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 343
+          "line": 414
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 369
+          "line": 440
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 391
+          "line": 462
         },
         {
           "file": "scripts/foundry/foundryVersionCompatibility.js",
@@ -24999,15 +25173,15 @@
       "scripts/foundry/foundryVersionCompatibility.js::detectLevelsModuleSupport": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 352
+          "line": 423
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 379
+          "line": 450
         },
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 422
+          "line": 493
         },
         {
           "file": "scripts/foundry/webLevelProviderV13Levels.js",
@@ -25037,7 +25211,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2379
+          "line": 2400
         }
       ],
       "scripts/foundry/webLevelProvider.js::createWebLevelProviderSnapshot": [
@@ -25057,7 +25231,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2400
+          "line": 2421
         },
         {
           "file": "tests/webLevelVisibility.test.js",
@@ -25099,15 +25273,15 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1987
+          "line": 2008
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2085
+          "line": 2106
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2208
+          "line": 2229
         },
         {
           "file": "tests/webLevelVisibility.test.js",
@@ -25384,7 +25558,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1576
+          "line": 1597
         },
         {
           "file": "tests/foundryCompatibility.test.js",
@@ -25668,7 +25842,7 @@
         },
         {
           "file": "scripts/interactions/WebMovementInteractionService.js",
-          "line": 44
+          "line": 86
         }
       ],
       "scripts/interactions/spanWebMovementGeometry.js::sweptMovementIntersectsPolyline": [
@@ -25678,11 +25852,11 @@
         },
         {
           "file": "scripts/interactions/WebMovementInteractionService.js",
-          "line": 83
+          "line": 142
         },
         {
           "file": "tests/webMovementInteractions.test.js",
-          "line": 19
+          "line": 23
         }
       ],
       "scripts/interactions/spanWebMovementGeometry.js::segmentToSegmentDistance": [
@@ -25696,7 +25870,7 @@
         },
         {
           "file": "tests/webMovementInteractions.test.js",
-          "line": 14
+          "line": 18
         }
       ],
       "scripts/interactions/webInteractionContract.js::createPublicWebInteractionContract": [
@@ -25990,11 +26164,11 @@
       "scripts/rendering/webs/webCapturedAssetTransform.js::applyWebCapturedAssetTransform": [
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 145
+          "line": 148
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 175
+          "line": 186
         },
         {
           "file": "scripts/rendering/webs/webCapturedAssetTransform.js",
@@ -26219,11 +26393,11 @@
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 71
+          "line": 74
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 95
+          "line": 98
         },
         {
           "file": "scripts/rendering/webs/WebCarpetPatchTextureService.js",
@@ -26425,7 +26599,7 @@
       "scripts/runtime/webs/webLevelVisibilityState.js::createWebLevelVisibilityState": [
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2406
+          "line": 2427
         }
       ],
       "scripts/runtime/webs/webRuntimeState.js::createWebRuntimeState": [
@@ -26443,7 +26617,7 @@
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 2241
+          "line": 2262
         },
         {
           "file": "tests/webRuntimeDiagnostics.test.js",
@@ -26461,11 +26635,11 @@
       "scripts/runtime/webs/webRuntimeState.js::createWebRuntimeSnapshot": [
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1654
+          "line": 1675
         },
         {
           "file": "scripts/runtime/webs/WebRuntimeService.js",
-          "line": 1674
+          "line": 1695
         },
         {
           "file": "tests/webRuntimeDiagnostics.test.js",
@@ -26695,7 +26869,7 @@
       "scripts/simulation/webs/webColourProfiles.js::isSupportedWebColourProfileId": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1431
+          "line": 1827
         },
         {
           "file": "scripts/config/sceneWebColourConfiguration.js",
@@ -26781,7 +26955,7 @@
       "scripts/simulation/webs/webColourProfiles.js::getWebColourOptions": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 920
+          "line": 1316
         },
         {
           "file": "scripts/ui/sceneConfigTemplateContext.js",
@@ -26827,7 +27001,7 @@
       "scripts/simulation/webs/webDensityPresets.js::isSupportedWebDensityId": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 1414
+          "line": 1810
         },
         {
           "file": "scripts/config/sceneWebDensityConfiguration.js",
@@ -27374,15 +27548,19 @@
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 124
+          "line": 127
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 496
+          "line": 502
         },
         {
           "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-          "line": 672
+          "line": 540
+        },
+        {
+          "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
+          "line": 716
         },
         {
           "file": "scripts/rendering/webs/WebCarpetPatchTextureService.js",
@@ -27570,7 +27748,7 @@
       "scripts/simulation/webs/webLevelContract.js::normaliseWebLevelProviderMode": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 404
+          "line": 475
         },
         {
           "file": "scripts/foundry/webLevelProvider.js",
@@ -27932,11 +28110,11 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 384
+          "line": 538
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 418
+          "line": 572
         },
         {
           "file": "scripts/spatial/webSpatialQueries.js",
@@ -27966,11 +28144,11 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 354
+          "line": 508
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 546
+          "line": 731
         },
         {
           "file": "scripts/spatial/webSpatialQueries.js",
@@ -27980,7 +28158,7 @@
       "scripts/spatial/webSpatialGeometry.js::calculatePolylineBounds": [
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 392
+          "line": 546
         }
       ],
       "scripts/spatial/webSpatialGeometry.js::expandSpatialBounds": [
@@ -27994,15 +28172,15 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 241
+          "line": 395
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 284
+          "line": 438
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 393
+          "line": 547
         }
       ],
       "scripts/spatial/webSpatialGeometry.js::spatialBoundsOverlap": [
@@ -28012,13 +28190,17 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 257
+          "line": 321
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 411
         }
       ],
       "scripts/spatial/webSpatialGeometry.js::pointToSpatialBoundsDistance": [
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 260
+          "line": 414
         }
       ],
       "scripts/spatial/webSpatialGeometry.js::pointToPolylineDistance": [
@@ -28030,19 +28212,19 @@
       "scripts/spatial/webSpatialGeometry.js::createSpatialCellKeys": [
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 365
+          "line": 519
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 411
+          "line": 565
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 433
+          "line": 587
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 439
+          "line": 593
         }
       ],
       "scripts/spatial/webSpatialGeometry.js::spatialElevationBandsOverlap": [
@@ -28068,17 +28250,21 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 233
+          "line": 268
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 276
+          "line": 387
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 430
         }
       ],
       "scripts/spatial/webSpatialQueries.js::webEntryMatchesSpatialQuery": [
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 256
+          "line": 410
         },
         {
           "file": "scripts/spatial/webSpatialQueries.js",
@@ -28097,12 +28283,16 @@
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
           "line": 220
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 317
         }
       ],
       "scripts/spatial/webSpatialQueries.js::perchEntryMatchesSpatialQuery": [
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 299
+          "line": 453
         }
       ],
       "scripts/spatial/webSpatialQueries.js::compareSpatialResults": [],
@@ -28113,39 +28303,39 @@
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 318
-        },
-        {
-          "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 361
-        },
-        {
-          "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 382
-        },
-        {
-          "file": "scripts/spatial/WebSpatialIndex.js",
           "line": 472
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 474
+          "line": 515
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 475
+          "line": 536
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 480
+          "line": 657
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 488
+          "line": 659
         },
         {
           "file": "scripts/spatial/WebSpatialIndex.js",
-          "line": 510
+          "line": 660
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 665
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 673
+        },
+        {
+          "file": "scripts/spatial/WebSpatialIndex.js",
+          "line": 695
         },
         {
           "file": "scripts/spatial/webSpatialQueries.js",
@@ -28343,7 +28533,7 @@
       "scripts/ui/settingsConfigMaintenanceControls.js::activateSettingsConfigMaintenanceControls": [
         {
           "file": "scripts/config/moduleSettings.js",
-          "line": 583
+          "line": 584
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
@@ -28357,47 +28547,47 @@
       "scripts/ui/settingsConfigMaintenanceControls.js::confirmRestoreAllDestroyedSpanWebsAction": [
         {
           "file": "scripts/ui/settingsConfigMaintenanceControls.js",
-          "line": 92
+          "line": 95
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 207
+          "line": 210
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 259
+          "line": 262
         }
       ],
       "scripts/ui/settingsConfigMaintenanceControls.js::confirmCleanupAction": [
         {
           "file": "scripts/ui/settingsConfigMaintenanceControls.js",
-          "line": 106
+          "line": 109
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 208
+          "line": 211
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 260
+          "line": 263
         }
       ],
       "scripts/ui/settingsConfigMaintenanceControls.js::confirmUninstallAction": [
         {
           "file": "scripts/ui/settingsConfigMaintenanceControls.js",
-          "line": 120
+          "line": 123
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 209
+          "line": 212
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 236
+          "line": 239
         },
         {
           "file": "tests/settingsConfigMaintenanceControls.test.js",
-          "line": 261
+          "line": 264
         }
       ],
       "scripts/util/seededRandom.js::hashString": [
@@ -28532,7 +28722,7 @@
     "settings": [
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 869,
+        "line": 1265,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "<dynamic: definition.key>",
@@ -28544,7 +28734,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 1048,
+        "line": 1444,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "<dynamic: definition.key>",
@@ -28556,7 +28746,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 1084,
+        "line": 1480,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "clearCarpetTextureCache",
@@ -28568,7 +28758,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 1126,
+        "line": 1522,
         "method": "set",
         "namespace": "dynamic-webs",
         "key": "clearCarpetTextureCache",
@@ -28580,7 +28770,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 988,
+        "line": 1384,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "defaultSpanVisionMode",
@@ -28592,7 +28782,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 903,
+        "line": 1299,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "defaultWebColour",
@@ -28604,7 +28794,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 942,
+        "line": 1338,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "defaultWebThickness",
@@ -28616,7 +28806,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 1279,
+        "line": 1675,
         "method": "get",
         "namespace": "dynamic-webs",
         "key": "levelProviderMode",
@@ -28628,7 +28818,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 749,
+        "line": 1145,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "levelProviderMode",
@@ -28640,7 +28830,7 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
-        "line": 798,
+        "line": 1194,
         "method": "register",
         "namespace": "dynamic-webs",
         "key": "maximumSpanGridUnits",
@@ -28723,27 +28913,27 @@
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 60,
+        "line": 61,
         "name": "Hooks"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 121,
+        "line": 123,
         "name": "Hooks"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 178,
+        "line": 180,
         "name": "Hooks"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 312,
+        "line": 392,
         "name": "Hooks"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 378,
+        "line": 458,
         "name": "Hooks"
       },
       {
@@ -28793,17 +28983,17 @@
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 524,
+        "line": 529,
         "name": "Hooks"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 552,
+        "line": 557,
         "name": "Hooks"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 757,
+        "line": 762,
         "name": "Hooks"
       },
       {
@@ -28838,12 +29028,12 @@
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 61,
+        "line": 62,
         "name": "Levels"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 283,
+        "line": 363,
         "name": "Levels"
       },
       {
@@ -28873,17 +29063,17 @@
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 522,
+        "line": 527,
         "name": "PIXI"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 545,
+        "line": 550,
         "name": "PIXI"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 755,
+        "line": 760,
         "name": "PIXI"
       },
       {
@@ -29028,37 +29218,37 @@
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 59,
+        "line": 60,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 120,
+        "line": 122,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 177,
+        "line": 179,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 210,
+        "line": 213,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 282,
+        "line": 362,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 311,
+        "line": 391,
         "name": "canvas"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 377,
+        "line": 457,
         "name": "canvas"
       },
       {
@@ -29158,17 +29348,17 @@
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 520,
+        "line": 525,
         "name": "canvas"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 547,
+        "line": 552,
         "name": "canvas"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 753,
+        "line": 758,
         "name": "canvas"
       },
       {
@@ -29393,17 +29583,17 @@
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 246,
+        "line": 249,
         "name": "foundry"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 555,
+        "line": 560,
         "name": "foundry"
       },
       {
         "file": "tests/webCaptureEffectService.test.js",
-        "line": 759,
+        "line": 764,
         "name": "foundry"
       },
       {
@@ -29443,37 +29633,37 @@
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 58,
+        "line": 59,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 110,
+        "line": 112,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 171,
+        "line": 173,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 206,
+        "line": 208,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 278,
+        "line": 358,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 305,
+        "line": 385,
         "name": "game"
       },
       {
         "file": "tests/moduleSettings.test.js",
-        "line": 371,
+        "line": 451,
         "name": "game"
       },
       {
@@ -29508,17 +29698,17 @@
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 190,
+        "line": 193,
         "name": "game"
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 220,
+        "line": 223,
         "name": "game"
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 247,
+        "line": 250,
         "name": "game"
       },
       {
@@ -29767,6 +29957,16 @@
         "name": "loadTemplates"
       },
       {
+        "file": "tests/moduleSettings.test.js",
+        "line": 63,
+        "name": "localStorage"
+      },
+      {
+        "file": "tests/moduleSettings.test.js",
+        "line": 225,
+        "name": "localStorage"
+      },
+      {
         "file": "scripts/ui/regionConfigApplication.js",
         "line": 218,
         "name": "setTimeout"
@@ -29793,17 +29993,17 @@
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 191,
+        "line": 194,
         "name": "ui"
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 221,
+        "line": 224,
         "name": "ui"
       },
       {
         "file": "tests/settingsConfigMaintenanceControls.test.js",
-        "line": 248,
+        "line": 251,
         "name": "ui"
       }
     ],
@@ -36368,139 +36568,139 @@
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "getConfiguredWebLevelProviderMode",
-        "line": 312,
+        "line": 383,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "getConfiguredMaximumSpanGridUnits",
-        "line": 316,
+        "line": 387,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "getConfiguredDefaultWebPopulationSettings",
-        "line": 320,
+        "line": 391,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "getConfiguredDefaultSpanWebBehaviourSettings",
-        "line": 324,
+        "line": 395,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "shouldShowWebLevelProviderSetting",
-        "line": 328,
+        "line": 399,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "createAvailableWebLevelProviderChoices",
-        "line": 333,
+        "line": 404,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "createWebLevelProviderHint",
-        "line": 366,
+        "line": 437,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "normaliseConfiguredWebLevelProviderMode",
-        "line": 386,
+        "line": 457,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "normaliseConfiguredMaximumSpanGridUnits",
-        "line": 429,
+        "line": 500,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "resetModuleSettingsRegistrationForTests",
-        "line": 468,
+        "line": 539,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MODULE_SETTING_KEYS",
-        "line": 57,
+        "line": 58,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "DEFAULT_WEB_LEVEL_PROVIDER_MODE",
-        "line": 87,
+        "line": 88,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MINIMUM_MAXIMUM_SPAN_GRID_UNITS",
-        "line": 90,
+        "line": 91,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MAXIMUM_MAXIMUM_SPAN_GRID_UNITS",
-        "line": 93,
+        "line": 94,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MAXIMUM_SPAN_GRID_UNITS_STEP",
-        "line": 96,
+        "line": 97,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "DEFAULT_MAXIMUM_SPAN_GRID_UNITS",
-        "line": 99,
+        "line": 100,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "LEVEL_PROVIDER_MODE_CHANGED_HOOK",
-        "line": 102,
+        "line": 103,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "CARPET_TEXTURE_CACHE_CLEAR_REQUESTED_HOOK",
-        "line": 105,
+        "line": 106,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK",
-        "line": 108,
+        "line": 109,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK",
-        "line": 111,
+        "line": 112,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK",
-        "line": 114,
+        "line": 115,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "WEB_LEVEL_PROVIDER_SETTING_LABELS",
-        "line": 117,
+        "line": 118,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "MODULE_SETTINGS_CATEGORY_DEFINITIONS",
-        "line": 127,
+        "line": 134,
         "category": "constants"
       },
       {
@@ -37552,6 +37752,12 @@
         "name": "createSceneConfigTemplateContext",
         "line": 56,
         "category": "functions"
+      },
+      {
+        "file": "scripts/ui/settingsConfigMaintenanceControls.js",
+        "name": "SETTINGS_CONFIG_MAINTENANCE_CONTROLS_SELECTOR",
+        "line": 8,
+        "category": "constants"
       }
     ],
     "internal_symbols_missing_comments": [
@@ -37605,92 +37811,140 @@
       },
       {
         "file": "scripts/config/moduleSettings.js",
+        "name": "applySettingsContainerStyles",
+        "line": 919,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "applySettingsGroupStyles",
+        "line": 930,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "applySettingsSummaryStyles",
+        "line": 943,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "applySettingsDescriptionStyles",
+        "line": 956,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "applySettingsBodyStyles",
+        "line": 967,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
         "name": "registerDefaultSettingsCategorisationHook",
-        "line": 590,
+        "line": 974,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "disableUnavailableLevelProviderControl",
-        "line": 628,
+        "line": 1012,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "findSettingsRow",
+        "line": 1051,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "findSettingsControl",
-        "line": 667,
+        "line": 1063,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "resolveSettingsRow",
-        "line": 695,
+        "line": 1091,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "resolveSettingsConfigRoot",
-        "line": 708,
+        "line": 1104,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "escapeAttributeSelectorValue",
-        "line": 732,
+        "line": 1128,
         "category": "functions"
       },
       {
         "file": "scripts/config/moduleSettings.js",
+        "name": "SETTINGS_GROUP_STATE_STORAGE_KEY",
+        "line": 128,
+        "category": "constants"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
+        "name": "SETTINGS_GROUPS_SELECTOR",
+        "line": 131,
+        "category": "constants"
+      },
+      {
+        "file": "scripts/config/moduleSettings.js",
         "name": "DEFAULT_DENSITY_SETTING_DEFINITIONS",
-        "line": 156,
+        "line": 227,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "AUTHORED_DEFAULT_WEB_POPULATION_SETTINGS",
-        "line": 192,
+        "line": 263,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS",
-        "line": 202,
+        "line": 273,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "settingsRegistered",
-        "line": 207,
+        "line": 278,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "settingsConfigHookRegistered",
-        "line": 210,
+        "line": 281,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "cachedWebLevelProviderMode",
-        "line": 213,
+        "line": 284,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "cachedMaximumSpanGridUnits",
-        "line": 216,
+        "line": 287,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "cachedDefaultWebPopulationSettings",
-        "line": 219,
+        "line": 290,
         "category": "constants"
       },
       {
         "file": "scripts/config/moduleSettings.js",
         "name": "cachedDefaultSpanWebBehaviourSettings",
-        "line": 222,
+        "line": 293,
         "category": "constants"
       },
       {
@@ -39608,6 +39862,60 @@
         "category": "functions"
       },
       {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "createMovementQueryDiagnostics",
+        "line": 343,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "mergeSpatialDiagnostics",
+        "line": 380,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "emitMovementQueryDiagnostics",
+        "line": 424,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "readMovementDiagnosticTime",
+        "line": 449,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "normaliseMovementDiagnosticNumber",
+        "line": 461,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "normaliseMovementDiagnosticInteger",
+        "line": 478,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "EMPTY_MOVEMENT_INTERACTION_RESULT",
+        "line": 9,
+        "category": "constants"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "MOVEMENT_DIAGNOSTIC_PHASE_NAMES",
+        "line": 12,
+        "category": "constants"
+      },
+      {
+        "file": "scripts/interactions/WebMovementInteractionService.js",
+        "name": "MOVEMENT_DIAGNOSTIC_COUNTER_NAMES",
+        "line": 24,
+        "category": "constants"
+      },
+      {
         "file": "scripts/interactions/WebMutableStateService.js",
         "name": "normalisePersistentSnapshot",
         "line": 626,
@@ -39921,57 +40229,69 @@
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
+        "name": "resolveDisplayAlpha",
+        "line": 490,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "normaliseTint",
-        "line": 465,
+        "line": 509,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "normaliseUnitMultiplier",
-        "line": 484,
+        "line": 528,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "requireWebpPath",
-        "line": 503,
-        "category": "functions"
-      },
-      {
-        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-        "name": "getFoundryTexture",
-        "line": 525,
-        "category": "functions"
-      },
-      {
-        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
-        "name": "loadFoundryTexture",
         "line": 547,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
+        "name": "getFoundryTexture",
+        "line": 569,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
+        "name": "loadFoundryTexture",
+        "line": 591,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "normaliseLoadedTexture",
-        "line": 579,
+        "line": 623,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "resolveTextureDimensions",
-        "line": 618,
+        "line": 662,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "firstPositiveNumber",
-        "line": 648,
+        "line": 692,
         "category": "functions"
       },
       {
         "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
         "name": "clamp",
-        "line": 671,
+        "line": 715,
         "category": "functions"
+      },
+      {
+        "file": "scripts/rendering/webs/WebCapturedAssetTextureService.js",
+        "name": "LOADED_ASSET_FALLBACK_ALPHA_MULTIPLIER",
+        "line": 12,
+        "category": "constants"
       },
       {
         "file": "scripts/rendering/webs/webCapturedAssetTransform.js",
@@ -40666,85 +40986,85 @@
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "filterIntactWebs",
-        "line": 2273,
+        "line": 2294,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "createRenderingConfiguration",
-        "line": 2295,
+        "line": 2316,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "createSceneGeometrySummary",
-        "line": 2308,
+        "line": 2329,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "resolveRuntimeLevelVisibility",
-        "line": 2372,
+        "line": 2393,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "levelVisibilityEquals",
-        "line": 2410,
+        "line": 2431,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "resolveSpatialCellSize",
-        "line": 2449,
+        "line": 2470,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "normaliseCategoryDensityMap",
-        "line": 2477,
+        "line": 2498,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "normaliseCategoryDensitySourceMap",
-        "line": 2496,
+        "line": 2517,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "normaliseOptionalIdentifier",
-        "line": 2515,
+        "line": 2536,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "createEmptyMutableStatePersistenceDiagnostics",
-        "line": 2534,
+        "line": 2555,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "mutableStateMatchesPersistentState",
-        "line": 2567,
+        "line": 2588,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "createMutableStateDifference",
-        "line": 2608,
+        "line": 2629,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "resolveSceneDocument",
-        "line": 2681,
+        "line": 2702,
         "category": "functions"
       },
       {
         "file": "scripts/runtime/webs/WebRuntimeService.js",
         "name": "deepFreezeClone",
-        "line": 2711,
+        "line": 2732,
         "category": "functions"
       },
       {
@@ -41661,68 +41981,74 @@
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
+        "name": "compareInternalStrandEntries",
+        "line": 619,
+        "category": "functions"
+      },
+      {
+        "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "createWebMetadata",
-        "line": 465,
+        "line": 650,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "createWebResult",
-        "line": 478,
+        "line": 663,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "createStrandResult",
-        "line": 486,
+        "line": 671,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "createPerchResult",
-        "line": 508,
+        "line": 693,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "insertIntoCells",
-        "line": 527,
+        "line": 712,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "countCellReferences",
-        "line": 538,
+        "line": 723,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "pointInsideBounds",
-        "line": 544,
+        "line": 729,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "requireIdentifier",
-        "line": 550,
+        "line": 735,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "normaliseOptionalIdentifier",
-        "line": 556,
+        "line": 741,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "normalisePositiveNumber",
-        "line": 561,
+        "line": 746,
         "category": "functions"
       },
       {
         "file": "scripts/spatial/WebSpatialIndex.js",
         "name": "now",
-        "line": 569,
+        "line": 754,
         "category": "functions"
       },
       {
@@ -42052,37 +42378,37 @@
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "createButton",
-        "line": 202,
+        "line": 205,
         "category": "functions"
       },
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "runButtonAction",
-        "line": 210,
+        "line": 213,
         "category": "functions"
       },
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "confirmWithDialogV2",
-        "line": 248,
+        "line": 251,
         "category": "functions"
       },
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "resolveDialogV2",
-        "line": 284,
+        "line": 287,
         "category": "functions"
       },
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "readDialogInputValue",
-        "line": 292,
+        "line": 295,
         "category": "functions"
       },
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "notify",
-        "line": 331,
+        "line": 334,
         "category": "functions"
       },
       {
@@ -42094,7 +42420,7 @@
       {
         "file": "scripts/ui/settingsConfigMaintenanceControls.js",
         "name": "UNINSTALL_CONFIRMATION_TEXT",
-        "line": 8,
+        "line": 11,
         "category": "constants"
       },
       {
@@ -42178,19 +42504,19 @@
       {
         "file": "tests/moduleSettings.test.js",
         "name": "restoreGlobals",
-        "line": 55,
+        "line": 56,
         "category": "functions"
       },
       {
         "file": "tests/moduleSettings.test.js",
         "name": "createSettingsHarness",
-        "line": 63,
+        "line": 65,
         "category": "functions"
       },
       {
         "file": "tests/moduleSettings.test.js",
         "name": "findRegistration",
-        "line": 96,
+        "line": 98,
         "category": "functions"
       },
       {

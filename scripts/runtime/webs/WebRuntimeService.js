@@ -1540,12 +1540,14 @@ export class WebRuntimeService {
   visitStrands(
     bounds,
     options,
-    visitor
+    visitor,
+    diagnostics = null
   ) {
     return this.spatialIndex.visitStrands(
       bounds,
       options,
-      visitor
+      visitor,
+      diagnostics
     );
   }
 
@@ -2773,5 +2775,3 @@ function deepFreezeClone(
     clone
   );
 }
-
-
