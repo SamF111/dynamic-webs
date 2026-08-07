@@ -4,7 +4,7 @@
     "name": "Dynamic Webs captured-web asset generator",
     "version": "1.0.0",
     "masterSeed": "dynamic-webs:web-captured-assets:v1",
-    "generatedAt": "2026-08-07T14:23:51.355237+00:00",
+    "generatedAt": "2026-08-07T14:43:01.445366+00:00",
     "deterministicContent": true,
     "authoredFibreStandard": "span-visibility-v1",
     "topology": "local-entanglement-overlay"
