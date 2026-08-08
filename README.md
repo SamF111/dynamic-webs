@@ -7,7 +7,7 @@
 ![Foundry Version](https://img.shields.io/badge/Foundry-v13%20%7C%20v14-informational)
 ![Public API](https://img.shields.io/badge/Public%20API-v1-blue)
 ![Latest Release](https://img.shields.io/github/v/release/SamF111/dynamic-webs?label=release)
-![Latest Downloads](https://img.shields.io/github/downloads/SamF111/dynamic-webs/latest/dynamic-webs.zip?label=latest%20downloads)
+![Latest Downloads](https://img.shields.io/github/downloads/SamF111/dynamic-webs/latest/module.zip?label=latest%20downloads)
 
 **Dynamic Webs** fills Foundry Virtual Tabletop scenes with procedurally generated spider webs.
 
