@@ -15,12 +15,12 @@ test("README is a public landing page with the author's motivation", async () =>
     "I built Dynamic Webs for my own game",
     "scenes to feel more lived-in",
     "large spider battle",
-    "originally lived inside another module",
     "decided to share it"
   ]) {
     assert.ok(readme.includes(phrase));
   }
 
+  assert.match(readme, /originally lived inside \[Ambient Critters\]\(https:\/\/github\.com\/SamF111\/ambient-critters\)/u);
   assert.match(readme, /## What it adds/u);
   assert.match(readme, /## Getting started/u);
   assert.match(readme, /## Compatibility/u);
