@@ -100,6 +100,8 @@ Change the walls, Regions, population settings or span reach and the affected we
 
 ## Integration with other modules
 
+[Ambient Critters](https://github.com/SamF111/ambient-critters) brings animated spiders and other small wildlife to your Scenes. Its optional Dynamic Webs integration lets spiders use suitable generated webs and allows small critters to become trapped in them. Both modules also work independently.
+
 Dynamic Webs is intentionally creature-agnostic. It knows where the webs are and can report when an entity reaches or crosses them, but it does not decide whether a spider ignores a web, a fly becomes trapped, or a construct tears through it.
 
 Other modules can use the stable version-1 public API for spatial queries, generic movement checks, whole-span destruction and transient captured-web visuals. Dynamic Webs does not require Ambient Critters, and consumers must not import its internal source files.
