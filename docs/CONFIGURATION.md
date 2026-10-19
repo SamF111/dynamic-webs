@@ -48,7 +48,7 @@ The authored initial value for each category is `standard`. World defaults may c
 
 Dynamic Webs uses Foundry's standard **Configure Settings** page. Module settings are grouped under:
 
-- **Generation Defaults** — maximum span width, span vision, secret-door movement blocking and span destructibility
+- **Generation Defaults** — maximum span width, span vision, secret-door movement blocking and token crossing behaviour
 - **Population Defaults** — initial corner, span, ground and carpet densities
 - **Appearance Defaults** — initial colour and thickness
 - **Level Awareness** — the Foundry v13 level provider selector where applicable
@@ -151,17 +151,21 @@ Choose one of:
 
 ### Movement
 
-Movement blocking is available only through a module-owned **closed secret-door** WallDocument. There is no generic movement-blocking toggle.
+Enable **Block movement** to give each intact span a module-owned **closed secret-door** WallDocument. This is the only movement-blocking mode.
 
 Vision and movement are independent. A vision-only span never blocks movement, while a secret-door span retains the selected vision mode.
 
-### Destructibility
+### Attempted crossing
 
-Wall-spanning webs may be configured as destructible or indestructible.
+Choose one of:
 
-When destructible, committed token movement can destroy an intersected whole span. When indestructible, token movement does not query or destroy spans, and previously stored destroyed-span IDs are restored during reconciliation.
+- **Open Secret Door** — opens the generated secret-door wall and leaves the web intact. This option requires **Block movement**.
+- **Destroy Web** — destroys the intersected whole span. If **Block movement** is enabled, the generated secret door is opened and left in place for later clean-up rather than deleted during token movement. A vision-only generated wall still has to be removed because it has no harmless open state.
+- **No Action** — token movement does not alter the span.
 
-Corner, ground and carpet webs are unaffected by these Scene-wide controls.
+The crossing policy controls future token interaction only. Changing it does not restore spans which were already destroyed. Use **Restore Destroyed Span Webs** when restoration is intended.
+
+Explicit whole-span destruction through the public API remains available independently of the Scene's automatic crossing policy. Corner, ground and carpet webs are unaffected by these Scene-wide controls.
 
 ## Scene maintenance
 

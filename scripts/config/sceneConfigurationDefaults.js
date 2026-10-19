@@ -118,7 +118,7 @@ const expectedSpanWebBehaviourKeys =
   [
     "visionMode",
     "secretDoor",
-    "destructible"
+    "crossingAction"
   ];
 
 if (
@@ -201,10 +201,10 @@ export const DEFAULT_SCENE_CONFIGURATION =
           spanWebBehaviour.secretDoor,
           `${DEFAULTS_CONTEXT}.spanWebBehaviour.secretDoor`
         ),
-      destructible:
-        assertBoolean(
-          spanWebBehaviour.destructible,
-          `${DEFAULTS_CONTEXT}.spanWebBehaviour.destructible`
+      crossingAction:
+        assertRequiredString(
+          spanWebBehaviour.crossingAction,
+          `${DEFAULTS_CONTEXT}.spanWebBehaviour.crossingAction`
         )
     },
     webPopulations:

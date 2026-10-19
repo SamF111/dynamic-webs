@@ -149,10 +149,17 @@ export function collectStructuralWallSegments(
       continue;
     }
 
-    byId.set(
-      `${segment.wallId}:${segment.levelId}`,
-      segment
-    );
+    // Generation contexts already partition geometry by level. Expand native
+    // multi-level walls here so each floor receives only its applicable walls.
+    const { levelIds, ...geometry } = segment;
+    for (const levelId of levelIds ?? [segment.levelId]) {
+      const level = levelProvider.levels?.find(entry => entry.id === levelId);
+      byId.set(
+        `${segment.wallId}:${levelId}`,
+        Object.freeze({ ...geometry, levelId,
+          elevationBand: level?.elevationBand ?? segment.elevationBand })
+      );
+    }
   }
 
   return Array.from(
@@ -380,6 +387,8 @@ function normaliseWallSegment(
       levelMetadata.levelProviderMode,
     levelId:
       levelMetadata.levelId,
+    levelIds:
+      levelMetadata.levelIds,
     elevationBand:
       levelMetadata.elevationBand,
     levelMetadataResolved:

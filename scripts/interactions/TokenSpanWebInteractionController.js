@@ -12,6 +12,11 @@ import {
   requestTokenSpanWebMovement
 } from "../networking/webMutableStateSocket.js";
 
+import {
+  SPAN_WEB_CROSSING_ACTIONS,
+  normaliseSpanWebCrossingAction
+} from "../config/spanWebBehaviourContract.js";
+
 const MOVEMENT_SNAPSHOT_MAXIMUM_AGE_MS =
   10000;
 
@@ -22,14 +27,14 @@ const POINT_EPSILON =
   0.000001;
 
 /**
- * Initiating-client token movement handler for GM-authoritative whole-span
- * destruction.
+ * Initiating-client token movement handler for GM-authoritative wall-span
+ * crossing behaviour.
  *
- * preUpdateToken captures the true document origin and destination only on the
- * client that initiated the movement. updateToken then follows that client's
- * rendered Token placeable through the canvas ticker so every visible movement
- * segment is tested. GM-originated movement is applied directly; player
- * movement is submitted to the GM through the Dynamic Webs socket.
+ * preUpdateToken captures and evaluates the intended movement immediately so a
+ * closed generated secret door can react to an attempted crossing before any
+ * committed TokenDocument movement exists. updateToken then follows the
+ * rendered Token placeable as a compatibility supplement for unusual visual
+ * paths. Player interactions are submitted to the GM for validation.
  */
 export class TokenSpanWebInteractionController {
   constructor({
@@ -42,6 +47,9 @@ export class TokenSpanWebInteractionController {
       new Map();
 
     this.pendingMovementsByTokenId =
+      new Map();
+
+    this.preProcessedMovementsByTokenId =
       new Map();
 
     this.visualMovementTrackersByTokenId =
@@ -59,6 +67,9 @@ export class TokenSpanWebInteractionController {
     this.destroyedWebCount =
       0;
 
+    this.openedDoorRequestCount =
+      0;
+
     this.lastOutcome =
       null;
   }
@@ -68,6 +79,7 @@ export class TokenSpanWebInteractionController {
   ) {
     this.stopAllVisualMovementTrackers();
     this.pendingMovementsByTokenId.clear();
+    this.preProcessedMovementsByTokenId.clear();
     this.snapshotsByTokenId.clear();
 
     const levels =
@@ -105,6 +117,8 @@ export class TokenSpanWebInteractionController {
         0 ||
       this.pendingMovementsByTokenId.size >
         0 ||
+      this.preProcessedMovementsByTokenId.size >
+        0 ||
       this.visualMovementTrackersByTokenId.size >
         0 ||
       this.visualMovementTickerCallback !==
@@ -112,9 +126,202 @@ export class TokenSpanWebInteractionController {
 
     this.stopAllVisualMovementTrackers();
     this.pendingMovementsByTokenId.clear();
+    this.preProcessedMovementsByTokenId.clear();
     this.snapshotsByTokenId.clear();
 
     return hadState;
+  }
+
+  /**
+   * Evaluate Foundry's final constrained movement path before the update
+   * workflow concludes. Foundry v13/v14 expose this only to the initiating
+   * client, making it the earliest reliable point for attempted-crossing
+   * behaviour such as opening a blocking generated secret door.
+   */
+  handleTokenPreMoved(
+    tokenDocument,
+    movement,
+    operation = {}
+  ) {
+    const service =
+      this.runtime
+        ?.getWebRuntimeService?.();
+
+    const state =
+      service?.getState?.();
+
+    const crossingAction =
+      resolveCrossingAction(
+        state
+      );
+
+    if (
+      !service ||
+      state?.active !==
+        true ||
+      crossingAction ===
+        SPAN_WEB_CROSSING_ACTIONS.NONE
+    ) {
+      return null;
+    }
+
+    const movementSnapshots =
+      createPreMoveSnapshots({
+        tokenDocument,
+        movement,
+        scene:
+          globalThis.canvas?.scene,
+        levels:
+          state?.levels ??
+          []
+      });
+
+    if (
+      movementSnapshots.length <
+        2
+    ) {
+      return null;
+    }
+
+    const userId =
+      String(
+        globalThis.game?.user?.id ??
+        ""
+      ).trim() ||
+      null;
+
+    const overallMovement =
+      createWebTokenMovementTransitionFromSnapshots({
+        from:
+          movementSnapshots[0],
+        to:
+          movementSnapshots[
+            movementSnapshots.length -
+            1
+          ],
+        userId
+      });
+
+    if (
+      !this.#isMovementCompatibleWithState(
+        overallMovement,
+        state
+      )
+    ) {
+      return null;
+    }
+
+    const pathPoints =
+      Object.freeze(
+        movementSnapshots.map(
+          snapshot =>
+            snapshot.centre
+        )
+      );
+
+    const tracker =
+      {
+        movement:
+          overallMovement,
+        previousCentre:
+          overallMovement.from.centre,
+        startedAt:
+          Date.now(),
+        processedWebIds:
+          new Set(),
+        animate:
+          operation?.animate ===
+            true
+      };
+
+    let outcome =
+      null;
+
+    for (
+      let index = 0;
+      index +
+        1 <
+        movementSnapshots.length;
+      index +=
+        1
+    ) {
+      const fromSnapshot =
+        movementSnapshots[
+          index
+        ];
+
+      const toSnapshot =
+        movementSnapshots[
+          index +
+            1
+        ];
+
+      if (
+        pointsEqual(
+          fromSnapshot.centre,
+          toSnapshot.centre
+        )
+      ) {
+        continue;
+      }
+
+      const segmentMovement =
+        createWebTokenMovementTransitionFromSnapshots({
+          from:
+            fromSnapshot,
+          to:
+            toSnapshot,
+          userId
+        });
+
+      if (
+        !this.#isMovementCompatibleWithState(
+          segmentMovement,
+          state
+        )
+      ) {
+        continue;
+      }
+
+      tracker.movement =
+        Object.freeze({
+          ...segmentMovement,
+          pathPoints
+        });
+
+      outcome =
+        this.#processMovementSegment(
+          tracker,
+          fromSnapshot.centre,
+          toSnapshot.centre
+        ) ??
+        outcome;
+    }
+
+    tracker.movement =
+      overallMovement;
+
+    this.pendingMovementsByTokenId.set(
+      overallMovement.tokenId,
+      overallMovement
+    );
+
+    this.preProcessedMovementsByTokenId.set(
+      overallMovement.tokenId,
+      {
+        movement:
+          overallMovement,
+        processedWebIds:
+          new Set(
+            tracker.processedWebIds
+          ),
+        outcome,
+        capturedAt:
+          Date.now()
+      }
+    );
+
+    return outcome;
   }
 
   /** Capture the authoritative movement endpoints before Foundry mutates the document. */
@@ -124,8 +331,6 @@ export class TokenSpanWebInteractionController {
     options = {},
     userId = null
   ) {
-    void options;
-
     const service =
       this.runtime
         ?.getWebRuntimeService?.();
@@ -145,11 +350,16 @@ export class TokenSpanWebInteractionController {
     const state =
       service.getState();
 
+    const crossingAction =
+      resolveCrossingAction(
+        state
+      );
+
     if (
       state?.active !==
         true ||
-      state?.spanWebBehaviour?.destructible ===
-        false
+      crossingAction ===
+        SPAN_WEB_CROSSING_ACTIONS.NONE
     ) {
       return null;
     }
@@ -173,6 +383,10 @@ export class TokenSpanWebInteractionController {
       !this.#isMovementCompatibleWithState(
         movement,
         state
+      ) ||
+      pointsEqual(
+        movement.from.centre,
+        movement.to.centre
       )
     ) {
       return null;
@@ -181,6 +395,66 @@ export class TokenSpanWebInteractionController {
     this.pendingMovementsByTokenId.set(
       movement.tokenId,
       movement
+    );
+
+    const preMoved =
+      this.preProcessedMovementsByTokenId.get(
+        movement.tokenId
+      ) ??
+      null;
+
+    if (
+      preMoved &&
+      Date.now() -
+        Number(
+          preMoved.capturedAt
+        ) <=
+          MOVEMENT_SNAPSHOT_MAXIMUM_AGE_MS &&
+      pointsEqual(
+        preMoved.movement?.from?.centre,
+        movement.from.centre
+      ) &&
+      pointsEqual(
+        preMoved.movement?.to?.centre,
+        movement.to.centre
+      )
+    ) {
+      return movement;
+    }
+
+    const tracker =
+      {
+        movement,
+        previousCentre:
+          movement.from.centre,
+        startedAt:
+          Date.now(),
+        processedWebIds:
+          new Set(),
+        animate:
+          options?.animate ===
+            true
+      };
+
+    const outcome =
+      this.#processMovementSegment(
+        tracker,
+        movement.from.centre,
+        movement.to.centre
+      );
+
+    this.preProcessedMovementsByTokenId.set(
+      movement.tokenId,
+      {
+        movement,
+        processedWebIds:
+          new Set(
+            tracker.processedWebIds
+          ),
+        outcome,
+        capturedAt:
+          Date.now()
+      }
     );
 
     return movement;
@@ -211,13 +485,6 @@ export class TokenSpanWebInteractionController {
 
     const state =
       service.getState();
-
-    if (
-      state?.spanWebBehaviour?.destructible ===
-        false
-    ) {
-      return null;
-    }
 
     const current =
       createWebTokenMovementSnapshot({
@@ -271,6 +538,31 @@ export class TokenSpanWebInteractionController {
       );
     }
 
+    const preProcessed =
+      current.tokenId
+        ? this.preProcessedMovementsByTokenId.get(
+            current.tokenId
+          ) ??
+          null
+        : null;
+
+    if (
+      current.tokenId
+    ) {
+      this.preProcessedMovementsByTokenId.delete(
+        current.tokenId
+      );
+    }
+
+    if (
+      resolveCrossingAction(
+        state
+      ) ===
+        SPAN_WEB_CROSSING_ACTIONS.NONE
+    ) {
+      return null;
+    }
+
     if (
       !movementWasInitiatedByCurrentUser(
         userId
@@ -302,7 +594,8 @@ export class TokenSpanWebInteractionController {
 
     return this.startVisualMovementTracker(
       movement,
-      options
+      options,
+      preProcessed
     );
   }
 
@@ -331,6 +624,11 @@ export class TokenSpanWebInteractionController {
         tokenId
       );
 
+    const removedPreProcessedMovement =
+      this.preProcessedMovementsByTokenId.delete(
+        tokenId
+      );
+
     const removedVisualTracker =
       this.stopVisualMovementTracker(
         tokenId
@@ -338,6 +636,7 @@ export class TokenSpanWebInteractionController {
 
     return removedSnapshot ||
       removedPendingMovement ||
+      removedPreProcessedMovement ||
       removedVisualTracker;
   }
 
@@ -353,7 +652,8 @@ export class TokenSpanWebInteractionController {
    */
   startVisualMovementTracker(
     movement,
-    options = {}
+    options = {},
+    preProcessed = null
   ) {
     this.stopVisualMovementTracker(
       movement.tokenId
@@ -366,18 +666,24 @@ export class TokenSpanWebInteractionController {
       startedAt:
         Date.now(),
       processedWebIds:
-        new Set(),
+        new Set(
+          preProcessed?.processedWebIds ??
+          []
+        ),
       animate:
         options?.animate ===
           true
     };
 
     const completePathOutcome =
-      this.#processMovementSegment(
-        tracker,
-        movement.from.centre,
-        movement.to.centre
-      );
+      preProcessed
+        ? preProcessed.outcome ??
+          this.lastOutcome
+        : this.#processMovementSegment(
+            tracker,
+            movement.from.centre,
+            movement.to.centre
+          );
 
     const tokenPlaceable =
       getWebTokenPlaceable(
@@ -623,6 +929,8 @@ export class TokenSpanWebInteractionController {
         this.snapshotsByTokenId.size,
       pendingMovementCount:
         this.pendingMovementsByTokenId.size,
+      preProcessedMovementCount:
+        this.preProcessedMovementsByTokenId.size,
       visualMovementTrackerCount:
         this.visualMovementTrackersByTokenId.size,
       visualMovementTickerActive:
@@ -634,6 +942,8 @@ export class TokenSpanWebInteractionController {
         this.submittedMovementRequestCount,
       destroyedWebCount:
         this.destroyedWebCount,
+      openedDoorRequestCount:
+        this.openedDoorRequestCount,
       lastOutcome:
         this.lastOutcome
     });
@@ -657,10 +967,18 @@ export class TokenSpanWebInteractionController {
       this.runtime
         ?.getWebRuntimeService?.();
 
+    const state =
+      service?.getState?.();
+
+    const crossingAction =
+      resolveCrossingAction(
+        state
+      );
+
     if (
       !service ||
-      service.getState?.()?.spanWebBehaviour?.destructible ===
-        false
+      crossingAction ===
+        SPAN_WEB_CROSSING_ACTIONS.NONE
     ) {
       return null;
     }
@@ -726,9 +1044,12 @@ export class TokenSpanWebInteractionController {
               Object.freeze({
                 ...to
               }),
+            crossingAction,
             hitWebIds:
               Object.freeze([]),
             destroyedWebIds:
+              Object.freeze([]),
+            openedWebIds:
               Object.freeze([]),
             at:
               Date.now()
@@ -790,8 +1111,11 @@ export class TokenSpanWebInteractionController {
             Object.freeze({
               ...to
             }),
+          crossingAction,
           hitWebIds,
           destroyedWebIds:
+            Object.freeze([]),
+          openedWebIds:
             Object.freeze([]),
           requestSubmitted:
             requested,
@@ -802,25 +1126,71 @@ export class TokenSpanWebInteractionController {
       return this.lastOutcome;
     }
 
-    const result =
-      service.destroyWebs(
-        hitWebIds,
-        {
-          cause:
-            "token-movement",
-          entityId:
-            movement.tokenId,
-          userId:
-            movement.userId ??
-            globalThis.game?.user?.id ??
-            null,
-          animate:
-            tracker.animate
-        }
-      );
+    let destroyedWebIds =
+      Object.freeze([]);
 
-    this.destroyedWebCount +=
-      result.destroyedWebIds.length;
+    let openedWebIds =
+      Object.freeze([]);
+
+    if (
+      crossingAction ===
+        SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+    ) {
+      const result =
+        service.destroyWebs(
+          hitWebIds,
+          {
+            cause:
+              "token-movement",
+            entityId:
+              movement.tokenId,
+            userId:
+              movement.userId ??
+              globalThis.game?.user?.id ??
+              null,
+            animate:
+              tracker.animate
+          }
+        );
+
+      destroyedWebIds =
+        result.destroyedWebIds;
+
+      this.destroyedWebCount +=
+        destroyedWebIds.length;
+    } else if (
+      crossingAction ===
+        SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR
+    ) {
+      const result =
+        service.openSpanSecretDoors?.(
+          hitWebIds,
+          {
+            cause:
+              "token-movement",
+            entityId:
+              movement.tokenId,
+            userId:
+              movement.userId ??
+              globalThis.game?.user?.id ??
+              null
+          }
+        );
+
+      openedWebIds =
+        Object.freeze([
+          ...(
+            Array.isArray(
+              result?.requestedWebIds
+            )
+              ? result.requestedWebIds
+              : []
+          )
+        ]);
+
+      this.openedDoorRequestCount +=
+        openedWebIds.length;
+    }
 
     this.lastOutcome =
       Object.freeze({
@@ -836,9 +1206,10 @@ export class TokenSpanWebInteractionController {
           Object.freeze({
             ...to
           }),
+        crossingAction,
         hitWebIds,
-        destroyedWebIds:
-          result.destroyedWebIds,
+        destroyedWebIds,
+        openedWebIds,
         requestSubmitted:
           false,
         at:
@@ -940,6 +1311,183 @@ export class TokenSpanWebInteractionController {
       ?.levels ??
       [];
   }
+}
+
+function createPreMoveSnapshots({
+  tokenDocument,
+  movement,
+  scene,
+  levels
+}) {
+  const origin =
+    createWebTokenMovementSnapshot({
+      token:
+        tokenDocument,
+      scene,
+      levels,
+      changed:
+        createWaypointSnapshotChange(
+          movement?.origin
+        )
+    });
+
+  const pendingWaypoints =
+    Array.isArray(
+      movement?.pending?.waypoints
+    ) &&
+    movement.pending.waypoints.length >
+      0
+      ? movement.pending.waypoints
+      : movement?.destination
+        ? [
+            movement.destination
+          ]
+        : [];
+
+  const snapshots =
+    [
+      origin
+    ];
+
+  for (
+    const waypoint of
+    pendingWaypoints
+  ) {
+    const snapshot =
+      createWebTokenMovementSnapshot({
+        token:
+          tokenDocument,
+        scene,
+        levels,
+        changed:
+          createWaypointSnapshotChange(
+            waypoint
+          )
+      });
+
+    const previous =
+      snapshots.at(
+        -1
+      );
+
+    if (
+      previous &&
+      pointsEqual(
+        previous.centre,
+        snapshot.centre
+      ) &&
+      previous.levelId ===
+        snapshot.levelId &&
+      previous.elevation ===
+        snapshot.elevation
+    ) {
+      continue;
+    }
+
+    snapshots.push(
+      snapshot
+    );
+  }
+
+  return snapshots;
+}
+
+function createWaypointSnapshotChange(
+  waypoint
+) {
+  if (
+    !waypoint ||
+    typeof waypoint !==
+      "object"
+  ) {
+    return {};
+  }
+
+  const changed =
+    {};
+
+  for (
+    const key of
+    [
+      "x",
+      "y",
+      "width",
+      "height",
+      "elevation"
+    ]
+  ) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        waypoint,
+        key
+      )
+    ) {
+      changed[
+        key
+      ] =
+        waypoint[
+          key
+        ];
+    }
+  }
+
+  const levelId =
+    waypoint.levelId ??
+    (
+      typeof waypoint.level ===
+        "string"
+        ? waypoint.level
+        : waypoint.level?.id
+    );
+
+  if (
+    levelId !==
+      null &&
+    levelId !==
+      undefined &&
+    String(
+      levelId
+    ).trim()
+  ) {
+    changed.levelId =
+      String(
+        levelId
+      ).trim();
+  }
+
+  return changed;
+}
+
+function resolveCrossingAction(
+  state
+) {
+  const behaviour =
+    state?.spanWebBehaviour;
+
+  if (
+    behaviour?.crossingAction
+  ) {
+    const action =
+      normaliseSpanWebCrossingAction(
+        behaviour.crossingAction,
+        SPAN_WEB_CROSSING_ACTIONS.NONE
+      );
+
+    return action ===
+        SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR &&
+      behaviour.secretDoor !==
+        true
+      ? SPAN_WEB_CROSSING_ACTIONS.NONE
+      : action;
+  }
+
+  /**
+   * Compatibility fallback for transient/test state created before schema v2.
+   */
+  return behaviour?.destructible ===
+    false
+    ? SPAN_WEB_CROSSING_ACTIONS.NONE
+    : SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB;
 }
 
 function movementWasInitiatedByCurrentUser(

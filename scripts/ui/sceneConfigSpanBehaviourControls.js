@@ -6,6 +6,10 @@ import {
   createSceneSpanWebBehaviourFlagValue
 } from "../config/sceneSpanWebBehaviourConfiguration.js";
 
+import {
+  SPAN_WEB_CROSSING_ACTIONS
+} from "../config/spanWebBehaviourContract.js";
+
 /** Activate the collapsed Scene-wide wall-span behaviour controls. */
 export function activateSceneConfigSpanBehaviourControls(
   application,
@@ -58,9 +62,9 @@ export function activateSceneConfigSpanBehaviourControls(
       "[data-dynamic-webs-span-secret-door]"
     );
 
-  const destructible =
+  const crossingAction =
     section.querySelector(
-      "[data-dynamic-webs-span-destructible]"
+      "[data-dynamic-webs-span-crossing-action]"
     );
 
   if (
@@ -68,7 +72,7 @@ export function activateSceneConfigSpanBehaviourControls(
     !maximumWidth ||
     !visionMode ||
     !secretDoor ||
-    !destructible
+    !crossingAction
   ) {
     throw new Error(
       `${MODULE_TITLE} | One or more Scene span-behaviour controls are missing.`
@@ -81,6 +85,28 @@ export function activateSceneConfigSpanBehaviourControls(
 
   const sync =
     () => {
+      const openSecretDoorOption =
+        crossingAction.querySelector?.(
+          `option[value="${SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR}"]`
+        ) ??
+        null;
+
+      if (
+        !secretDoor.checked &&
+        crossingAction.value ===
+          SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR
+      ) {
+        crossingAction.value =
+          SPAN_WEB_CROSSING_ACTIONS.NONE;
+      }
+
+      if (
+        openSecretDoorOption
+      ) {
+        openSecretDoorOption.disabled =
+          !secretDoor.checked;
+      }
+
       const value =
         createSceneSpanWebBehaviourFlagValue({
           maximumSpanGridUnits:
@@ -91,8 +117,8 @@ export function activateSceneConfigSpanBehaviourControls(
             visionMode.value,
           secretDoor:
             secretDoor.checked,
-          destructible:
-            destructible.checked
+          crossingAction:
+            crossingAction.value
         });
 
       hidden.value =
@@ -119,26 +145,6 @@ export function activateSceneConfigSpanBehaviourControls(
 
         control.disabled =
           !editable;
-      }
-
-      const warning =
-        section.querySelector(
-          "[data-dynamic-webs-span-indestructible-warning]"
-        );
-
-      if (
-        warning
-      ) {
-        const destroyedCount =
-          Number(
-            warning.dataset.destroyedCount
-          ) ||
-          0;
-
-        warning.hidden =
-          destructible.checked ||
-          destroyedCount ===
-            0;
       }
     };
 

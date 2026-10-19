@@ -6,7 +6,11 @@ import {
   registerWebMutableStateSocket
 } from "../scripts/networking/webMutableStateSocket.js";
 
-function createEnvironment({ isGM, destructible = true }) {
+function createEnvironment({
+  isGM,
+  crossingAction = "destroy-web",
+  secretDoor = false
+}) {
   const previous = {
     Hooks: globalThis.Hooks,
     game: globalThis.game,
@@ -19,6 +23,7 @@ function createEnvironment({ isGM, destructible = true }) {
   const applied = [];
   const movementQueries = [];
   const destroyed = [];
+  const opened = [];
   let hookId = 0;
 
   const tokenDocument = {
@@ -43,7 +48,8 @@ function createEnvironment({ isGM, destructible = true }) {
         active: true,
         sceneId: "scene-a",
         spanWebBehaviour: {
-          destructible
+          crossingAction,
+          secretDoor
         },
         levels: [
           {
@@ -77,6 +83,19 @@ function createEnvironment({ isGM, destructible = true }) {
           ...webIds
         ]),
         state: this.getMutableState()
+      });
+    },
+    openSpanSecretDoors(webIds, metadata) {
+      opened.push({
+        webIds,
+        metadata
+      });
+
+      return Object.freeze({
+        changed: true,
+        requestedWebIds: Object.freeze([
+          ...webIds
+        ])
       });
     },
     getMutableState() {
@@ -180,6 +199,7 @@ function createEnvironment({ isGM, destructible = true }) {
     applied,
     movementQueries,
     destroyed,
+    opened,
     tokenDocument,
     socketHandlers,
     hookHandlers,
@@ -411,10 +431,10 @@ test("the responsible GM accepts the player's first movement request before its 
 
 
 
-test("the responsible GM rejects player movement destruction for an indestructible Scene", () => {
+test("the responsible GM skips player movement interaction for No Action", () => {
   const environment = createEnvironment({
     isGM: true,
-    destructible: false
+    crossingAction: "none"
   });
 
   try {
@@ -423,7 +443,7 @@ test("the responsible GM rejects player movement destruction for an indestructib
     const handler = environment.socketHandlers.get("module.dynamic-webs");
     handler({
       type: "token-span-movement-request",
-      requestId: "player-a:token-a:indestructible:1",
+      requestId: "player-a:token-a:no-action:1",
       requesterUserId: "player-a",
       sceneId: "scene-a",
       tokenId: "token-a",
@@ -436,6 +456,91 @@ test("the responsible GM rejects player movement destruction for an indestructib
 
     assert.equal(environment.movementQueries.length, 0);
     assert.equal(environment.destroyed.length, 0);
+    assert.equal(environment.opened.length, 0);
+  } finally {
+    environment.restore();
+  }
+});
+
+test("the responsible GM validates later waypoint segments against the declared movement path", () => {
+  const environment = createEnvironment({
+    isGM: true
+  });
+
+  try {
+    registerWebMutableStateSocket(environment.runtime);
+
+    const handler = environment.socketHandlers.get("module.dynamic-webs");
+
+    environment.tokenDocument.x = 0;
+    environment.tokenDocument.y = 0;
+
+    handler({
+      type: "token-span-movement-request",
+      requestId: "player-a:token-a:curved:1",
+      requesterUserId: "player-a",
+      sceneId: "scene-a",
+      tokenId: "token-a",
+      movementFrom: { x: 50, y: 50 },
+      movementTo: { x: 250, y: 250 },
+      movementPath: [
+        { x: 50, y: 50 },
+        { x: 50, y: 250 },
+        { x: 250, y: 250 }
+      ],
+      segmentFrom: { x: 50, y: 250 },
+      segmentTo: { x: 150, y: 250 },
+      sentAt: Date.now()
+    });
+
+    assert.equal(environment.movementQueries.length, 1);
+    assert.deepEqual(
+      environment.movementQueries[0].from,
+      { x: 50, y: 250 }
+    );
+    assert.deepEqual(
+      environment.movementQueries[0].to,
+      { x: 150, y: 250 }
+    );
+    assert.equal(environment.destroyed.length, 1);
+  } finally {
+    environment.restore();
+  }
+});
+
+test("the responsible GM opens generated secret doors instead of destroying web state", () => {
+  const environment = createEnvironment({
+    isGM: true,
+    crossingAction: "open-secret-door",
+    secretDoor: true
+  });
+
+  try {
+    registerWebMutableStateSocket(environment.runtime);
+
+    const handler = environment.socketHandlers.get("module.dynamic-webs");
+
+    environment.tokenDocument.x = 0;
+
+    handler({
+      type: "token-span-movement-request",
+      requestId: "player-a:token-a:open:1",
+      requesterUserId: "player-a",
+      sceneId: "scene-a",
+      tokenId: "token-a",
+      movementFrom: { x: 50, y: 50 },
+      movementTo: { x: 250, y: 50 },
+      segmentFrom: { x: 100, y: 50 },
+      segmentTo: { x: 150, y: 50 },
+      sentAt: Date.now()
+    });
+
+    assert.equal(environment.movementQueries.length, 1);
+    assert.equal(environment.destroyed.length, 0);
+    assert.equal(environment.opened.length, 1);
+    assert.deepEqual(environment.opened[0].webIds, ["span-a"]);
+    assert.equal(environment.opened[0].metadata.entityId, "token-a");
+    assert.equal(environment.opened[0].metadata.userId, "player-a");
   } finally {
     environment.restore();
   }

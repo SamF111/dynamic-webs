@@ -22,11 +22,16 @@ import {
 } from "./moduleSettings.js";
 
 import {
+  SPAN_WEB_CROSSING_ACTIONS,
   normaliseSpanWebBehaviourBoolean,
+  normaliseSpanWebCrossingAction,
   normaliseSpanWebVisionMode
 } from "./spanWebBehaviourContract.js";
 
 export const SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION =
+  2;
+
+const LEGACY_SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION =
   1;
 
 export const SCENE_SPAN_WEB_BEHAVIOUR_FLAG_PATH =
@@ -95,9 +100,8 @@ export function getSceneSpanWebBehaviourConfiguration(
 /**
  * Normalise the compact Scene-owned span behaviour flag.
  *
- * A null maximum width means that the Scene continues to follow the current
- * world default. Other missing fields inherit world defaults until the Scene
- * form is explicitly saved.
+ * Schema v1 stored `destructible`; schema v2 stores the future token-crossing
+ * policy independently from persistent whole-span destruction state.
  */
 export function normaliseSceneSpanWebBehaviour(
   value,
@@ -130,6 +134,18 @@ export function normaliseSceneSpanWebBehaviour(
       worldBehaviour
     );
 
+  const secretDoor =
+    normaliseSpanWebBehaviourBoolean(
+      source.secretDoor,
+      resolvedWorldBehaviour.secretDoor
+    );
+
+  const crossingAction =
+    normaliseSourceCrossingAction(
+      source,
+      resolvedWorldBehaviour.crossingAction
+    );
+
   return Object.freeze({
     schemaVersion:
       SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION,
@@ -144,16 +160,14 @@ export function normaliseSceneSpanWebBehaviour(
         source.visionMode,
         resolvedWorldBehaviour.visionMode
       ),
-    secretDoor:
-      normaliseSpanWebBehaviourBoolean(
-        source.secretDoor,
-        resolvedWorldBehaviour.secretDoor
-      ),
-    destructible:
-      normaliseSpanWebBehaviourBoolean(
-        source.destructible,
-        resolvedWorldBehaviour.destructible
-      )
+    secretDoor,
+    crossingAction:
+      crossingAction ===
+          SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR &&
+        secretDoor !==
+          true
+        ? SPAN_WEB_CROSSING_ACTIONS.NONE
+        : crossingAction
   });
 }
 
@@ -177,8 +191,8 @@ export function createSceneSpanWebBehaviourFlagValue(
       normalised.visionMode,
     secretDoor:
       normalised.secretDoor,
-    destructible:
-      normalised.destructible
+    crossingAction:
+      normalised.crossingAction
   });
 }
 
@@ -235,10 +249,22 @@ function parseBehaviourValue(
     );
   }
 
+  const inferredSchemaVersion =
+    Object.prototype.hasOwnProperty.call(
+      parsed,
+      "destructible"
+    ) &&
+    !Object.prototype.hasOwnProperty.call(
+      parsed,
+      "crossingAction"
+    )
+      ? LEGACY_SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION
+      : SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION;
+
   const schemaVersion =
     parsed.schemaVersion ===
       undefined
-      ? SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION
+      ? inferredSchemaVersion
       : Number(
           parsed.schemaVersion
         );
@@ -247,15 +273,45 @@ function parseBehaviourValue(
     !Number.isInteger(
       schemaVersion
     ) ||
-    schemaVersion !==
+    ![
+      LEGACY_SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION,
       SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION
+    ].includes(
+      schemaVersion
+    )
   ) {
     throw new Error(
       `${MODULE_TITLE} | Unsupported Scene span-web behaviour schema version.`
     );
   }
 
-  return parsed;
+  return Object.freeze({
+    ...parsed,
+    schemaVersion
+  });
+}
+
+function normaliseSourceCrossingAction(
+  source,
+  fallback
+) {
+  if (
+    source?.schemaVersion ===
+      LEGACY_SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION
+  ) {
+    return normaliseSpanWebBehaviourBoolean(
+      source.destructible,
+      fallback ===
+        SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+    )
+      ? SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+      : SPAN_WEB_CROSSING_ACTIONS.NONE;
+  }
+
+  return normaliseSpanWebCrossingAction(
+    source?.crossingAction,
+    fallback
+  );
 }
 
 function normaliseOptionalMaximumSpanGridUnits(
@@ -290,6 +346,19 @@ function normaliseWorldBehaviour(
       ? value
       : DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR;
 
+  const legacyCrossingAction =
+    Object.prototype.hasOwnProperty.call(
+      source,
+      "destructible"
+    )
+      ? normaliseSpanWebBehaviourBoolean(
+          source.destructible,
+          true
+        )
+        ? SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+        : SPAN_WEB_CROSSING_ACTIONS.NONE
+      : DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.crossingAction;
+
   return Object.freeze({
     visionMode:
       normaliseSpanWebVisionMode(
@@ -301,10 +370,10 @@ function normaliseWorldBehaviour(
         source.secretDoor,
         DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.secretDoor
       ),
-    destructible:
-      normaliseSpanWebBehaviourBoolean(
-        source.destructible,
-        DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.destructible
+    crossingAction:
+      normaliseSpanWebCrossingAction(
+        source.crossingAction,
+        legacyCrossingAction
       )
   });
 }

@@ -39,8 +39,14 @@ import {
 } from "../config/moduleSettings.js";
 
 import {
+  SPAN_WEB_CROSSING_ACTION_OPTIONS,
+  SPAN_WEB_CROSSING_ACTIONS,
   SPAN_WEB_VISION_OPTIONS
 } from "../config/spanWebBehaviourContract.js";
+
+import {
+  SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION
+} from "../config/sceneSpanWebBehaviourConfiguration.js";
 
 import {
   getSceneWebMutableStateConfiguration
@@ -103,15 +109,15 @@ export async function createSceneConfigTemplateContext({ application, scene }) {
     spanWebBehaviourValue:
       JSON.stringify({
         schemaVersion:
-          1,
+          SCENE_SPAN_WEB_BEHAVIOUR_SCHEMA_VERSION,
         maximumSpanGridUnits:
           configuration.spanWebBehaviour.maximumSpanGridUnitsOverride,
         visionMode:
           configuration.spanWebBehaviour.visionMode,
         secretDoor:
           configuration.spanWebBehaviour.secretDoor,
-        destructible:
-          configuration.spanWebBehaviour.destructible
+        crossingAction:
+          configuration.spanWebBehaviour.crossingAction
       }),
     spanWebBehaviour: {
       useWorldMaximumSpanWidth:
@@ -144,8 +150,27 @@ export async function createSceneConfigTemplateContext({ application, scene }) {
         ),
       secretDoor:
         configuration.spanWebBehaviour.secretDoor,
-      destructible:
-        configuration.spanWebBehaviour.destructible,
+      crossingAction:
+        configuration.spanWebBehaviour.crossingAction,
+      crossingActionOptions:
+        SPAN_WEB_CROSSING_ACTION_OPTIONS.map(
+          (
+            option
+          ) => ({
+            value:
+              option.id,
+            label:
+              option.label,
+            selected:
+              option.id ===
+              configuration.spanWebBehaviour.crossingAction,
+            disabled:
+              option.requiresSecretDoor ===
+                true &&
+              configuration.spanWebBehaviour.secretDoor !==
+                true
+          })
+        ),
       destroyedWebCount,
       hasDestroyedWebs:
         destroyedWebCount >
@@ -344,16 +369,23 @@ function createSpanBehaviourSummary(
     )?.label ??
     behaviour.visionMode;
 
+  const crossingLabel =
+    behaviour.crossingAction ===
+      SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR
+      ? "Opens on crossing"
+      : behaviour.crossingAction ===
+          SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+        ? "Destroys on crossing"
+        : "No crossing action";
+
   const parts =
     [
       `${behaviour.maximumSpanGridUnits} grid`,
       `${visionLabel} vision`,
       behaviour.secretDoor
-        ? "Secret doors"
+        ? "Blocks movement"
         : "Free movement",
-      behaviour.destructible
-        ? "Destructible"
-        : "Indestructible"
+      crossingLabel
     ];
 
   return parts.join(

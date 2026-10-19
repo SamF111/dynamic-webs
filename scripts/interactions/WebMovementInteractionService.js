@@ -1,3 +1,5 @@
+// D:/FoundryVTT/Data/modules/dynamic-webs/scripts/interactions/WebMovementInteractionService.js
+// Purpose: Resolve standalone movement interactions and deliver optional immutable diagnostics.
 import {
   MODULE_TITLE
 } from "../module/moduleConstants.js";
@@ -385,41 +387,15 @@ export class WebMovementInteractionService {
   }
 }
 
+// Each query owns these ordinary objects. Their stable property layout avoids
+// dictionary-to-object copies; only the finished, deeply frozen snapshot escapes.
+const EMPTY_DIAGNOSTIC_PHASES = Object.freeze(Object.fromEntries(
+  MOVEMENT_DIAGNOSTIC_PHASE_NAMES.map(name => [name, 0])));
+const EMPTY_DIAGNOSTIC_COUNTERS = Object.freeze(Object.fromEntries(
+  MOVEMENT_DIAGNOSTIC_COUNTER_NAMES.map(name => [name, 0])));
+
 function createMovementQueryDiagnostics() {
-  const phases =
-    Object.create(
-      null
-    );
-
-  for (
-    const phaseName of
-    MOVEMENT_DIAGNOSTIC_PHASE_NAMES
-  ) {
-    phases[
-      phaseName
-    ] =
-      0;
-  }
-
-  const counters =
-    Object.create(
-      null
-    );
-
-  for (
-    const counterName of
-    MOVEMENT_DIAGNOSTIC_COUNTER_NAMES
-  ) {
-    counters[
-      counterName
-    ] =
-      0;
-  }
-
-  return {
-    phases,
-    counters
-  };
+  return {phases: {...EMPTY_DIAGNOSTIC_PHASES}, counters: {...EMPTY_DIAGNOSTIC_COUNTERS}};
 }
 
 function mergeSpatialDiagnostics(
@@ -495,18 +471,9 @@ function emitMovementQueryDiagnostics(
   diagnostics
 ) {
   try {
-    observer(
-      Object.freeze({
-        phases:
-          Object.freeze({
-            ...diagnostics.phases
-          }),
-        counters:
-          Object.freeze({
-            ...diagnostics.counters
-          })
-      })
-    );
+    Object.freeze(diagnostics.phases);
+    Object.freeze(diagnostics.counters);
+    observer(Object.freeze(diagnostics));
   } catch (_error) {
     /*
      * Profiling is strictly observational. A diagnostic consumer must never

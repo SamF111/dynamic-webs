@@ -15,7 +15,7 @@ Dynamic Webs includes:
 - Density, colour, thickness, floor and Region controls
 - Foundry v13 Levels support and Foundry v14 native elevation support
 - Deterministic procedural WebP presentation assets
-- Scene-wide span vision, secret-door movement and destructibility options
+- Scene-wide span vision, secret-door movement and token crossing behaviour
 - Persistent whole-span destruction and restoration
 - Generated-wall reconciliation and maintenance controls
 - Immutable spatial queries and generic entity interaction checks
@@ -29,7 +29,7 @@ Remaining work before the first public release is release engineering rather tha
 
 - Complete final Foundry v13 and v14 smoke testing
 - Verify installation from the published manifest and module archive
-- Confirm multi-client span destruction and restoration
+- Confirm multi-client span opening, destruction and restoration
 - Review dense and carpet-heavy Scene performance
 - Finalise screenshots, release notes and package publication
 

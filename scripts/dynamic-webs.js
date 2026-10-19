@@ -59,6 +59,8 @@ import {
   restoreDestroyedSpanWebsAcrossWorld
 } from "./maintenance/WebWallMaintenanceService.js";
 
+import {showReleaseNotice} from "./ui/releaseNotice.js";
+
 let initialisationPromise =
   null;
 
@@ -95,6 +97,8 @@ globalThis.Hooks.once(
 
       runtime.ready =
         true;
+
+      void showReleaseNotice();
 
       /**
        * canvasReady normally performs this synchronisation. The extra ready

@@ -293,9 +293,7 @@ export class WebRuntimeService {
         persistedState:
           enteringScene
             ? persistedMutableState
-            : null,
-        destroyable:
-          spanWebBehaviour.destructible
+            : null
       });
 
     nextSpatialIndex.applyDestroyedWebIds(
@@ -1172,20 +1170,6 @@ export class WebRuntimeService {
     webIds,
     metadata = {}
   ) {
-    if (
-      this.state.spanWebBehaviour?.destructible ===
-        false
-    ) {
-      return Object.freeze({
-        changed:
-          false,
-        destroyedWebIds:
-          Object.freeze([]),
-        state:
-          this.getMutableState()
-      });
-    }
-
     const requestedIds =
       Array.from(
         new Set(
@@ -1316,6 +1300,108 @@ export class WebRuntimeService {
         true,
       destroyedWebIds,
       state
+    });
+  }
+
+  /**
+   * Request targeted opening of generated secret-door walls for intact spans.
+   *
+   * This does not mutate web geometry or persistent destroyed-span state.
+   */
+  openSpanSecretDoors(
+    webIds,
+    metadata = {}
+  ) {
+    if (
+      this.state.active !==
+        true ||
+      this.state.spanWebBehaviour?.secretDoor !==
+        true
+    ) {
+      return Object.freeze({
+        changed:
+          false,
+        requestedWebIds:
+          Object.freeze([])
+      });
+    }
+
+    const requestedIds =
+      Array.from(
+        new Set(
+          (
+            Array.isArray(
+              webIds
+            )
+              ? webIds
+              : [
+                  webIds
+                ]
+          )
+            .map(
+              value =>
+                String(
+                  value ??
+                  ""
+                ).trim()
+            )
+            .filter(
+              Boolean
+            )
+        )
+      ).sort();
+
+    const eligibleIds =
+      requestedIds.filter(
+        webId =>
+          this.mutableStateService.isWebIntact(
+            webId
+          ) &&
+          (
+            this.spatialIndex.getWeb(
+              webId
+            )?.webKind ===
+              "wall-span" ||
+            this.spatialIndex.getWeb(
+              webId
+            )?.kind ===
+              "wall-span"
+          )
+      );
+
+    const scene =
+      resolveSceneDocument(
+        this.state.sceneId
+      );
+
+    const requested =
+      scene &&
+      eligibleIds.length >
+        0
+        ? this.spanWallService.requestSecretDoorOpening?.({
+            scene,
+            webIds:
+              eligibleIds,
+            generationId:
+              this.state.generationId,
+            reason:
+              normaliseOptionalIdentifier(
+                metadata?.cause
+              ) ??
+              "token-movement-open-secret-door"
+          }) ===
+            true
+        : false;
+
+    return Object.freeze({
+      changed:
+        requested,
+      requestedWebIds:
+        Object.freeze(
+          requested
+            ? eligibleIds
+            : []
+        )
     });
   }
 
@@ -2149,6 +2235,12 @@ export class WebRuntimeService {
       difference.destroyedWebIds.length >
         0
     ) {
+      const normalisedReason =
+        normaliseOptionalIdentifier(
+          reason
+        ) ??
+        "destroy-span-wall";
+
       this.spanWallService.requestWebRemoval?.({
         scene,
         webIds:
@@ -2156,10 +2248,12 @@ export class WebRuntimeService {
         generationId:
           this.state.generationId,
         reason:
-          normaliseOptionalIdentifier(
-            reason
-          ) ??
-          "destroy-span-wall"
+          normalisedReason,
+        openSecretDoorsBeforeRemoval:
+          normalisedReason ===
+            "token-movement" &&
+          this.state.spanWebBehaviour?.secretDoor ===
+            true
       });
     }
 

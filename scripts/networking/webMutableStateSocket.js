@@ -6,6 +6,11 @@ import {
   createWebTokenMovementSnapshot
 } from "../foundry/webTokenCompatibility.js";
 
+import {
+  SPAN_WEB_CROSSING_ACTIONS,
+  normaliseSpanWebCrossingAction
+} from "../config/spanWebBehaviourContract.js";
+
 const SOCKET_CHANNEL =
   `module.${MODULE_ID}`;
 
@@ -214,6 +219,15 @@ export function requestTokenSpanWebMovement({
       movement?.to?.centre
     );
 
+  const movementPath =
+    normalisePointList(
+      movement?.pathPoints,
+      [
+        movementFrom,
+        movementTo
+      ]
+    );
+
   if (
     !requesterUserId ||
     !tokenId ||
@@ -222,6 +236,8 @@ export function requestTokenSpanWebMovement({
     !segmentTo ||
     !movementFrom ||
     !movementTo ||
+    movementPath.length <
+      2 ||
     pointsEqual(
       segmentFrom,
       segmentTo
@@ -258,6 +274,7 @@ export function requestTokenSpanWebMovement({
       tokenId,
       movementFrom,
       movementTo,
+      movementPath,
       segmentFrom,
       segmentTo,
       hitWebIds:
@@ -439,12 +456,17 @@ function handleTokenSpanMovementRequest({
   const state =
     service?.getState?.();
 
+  const crossingAction =
+    resolveCrossingAction(
+      state
+    );
+
   if (
     !service ||
     state?.active !==
       true ||
-    state?.spanWebBehaviour?.destructible ===
-      false ||
+    crossingAction ===
+      SPAN_WEB_CROSSING_ACTIONS.NONE ||
     state?.sceneId !==
       request.sceneId ||
     normaliseIdentifier(
@@ -505,22 +527,19 @@ function handleTokenSpanMovementRequest({
    * still rejecting requests unrelated to the authoritative token position.
    */
   if (
-    pointToSegmentDistance(
+    pointToPolylineDistance(
       current.centre,
-      request.movementFrom,
-      request.movementTo
+      request.movementPath
     ) >
       pathTolerance ||
-    pointToSegmentDistance(
+    pointToPolylineDistance(
       request.segmentFrom,
-      request.movementFrom,
-      request.movementTo
+      request.movementPath
     ) >
       pathTolerance ||
-    pointToSegmentDistance(
+    pointToPolylineDistance(
       request.segmentTo,
-      request.movementFrom,
-      request.movementTo
+      request.movementPath
     ) >
       pathTolerance
   ) {
@@ -560,24 +579,82 @@ function handleTokenSpanMovementRequest({
     return true;
   }
 
-  service.destroyWebs(
+  const hitWebIds =
     hits.map(
       hit =>
         hit.webId
-    ),
-    {
-      cause:
-        "token-movement",
-      entityId:
-        request.tokenId,
-      userId:
-        request.requesterUserId,
-      animate:
-        request.animate
-    }
-  );
+    );
 
-  return true;
+  if (
+    crossingAction ===
+      SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+  ) {
+    service.destroyWebs(
+      hitWebIds,
+      {
+        cause:
+          "token-movement",
+        entityId:
+          request.tokenId,
+        userId:
+          request.requesterUserId,
+        animate:
+          request.animate
+      }
+    );
+
+    return true;
+  }
+
+  if (
+    crossingAction ===
+      SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR
+  ) {
+    service.openSpanSecretDoors?.(
+      hitWebIds,
+      {
+        cause:
+          "token-movement",
+        entityId:
+          request.tokenId,
+        userId:
+          request.requesterUserId
+      }
+    );
+
+    return true;
+  }
+
+  return false;
+}
+
+function resolveCrossingAction(
+  state
+) {
+  const behaviour =
+    state?.spanWebBehaviour;
+
+  if (
+    behaviour?.crossingAction
+  ) {
+    const action =
+      normaliseSpanWebCrossingAction(
+        behaviour.crossingAction,
+        SPAN_WEB_CROSSING_ACTIONS.NONE
+      );
+
+    return action ===
+        SPAN_WEB_CROSSING_ACTIONS.OPEN_SECRET_DOOR &&
+      behaviour.secretDoor !==
+        true
+      ? SPAN_WEB_CROSSING_ACTIONS.NONE
+      : action;
+  }
+
+  return behaviour?.destructible ===
+    false
+    ? SPAN_WEB_CROSSING_ACTIONS.NONE
+    : SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB;
 }
 
 function normaliseTokenMovementRequest(
@@ -613,6 +690,15 @@ function normaliseTokenMovementRequest(
       message?.movementTo
     );
 
+  const movementPath =
+    normalisePointList(
+      message?.movementPath,
+      [
+        movementFrom,
+        movementTo
+      ]
+    );
+
   const segmentFrom =
     normalisePoint(
       message?.segmentFrom
@@ -638,6 +724,20 @@ function normaliseTokenMovementRequest(
     !tokenId ||
     !movementFrom ||
     !movementTo ||
+    movementPath.length <
+      2 ||
+    pointDistance(
+      movementPath[0],
+      movementFrom
+    ) >
+      MOVEMENT_PATH_TOLERANCE_PX ||
+    pointDistance(
+      movementPath.at(
+        -1
+      ),
+      movementTo
+    ) >
+      MOVEMENT_PATH_TOLERANCE_PX ||
     !segmentFrom ||
     !segmentTo ||
     !Number.isFinite(
@@ -669,6 +769,15 @@ function normaliseTokenMovementRequest(
     movementTo:
       Object.freeze(
         movementTo
+      ),
+    movementPath:
+      Object.freeze(
+        movementPath.map(
+          point =>
+            Object.freeze(
+              point
+            )
+        )
       ),
     segmentFrom:
       Object.freeze(
@@ -983,6 +1092,56 @@ function normaliseIdentifierList(
   ).sort();
 }
 
+function normalisePointList(
+  values,
+  fallback = []
+) {
+  const source =
+    Array.isArray(
+      values
+    ) &&
+    values.length >
+      0
+      ? values
+      : fallback;
+
+  const points =
+    [];
+
+  for (
+    const value of
+    source
+  ) {
+    const point =
+      normalisePoint(
+        value
+      );
+
+    if (!point) {
+      continue;
+    }
+
+    if (
+      points.length >
+        0 &&
+      pointsEqual(
+        points.at(
+          -1
+        ),
+        point
+      )
+    ) {
+      continue;
+    }
+
+    points.push(
+      point
+    );
+  }
+
+  return points;
+}
+
 function normalisePoint(
   value
 ) {
@@ -1042,6 +1201,50 @@ function pointDistance(
         second?.y
       )
   );
+}
+
+function pointToPolylineDistance(
+  point,
+  path
+) {
+  if (
+    !Array.isArray(
+      path
+    ) ||
+    path.length <
+      2
+  ) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  let distance =
+    Number.POSITIVE_INFINITY;
+
+  for (
+    let index = 0;
+    index +
+      1 <
+      path.length;
+    index +=
+      1
+  ) {
+    distance =
+      Math.min(
+        distance,
+        pointToSegmentDistance(
+          point,
+          path[
+            index
+          ],
+          path[
+            index +
+              1
+          ]
+        )
+      );
+  }
+
+  return distance;
 }
 
 function pointToSegmentDistance(

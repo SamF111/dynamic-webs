@@ -14,7 +14,7 @@
   "spanWebBehaviour": {
     "visionMode": "limited",
     "secretDoor": false,
-    "destructible": true
+    "crossingAction": "destroy-web"
   },
   "webPopulations": []
 }

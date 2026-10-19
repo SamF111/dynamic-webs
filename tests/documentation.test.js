@@ -1,3 +1,5 @@
+// D:/FoundryVTT/Data/modules/dynamic-webs/tests/documentation.test.js
+// Purpose: Verify public documentation covers the current configuration and integration contracts.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -37,7 +39,7 @@ test("README presents the four web types and principal GM-facing features", asyn
     "Confine",
     "Exclude",
     "closed Foundry secret door",
-    "destructible or indestructible",
+    "Attempted crossing can open the secret door, destroy the web, or take no action",
     "Foundry v14",
     "theripper93's Levels"
   ]) {
@@ -88,7 +90,8 @@ test("configuration guide owns populations, defaults, Regions, levels and span b
     "0.35–10",
     "None** — no vision restriction",
     "closed secret-door",
-    "indestructible",
+    "Open Secret Door",
+    "Destroy Web",
     "Clear All Webs and Prepare for Uninstall"
   ]) {
     assert.ok(configuration.includes(phrase));

@@ -235,8 +235,8 @@ test(
             "limited",
           secretDoor:
             false,
-          destructible:
-            true
+          crossingAction:
+            "destroy-web"
         }
       });
 
@@ -270,8 +270,8 @@ test(
             "blocked",
           secretDoor:
             true,
-          destructible:
-            true
+          crossingAction:
+            "open-secret-door"
         }
       });
 
@@ -308,8 +308,8 @@ test(
             "blocked",
           secretDoor:
             true,
-          destructible:
-            true
+          crossingAction:
+            "open-secret-door"
         }
       });
 
@@ -394,7 +394,7 @@ test("reconciliation preserves a GM-opened generated secret door", async () => {
       behaviour: {
         visionMode: "limited",
         secretDoor: true,
-        destructible: true
+        crossingAction: "open-secret-door"
       }
     };
 
@@ -418,6 +418,296 @@ test("reconciliation preserves a GM-opened generated secret door", async () => {
   }
 });
 
+
+test(
+  "targeted crossing opens only the requested generated secret door without deletion",
+  async () => {
+    const previousGame =
+      globalThis.game;
+
+    globalThis.game = {
+      user: {
+        isGM:
+          true
+      }
+    };
+
+    try {
+      const scene =
+        createScene();
+
+      const service =
+        new WebSpanWallService();
+
+      service.requestReconciliation({
+        scene,
+        webs: [
+          createWeb("span-a"),
+          createWeb("span-b")
+        ],
+        behaviour: {
+          visionMode:
+            "limited",
+          secretDoor:
+            true,
+          crossingAction:
+            "open-secret-door"
+        }
+      });
+
+      await service.flush();
+
+      const deleteCallsBefore =
+        scene._calls.delete.length;
+
+      service.requestSecretDoorOpening({
+        scene,
+        webIds: [
+          "span-a"
+        ],
+        reason:
+          "token-movement"
+      });
+
+      const diagnostics =
+        await service.flush();
+
+      const first =
+        scene.walls.contents.find(
+          wall =>
+            wall.getFlag(
+              "dynamic-webs",
+              "spanWebId"
+            ) ===
+              "span-a"
+        );
+
+      const second =
+        scene.walls.contents.find(
+          wall =>
+            wall.getFlag(
+              "dynamic-webs",
+              "spanWebId"
+            ) ===
+              "span-b"
+        );
+
+      assert.equal(
+        first.ds,
+        1
+      );
+
+      assert.equal(
+        second.ds,
+        0
+      );
+
+      assert.equal(
+        scene._calls.delete.length,
+        deleteCallsBefore
+      );
+
+      assert.equal(
+        scene._calls.update.at(-1).length,
+        1
+      );
+
+      assert.deepEqual(
+        scene._calls.update.at(-1)[0],
+        {
+          _id:
+            first.id,
+          ds:
+            1
+        }
+      );
+
+      assert.equal(
+        diagnostics.lastOperationType,
+        "open"
+      );
+
+      assert.equal(
+        diagnostics.openedCount,
+        1
+      );
+
+      service.requestSecretDoorOpening({
+        scene,
+        webIds: [
+          "span-a"
+        ],
+        reason:
+          "repeat-open"
+      });
+
+      const updatesBeforeFlush =
+        scene._calls.update.length;
+
+      await service.flush();
+
+      assert.equal(
+        scene._calls.update.length,
+        updatesBeforeFlush
+      );
+    } finally {
+      globalThis.game =
+        previousGame;
+    }
+  }
+);
+
+test(
+  "crossing destruction opens a closed secret door and defers WallDocument deletion",
+  async () => {
+    const previousGame =
+      globalThis.game;
+
+    globalThis.game = {
+      user: {
+        isGM:
+          true
+      }
+    };
+
+    try {
+      const scene =
+        createScene();
+
+      const service =
+        new WebSpanWallService();
+
+      const web =
+        createWeb(
+          "span-crossing-destroy"
+        );
+
+      const behaviour = {
+        visionMode:
+          "blocked",
+        secretDoor:
+          true,
+        crossingAction:
+          "destroy-web"
+      };
+
+      service.requestReconciliation({
+        scene,
+        webs: [
+          web
+        ],
+        behaviour
+      });
+
+      await service.flush();
+
+      assert.equal(
+        scene.walls.contents.length,
+        1
+      );
+
+      assert.equal(
+        scene.walls.contents[0].ds,
+        0
+      );
+
+      const deleteCallsBefore =
+        scene._calls.delete.length;
+
+      service.requestWebRemoval({
+        scene,
+        webIds: [
+          web.id
+        ],
+        reason:
+          "token-movement",
+        openSecretDoorsBeforeRemoval:
+          true
+      });
+
+      let diagnostics =
+        await service.flush();
+
+      assert.equal(
+        scene.walls.contents.length,
+        1
+      );
+
+      assert.equal(
+        scene.walls.contents[0].ds,
+        1
+      );
+
+      assert.equal(
+        scene._calls.delete.length,
+        deleteCallsBefore
+      );
+
+      assert.deepEqual(
+        scene._calls.update.at(-1),
+        [
+          {
+            _id:
+              scene.walls.contents[0].id,
+            ds:
+              1
+          }
+        ]
+      );
+
+      assert.equal(
+        diagnostics.openedCount,
+        1
+      );
+
+      assert.equal(
+        diagnostics.deletedCount,
+        0
+      );
+
+      assert.equal(
+        diagnostics.deferredCount,
+        1
+      );
+
+      assert.deepEqual(
+        diagnostics.deferredWallIds,
+        [
+          scene.walls.contents[0].id
+        ]
+      );
+
+      service.requestReconciliation({
+        scene,
+        webs: [
+          web
+        ],
+        destroyedWebIds: [
+          web.id
+        ],
+        behaviour,
+        reason:
+          "later-cleanup"
+      });
+
+      diagnostics =
+        await service.flush();
+
+      assert.equal(
+        scene.walls.contents.length,
+        0
+      );
+
+      assert.equal(
+        diagnostics.deletedCount,
+        1
+      );
+    } finally {
+      globalThis.game =
+        previousGame;
+    }
+  }
+);
 
 test(
   "direct span-wall mutations touch only the requested generated wall",
@@ -461,8 +751,8 @@ test(
             "blocked",
           secretDoor:
             true,
-          destructible:
-            true
+          crossingAction:
+            "open-secret-door"
         }
       });
 
@@ -537,8 +827,8 @@ test(
             "blocked",
           secretDoor:
             true,
-          destructible:
-            true
+          crossingAction:
+            "open-secret-door"
         },
         reason:
           "test-direct-restore"
@@ -601,7 +891,7 @@ test(
       const behaviour = {
         visionMode: "blocked",
         secretDoor: true,
-        destructible: true
+        crossingAction: "open-secret-door"
       };
 
       service.requestReconciliation({
@@ -662,7 +952,7 @@ test(
       const behaviour = {
         visionMode: "blocked",
         secretDoor: true,
-        destructible: true
+        crossingAction: "open-secret-door"
       };
 
       service.requestReconciliation({ scene, webs: [web], behaviour });

@@ -31,8 +31,8 @@ const worldBehaviour =
       "limited",
     secretDoor:
       false,
-    destructible:
-      true
+    crossingAction:
+      "destroy-web"
   });
 
 test(
@@ -71,28 +71,28 @@ test(
       false
     );
     assert.equal(
-      result.destructible,
-      true
+      result.crossingAction,
+      "destroy-web"
     );
   }
 );
 
 test(
-  "Scene span behaviour overrides width, vision, secret door and destructibility",
+  "Scene span behaviour overrides width, vision, movement blocking and crossing action",
   () => {
     const result =
       getSceneSpanWebBehaviourConfiguration(
         createScene({
           schemaVersion:
-            1,
+            2,
           maximumSpanGridUnits:
             3.25,
           visionMode:
             "blocked",
           secretDoor:
             true,
-          destructible:
-            false
+          crossingAction:
+            "open-secret-door"
         }),
         {
           worldMaximumSpanGridUnits:
@@ -118,8 +118,68 @@ test(
       true
     );
     assert.equal(
-      result.destructible,
-      false
+      result.crossingAction,
+      "open-secret-door"
+    );
+  }
+);
+
+test(
+  "schema v1 destructibility migrates without changing existing Scene semantics",
+  () => {
+    const destructive =
+      normaliseSceneSpanWebBehaviour(
+        {
+          schemaVersion:
+            1,
+          maximumSpanGridUnits:
+            null,
+          visionMode:
+            "limited",
+          secretDoor:
+            true,
+          destructible:
+            true
+        },
+        {
+          worldMaximumSpanGridUnits:
+            2,
+          worldBehaviour
+        }
+      );
+
+    const indestructible =
+      normaliseSceneSpanWebBehaviour(
+        {
+          schemaVersion:
+            1,
+          maximumSpanGridUnits:
+            null,
+          visionMode:
+            "limited",
+          secretDoor:
+            true,
+          destructible:
+            false
+        },
+        {
+          worldMaximumSpanGridUnits:
+            2,
+          worldBehaviour
+        }
+      );
+
+    assert.equal(
+      destructive.schemaVersion,
+      2
+    );
+    assert.equal(
+      destructive.crossingAction,
+      "destroy-web"
+    );
+    assert.equal(
+      indestructible.crossingAction,
+      "none"
     );
   }
 );
@@ -134,9 +194,9 @@ test(
         visionMode:
           "none",
         secretDoor:
-          false,
-        destructible:
-          false
+          true,
+        crossingAction:
+          "open-secret-door"
       }, {
         worldMaximumSpanGridUnits:
           2,
@@ -159,20 +219,49 @@ test(
       value,
       {
         schemaVersion:
-          1,
+          2,
         maximumSpanGridUnits:
           null,
         visionMode:
           "none",
         secretDoor:
-          false,
-        destructible:
-          false
+          true,
+        crossingAction:
+          "open-secret-door"
       }
     );
     assert.equal(
       reparsed.maximumSpanGridUnits,
       2
+    );
+  }
+);
+
+test(
+  "Open Secret Door normalises to No Action when movement blocking is disabled",
+  () => {
+    const result =
+      normaliseSceneSpanWebBehaviour(
+        {
+          schemaVersion:
+            2,
+          visionMode:
+            "limited",
+          secretDoor:
+            false,
+          crossingAction:
+            "open-secret-door"
+        },
+        {
+          worldMaximumSpanGridUnits:
+            2,
+          worldBehaviour
+        }
+      );
+
+    assert.equal(
+      result.crossingAction,
+      "none"
     );
   }
 );

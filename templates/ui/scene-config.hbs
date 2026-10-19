@@ -101,7 +101,7 @@
       </div>
 
       <div class="form-group">
-        <label>Treat intact span webs as closed secret doors</label>
+        <label>Block movement</label>
         <div class="form-fields">
           <input
             type="checkbox"
@@ -110,28 +110,26 @@
             data-dynamic-webs-span-behaviour-control
           >
         </div>
-        <p class="hint">The only movement-blocking mode. Creates module-owned closed secret doors which GMs may open normally.</p>
+        <p class="hint">Uses a module-owned closed secret-door wall for each intact span. This is the only movement-blocking mode.</p>
       </div>
 
       <div class="form-group">
-        <label>Span webs are destructible</label>
+        <label>On attempted crossing</label>
         <div class="form-fields">
-          <input
-            type="checkbox"
-            {{#if spanWebBehaviour.destructible}}checked{{/if}}
-            data-dynamic-webs-span-destructible
+          <select
+            data-dynamic-webs-span-crossing-action
             data-dynamic-webs-span-behaviour-control
           >
+            {{#each spanWebBehaviour.crossingActionOptions}}
+              <option
+                value="{{value}}"
+                {{#if selected}}selected{{/if}}
+                {{#if disabled}}disabled{{/if}}
+              >{{label}}</option>
+            {{/each}}
+          </select>
         </div>
-        <p class="hint">When disabled, token movement cannot destroy wall-span webs. Saving restores any currently destroyed spans and clears their stored IDs.</p>
-        <p
-          class="hint warning"
-          data-dynamic-webs-span-indestructible-warning
-          data-destroyed-count="{{spanWebBehaviour.destroyedWebCount}}"
-          hidden
-        >
-          This Scene currently has {{spanWebBehaviour.destroyedWebCount}} destroyed wall-span web(s). Saving with destructibility disabled restores them.
-        </p>
+        <p class="hint">Open Secret Door changes the generated door state and keeps the web intact. Destroy Web removes the web asset/state; when movement blocking is enabled, its secret door opens and remains for later clean-up instead of being deleted during the crossing. No Action leaves the web unchanged.</p>
       </div>
 
       <hr>

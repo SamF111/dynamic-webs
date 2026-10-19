@@ -110,8 +110,17 @@ export class FoundryV14NativeWebLevelProvider {
       candidate?.parent ??
       null;
 
+    // v14 Scene documents expose level membership as a Set (source: array).
+    // An empty assignment means the wall applies to every Scene level.
+    const nativeAssignments = document?.levels ?? document?._source?.levels;
+    const assignedLevelIds = nativeAssignments == null ? null :
+      [...new Set(collectValues(nativeAssignments).map(id => firstIdentifier(id)).filter(Boolean))];
+    const levelIds = assignedLevelIds === null ? null :
+      assignedLevelIds.length ? assignedLevelIds : levels.map(entry => entry.id);
+
     const directLevelId =
       firstIdentifier(
+        levelIds?.[0],
         document?.level?.id,
         document?.levelId,
         document?._source?.levelId,
@@ -201,6 +210,7 @@ export class FoundryV14NativeWebLevelProvider {
       createBaseWebLevel();
 
     return Object.freeze({
+      ...(levelIds === null ? {} : { levelIds: Object.freeze(levelIds) }),
       levelProviderMode:
         this.mode,
       levelId:

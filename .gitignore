@@ -1,0 +1,15 @@
+# Local dependencies and generated output
+/.venv/
+/node_modules/
+/coverage/
+/reports/
+/procedural-directory-relationship-map.json
+/procedural-directory-relationship-map.txt
+
+# Local agent state, attachments and credentials
+/.codex/
+/.agents/
+/.codex-remote-attachments/
+/.aws/
+/TODO.md
+/TODO_COMPLETED.md

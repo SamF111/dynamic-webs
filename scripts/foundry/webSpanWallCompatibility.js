@@ -152,8 +152,10 @@ export function createGeneratedSpanWallData({
   }
 
   const coordinates =
-    createSpanWallCoordinates(
-      web
+    // WallDocument's integer NumberField rounds coordinates during cleaning.
+    // Compare and submit the same values to avoid rewriting unchanged walls.
+    Object.freeze(
+      createSpanWallCoordinates(web).map(value => Math.round(value))
     );
 
   const constants =
@@ -329,7 +331,7 @@ export function createSpanWallLevelData(
       "base"
   ) {
     return Object.freeze({
-      levelId
+      levels: Object.freeze([levelId])
     });
   }
 
@@ -421,17 +423,12 @@ export function generatedSpanWallMatches(
   if (
     Object.prototype.hasOwnProperty.call(
       desiredData,
-      "levelId"
+      "levels"
     ) &&
-    String(
-      existing?.levelId ??
-      existing?._source?.levelId ??
-      ""
-    ) !==
-      String(
-        desiredData.levelId ??
-        ""
-      )
+    !levelIdsEqual(
+      existing?.levels ?? existing?._source?.levels,
+      desiredData.levels
+    )
   ) {
     return false;
   }
@@ -506,10 +503,20 @@ export function mergeGeneratedSpanWallFlags(
   });
 }
 
+/** Native wall levels may be exposed as a Set or a source array. */
+function levelIdsEqual(existing, desired) {
+  const existingIds = new Set(existing ?? []);
+  return existingIds.size === desired.length &&
+    desired.every(id => existingIds.has(id));
+}
+
 function resolveWallConstants() {
   const constants =
     globalThis.CONST ??
     {};
+
+  const senseTypes = constants.EDGE_SENSE_TYPES ?? constants.WALL_SENSE_TYPES;
+  const directions = constants.EDGE_DIRECTIONS ?? constants.WALL_DIRECTIONS;
 
   return {
     movementNone:
@@ -519,13 +526,13 @@ function resolveWallConstants() {
       constants.WALL_MOVEMENT_TYPES?.NORMAL ??
       20,
     senseNone:
-      constants.WALL_SENSE_TYPES?.NONE ??
+      senseTypes?.NONE ??
       0,
     senseLimited:
-      constants.WALL_SENSE_TYPES?.LIMITED ??
+      senseTypes?.LIMITED ??
       10,
     senseNormal:
-      constants.WALL_SENSE_TYPES?.NORMAL ??
+      senseTypes?.NORMAL ??
       20,
     doorNone:
       constants.WALL_DOOR_TYPES?.NONE ??
@@ -540,7 +547,7 @@ function resolveWallConstants() {
       constants.WALL_DOOR_STATES?.OPEN ??
       1,
     directionBoth:
-      constants.WALL_DIRECTIONS?.BOTH ??
+      directions?.BOTH ??
       0
   };
 }

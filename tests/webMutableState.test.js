@@ -145,26 +145,38 @@ test("internal rollback restores the earlier eligibility set after a failed rege
 });
 
 
-test("indestructible Scene policy restores persisted spans and disables all destruction", () => {
+test("token crossing policy does not invalidate persistent destroyed-span state", () => {
   const service = new WebMutableStateService();
 
   const snapshot = service.reconcile({
     sceneId: "scene-a",
     generationId: 1,
     webs,
-    destroyable: false,
     persistedState: {
       revision: 6,
-      destroyedWebIds: ["span-a", "span-b"]
+      destroyedWebIds: ["span-a"]
     }
   });
 
-  assert.equal(snapshot.destroyable, false);
-  assert.equal(snapshot.eligibleWebCount, 0);
-  assert.deepEqual(snapshot.eligibleWebIds, []);
-  assert.deepEqual(snapshot.destroyedWebIds, []);
-  assert.equal(snapshot.revision, 7);
-  assert.deepEqual(snapshot.lastReconciliation.prunedWebIds, ["span-a", "span-b"]);
-  assert.equal(service.destroyWeb("span-a", { cause: "test" }), false);
-  assert.deepEqual(service.destroyWebs(["span-a", "span-b"], { cause: "test" }), []);
+  assert.equal(snapshot.destroyable, true);
+  assert.equal(snapshot.eligibleWebCount, 2);
+  assert.deepEqual(snapshot.eligibleWebIds, ["span-a", "span-b"]);
+  assert.deepEqual(snapshot.destroyedWebIds, ["span-a"]);
+  assert.equal(snapshot.revision, 6);
+
+  assert.equal(
+    service.destroyWeb(
+      "span-b",
+      {
+        cause:
+          "public-api"
+      }
+    ),
+    true
+  );
+
+  assert.deepEqual(
+    service.createSnapshot().destroyedWebIds,
+    ["span-a", "span-b"]
+  );
 });

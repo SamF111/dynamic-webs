@@ -1,3 +1,5 @@
+// D:/FoundryVTT/Data/modules/dynamic-webs/scripts/spatial/WebSpatialIndex.js
+// Purpose: index live web geometry and answer standalone spatial queries.
 import {
   calculatePolylineBounds,
   createSpatialCellKeys,
@@ -841,40 +843,25 @@ export class WebSpatialIndex {
     ids,
     diagnostics = null
   ) {
-    const cellKeys =
-      createSpatialCellKeys(
-        bounds,
-        this.cellSizePx
-      );
-
-    for (
-      const key of
-      cellKeys
-    ) {
-      for (
-        const id of
-        cells.get(
-          key
-        ) ??
-          []
-      ) {
-        if (
-          diagnostics &&
-          ids.has(
-            id
-          )
-        ) {
-          incrementSpatialDiagnosticCounter(
-            diagnostics,
-            "duplicateRejectedCandidateCount"
-          );
-
-          continue;
+    // Walk the current cells directly. Query misses need no frozen key array
+    // or empty array per absent cell; validation and traversal order are unchanged.
+    const safeBounds = normaliseSpatialBounds(bounds);
+    const cellSize = normalisePositiveNumber(this.cellSizePx, "spatial cell size");
+    const minimumCellX = Math.floor(safeBounds.x / cellSize);
+    const maximumCellX = Math.floor(safeBounds.right / cellSize);
+    const minimumCellY = Math.floor(safeBounds.y / cellSize);
+    const maximumCellY = Math.floor(safeBounds.bottom / cellSize);
+    for (let cellY = minimumCellY; cellY <= maximumCellY; cellY++) {
+      for (let cellX = minimumCellX; cellX <= maximumCellX; cellX++) {
+        const candidates = cells.get(`${cellX}:${cellY}`);
+        if (!candidates) continue;
+        for (const id of candidates) {
+          if (diagnostics && ids.has(id)) {
+            incrementSpatialDiagnosticCounter(diagnostics, "duplicateRejectedCandidateCount");
+            continue;
+          }
+          ids.add(id);
         }
-
-        ids.add(
-          id
-        );
       }
     }
   }

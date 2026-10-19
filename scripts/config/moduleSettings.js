@@ -1,3 +1,6 @@
+// D:/FoundryVTT/Data/modules/dynamic-webs/scripts/config/moduleSettings.js
+// Purpose: Register standalone module settings and organize their optional UI controls.
+import {activateOptionalCompanionLink} from "../ui/optionalCompanion.js";
 import {
   MODULE_ID,
   MODULE_TITLE
@@ -46,8 +49,11 @@ import {
 } from "../simulation/webs/webConfigurationDefaults.js";
 
 import {
+  SPAN_WEB_CROSSING_ACTIONS,
+  SPAN_WEB_CROSSING_ACTION_OPTIONS,
   SPAN_WEB_VISION_OPTIONS,
   normaliseSpanWebBehaviourBoolean,
+  normaliseSpanWebCrossingAction,
   normaliseSpanWebVisionMode
 } from "./spanWebBehaviourContract.js";
 
@@ -82,6 +88,8 @@ export const MODULE_SETTING_KEYS =
       "defaultSpanVisionMode",
     DEFAULT_SPAN_SECRET_DOOR:
       "defaultSpanSecretDoor",
+    DEFAULT_SPAN_CROSSING_ACTION:
+      "defaultSpanCrossingAction",
     DEFAULT_SPAN_DESTRUCTIBLE:
       "defaultSpanDestructible"
   });
@@ -140,7 +148,7 @@ export const MODULE_SETTINGS_CATEGORY_DEFINITIONS =
       label:
         "Generation Defaults",
       description:
-        "Span eligibility, vision, movement blocking, and destructibility.",
+        "Span eligibility, vision, movement blocking, and crossing behaviour.",
       open:
         true,
       firstSettingKey:
@@ -150,7 +158,7 @@ export const MODULE_SETTINGS_CATEGORY_DEFINITIONS =
           MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS,
           MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE,
           MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
-          MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION
         ])
     }),
     Object.freeze({
@@ -1001,6 +1009,7 @@ function registerDefaultSettingsCategorisationHook(
         html,
         maintenanceActions
       );
+      activateOptionalCompanionLink(resolveSettingsConfigRoot(html));
     }
   );
 
@@ -1420,57 +1429,96 @@ function registerDefaultSpanBehaviourSettings(
     }
   );
 
-  for (
-    const definition of
-    [
-      {
-        key:
-          MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
-        name:
-          "Default Span Secret Door",
-        property:
-          "secretDoor"
-      },
-      {
-        key:
-          MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE,
-        name:
-          "Default Span Destructibility",
-        property:
-          "destructible"
-      }
-    ]
-  ) {
-    settings.register(
-      MODULE_ID,
-      definition.key,
-      {
-        name:
-          definition.name,
-        hint:
-          "Default intact wall-span behaviour for Scenes without explicit span behaviour.",
-        scope:
-          "world",
-        config:
-          true,
-        type:
-          Boolean,
-        default:
-          AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS[
-            definition.property
-          ],
-        onChange:
-          value =>
-            handleDefaultSpanWebBehaviourSettingChanged({
-              settingKey:
-                definition.key,
-              [definition.property]:
-                value,
-              onDefaultSpanWebBehaviourSettingsChanged
-            })
-      }
-    );
-  }
+  settings.register(
+    MODULE_ID,
+    MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
+    {
+      name:
+        "Default Block Movement",
+      hint:
+        "When enabled, intact spans use module-owned closed secret-door walls for movement blocking.",
+      scope:
+        "world",
+      config:
+        true,
+      type:
+        Boolean,
+      default:
+        AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS.secretDoor,
+      onChange:
+        value =>
+          handleDefaultSpanWebBehaviourSettingChanged({
+            settingKey:
+              MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
+            secretDoor:
+              value,
+            onDefaultSpanWebBehaviourSettingsChanged
+          })
+    }
+  );
+
+  settings.register(
+    MODULE_ID,
+    MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION,
+    {
+      name:
+        "Default Crossing Action",
+      hint:
+        "Default token interaction with intact spans. Open Secret Door requires movement blocking. Destroy Web removes the web asset/state; a blocking secret door is opened and left for later clean-up instead of being deleted during the crossing.",
+      scope:
+        "world",
+      config:
+        true,
+      type:
+        String,
+      choices:
+        Object.freeze(
+          Object.fromEntries(
+            SPAN_WEB_CROSSING_ACTION_OPTIONS.map(
+              option => [
+                option.id,
+                option.label
+              ]
+            )
+          )
+        ),
+      default:
+        AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS.crossingAction,
+      onChange:
+        value =>
+          handleDefaultSpanWebBehaviourSettingChanged({
+            settingKey:
+              MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION,
+            crossingAction:
+              value,
+            onDefaultSpanWebBehaviourSettingsChanged
+          })
+    }
+  );
+
+  /**
+   * Legacy v1 world setting. Keep it registered but hidden so an existing
+   * world's explicit Boolean value can be migrated when the new crossing
+   * setting has not yet been stored.
+   */
+  settings.register(
+    MODULE_ID,
+    MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE,
+    {
+      name:
+        "Legacy Default Span Destructibility",
+      hint:
+        "Legacy Dynamic Webs setting retained only for migration.",
+      scope:
+        "world",
+      config:
+        false,
+      type:
+        Boolean,
+      default:
+        true
+    }
+  );
 }
 
 function registerCarpetTextureCacheSetting(
@@ -1609,7 +1657,7 @@ function handleDefaultSpanWebBehaviourSettingChanged({
   settingKey,
   visionMode = undefined,
   secretDoor = undefined,
-  destructible = undefined,
+  crossingAction = undefined,
   onDefaultSpanWebBehaviourSettingsChanged = null
 }) {
   const current =
@@ -1633,13 +1681,13 @@ function handleDefaultSpanWebBehaviourSettingChanged({
               secretDoor,
               current.secretDoor
             ),
-      destructible:
-        destructible ===
+      crossingAction:
+        crossingAction ===
           undefined
-          ? current.destructible
-          : normaliseSpanWebBehaviourBoolean(
-              destructible,
-              current.destructible
+          ? current.crossingAction
+          : normaliseSpanWebCrossingAction(
+              crossingAction,
+              current.crossingAction
             )
     });
 
@@ -1761,6 +1809,25 @@ function readInitialDefaultWebPopulationSettings(
 function readInitialDefaultSpanWebBehaviourSettings(
   settings
 ) {
+  const crossingAction =
+    hasExplicitWorldSetting(
+      settings,
+      MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION
+    )
+      ? readSettingSafely(
+          settings,
+          MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION
+        )
+      : normaliseSpanWebBehaviourBoolean(
+          readSettingSafely(
+            settings,
+            MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+          ),
+          true
+        )
+        ? SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+        : SPAN_WEB_CROSSING_ACTIONS.NONE;
+
   return createFrozenDefaultSpanWebBehaviourSettings({
     visionMode:
       readSettingSafely(
@@ -1774,13 +1841,46 @@ function readInitialDefaultSpanWebBehaviourSettings(
         MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR
       ) ??
       AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS.secretDoor,
-    destructible:
-      readSettingSafely(
-        settings,
-        MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
-      ) ??
-      AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS.destructible
+    crossingAction
   });
+}
+
+function hasExplicitWorldSetting(
+  settings,
+  key
+) {
+  const storage =
+    settings?.storage ??
+    globalThis.game?.settings?.storage;
+
+  const worldStorage =
+    storage?.get?.(
+      "world"
+    );
+
+  const fullKey =
+    `${MODULE_ID}.${key}`;
+
+  if (
+    typeof worldStorage?.has ===
+      "function"
+  ) {
+    return worldStorage.has(
+      fullKey
+    );
+  }
+
+  if (
+    typeof worldStorage?.get ===
+      "function"
+  ) {
+    return worldStorage.get(
+      fullKey
+    ) !==
+      undefined;
+  }
+
+  return false;
 }
 
 function readSettingSafely(
@@ -1892,12 +1992,11 @@ function createFrozenDefaultSpanWebBehaviourSettings(
       value
     )
       ? value
-      : AUTHORED_DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS ??
-        DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR;
+      : DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR;
 
   let visionMode;
   let secretDoor;
-  let destructible;
+  let crossingAction;
 
   try {
     visionMode =
@@ -1921,21 +2020,34 @@ function createFrozenDefaultSpanWebBehaviourSettings(
       DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.secretDoor;
   }
 
+  const legacyCrossingAction =
+    Object.prototype.hasOwnProperty.call(
+      source,
+      "destructible"
+    )
+      ? normaliseSpanWebBehaviourBoolean(
+          source.destructible,
+          true
+        )
+        ? SPAN_WEB_CROSSING_ACTIONS.DESTROY_WEB
+        : SPAN_WEB_CROSSING_ACTIONS.NONE
+      : DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.crossingAction;
+
   try {
-    destructible =
-      normaliseSpanWebBehaviourBoolean(
-        source.destructible,
-        DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.destructible
+    crossingAction =
+      normaliseSpanWebCrossingAction(
+        source.crossingAction,
+        legacyCrossingAction
       );
   } catch (_error) {
-    destructible =
-      DEFAULT_SCENE_SPAN_WEB_BEHAVIOUR.destructible;
+    crossingAction =
+      legacyCrossingAction;
   }
 
   return Object.freeze({
     visionMode,
     secretDoor,
-    destructible
+    crossingAction
   });
 }
 

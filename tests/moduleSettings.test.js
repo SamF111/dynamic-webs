@@ -33,6 +33,7 @@ const EXPECTED_SETTING_KEYS = Object.freeze([
   MODULE_SETTING_KEYS.MAXIMUM_SPAN_GRID_UNITS,
   MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE,
   MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR,
+  MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION,
   MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE,
   MODULE_SETTING_KEYS.DEFAULT_CORNER_WEB_DENSITY,
   MODULE_SETTING_KEYS.DEFAULT_SPAN_WEB_DENSITY,
@@ -68,6 +69,14 @@ function createSettingsHarness(initialValues = {}) {
   const menus = [];
   const writes = [];
   const values = new Map(Object.entries(initialValues));
+  const worldStorage = new Map(
+    Object.entries(initialValues).map(
+      ([key, value]) => [
+        `dynamic-webs.${key}`,
+        value
+      ]
+    )
+  );
 
   return {
     registrations,
@@ -75,6 +84,12 @@ function createSettingsHarness(initialValues = {}) {
     writes,
     values,
     settings: {
+      storage: new Map([
+        [
+          "world",
+          worldStorage
+        ]
+      ]),
       register(moduleId, key, configuration) {
         registrations.push({ moduleId, key, configuration });
         if (!values.has(key)) values.set(key, configuration.default);
@@ -89,6 +104,10 @@ function createSettingsHarness(initialValues = {}) {
       async set(moduleId, key, value) {
         assert.equal(moduleId, "dynamic-webs");
         values.set(key, value);
+        worldStorage.set(
+          `${moduleId}.${key}`,
+          value
+        );
         writes.push({ moduleId, key, value });
         return value;
       }
@@ -142,10 +161,29 @@ test("v13 registers all settings in Foundry's standard settings page and no subm
       harness.registrations.map((entry) => entry.key),
       EXPECTED_SETTING_KEYS
     );
-    assert.equal(harness.registrations.length, 12);
+    assert.equal(harness.registrations.length, 13);
     assert.ok(harness.registrations.every((entry) => entry.moduleId === "dynamic-webs"));
     assert.ok(harness.registrations.every((entry) => entry.configuration.scope === "world"));
-    assert.ok(harness.registrations.every((entry) => entry.configuration.config === true));
+    assert.equal(
+      findRegistration(
+        harness,
+        MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+      ).config,
+      false
+    );
+    assert.ok(
+      harness.registrations
+        .filter(
+          entry =>
+            entry.key !==
+              MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+        )
+        .every(
+          entry =>
+            entry.configuration.config ===
+              true
+        )
+    );
     assert.equal(harness.menus.length, 0);
     assert.ok(registeredHooks.some((entry) => entry.event === "renderSettingsConfig"));
 
@@ -187,9 +225,25 @@ test("v14 hides only the obsolete provider selector while keeping the other stan
       false
     );
 
-    for (const key of EXPECTED_SETTING_KEYS.filter((key) => key !== MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE)) {
+    for (
+      const key of EXPECTED_SETTING_KEYS.filter(
+        key =>
+          key !==
+            MODULE_SETTING_KEYS.LEVEL_PROVIDER_MODE &&
+          key !==
+            MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+      )
+    ) {
       assert.equal(findRegistration(harness, key).config, true);
     }
+
+    assert.equal(
+      findRegistration(
+        harness,
+        MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE
+      ).config,
+      false
+    );
 
     assert.equal(shouldShowWebLevelProviderSetting(), false);
     assert.equal(
@@ -417,12 +471,12 @@ test("world setting changes update independent cached defaults and emit focused 
 
     findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_VISION_MODE).onChange("blocked");
     findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_SECRET_DOOR).onChange(true);
-    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE).onChange(false);
+    findRegistration(harness, MODULE_SETTING_KEYS.DEFAULT_SPAN_CROSSING_ACTION).onChange("open-secret-door");
 
     assert.deepEqual(getConfiguredDefaultSpanWebBehaviourSettings(), {
       visionMode: "blocked",
       secretDoor: true,
-      destructible: false
+      crossingAction: "open-secret-door"
     });
 
     assert.deepEqual(callbackKinds, [
@@ -437,6 +491,33 @@ test("world setting changes update independent cached defaults and emit focused 
     assert.ok(emitted.some((entry) => entry.event === MAXIMUM_SPAN_GRID_UNITS_CHANGED_HOOK));
     assert.ok(emitted.some((entry) => entry.event === DEFAULT_WEB_POPULATION_SETTINGS_CHANGED_HOOK));
     assert.ok(emitted.some((entry) => entry.event === DEFAULT_SPAN_WEB_BEHAVIOUR_SETTINGS_CHANGED_HOOK));
+  } finally {
+    restoreGlobals(previous);
+  }
+});
+
+test("legacy world destructibility migrates only when the new crossing setting is not stored", () => {
+  const previous = preserveGlobals();
+  const harness = createSettingsHarness({
+    [MODULE_SETTING_KEYS.DEFAULT_SPAN_DESTRUCTIBLE]: false
+  });
+
+  globalThis.game = {
+    release: { generation: 13 },
+    modules: { get() { return null; } },
+    user: { isGM: true },
+    settings: harness.settings
+  };
+  globalThis.canvas = {};
+  globalThis.Hooks = { on() {}, callAll() {} };
+
+  try {
+    registerModuleSettings();
+
+    assert.equal(
+      getConfiguredDefaultSpanWebBehaviourSettings().crossingAction,
+      "none"
+    );
   } finally {
     restoreGlobals(previous);
   }

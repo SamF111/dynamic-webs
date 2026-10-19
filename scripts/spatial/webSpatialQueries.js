@@ -1,3 +1,5 @@
+// D:/FoundryVTT/Data/modules/dynamic-webs/scripts/spatial/webSpatialQueries.js
+// Purpose: normalize spatial filters and preserve immutable public query results.
 import {
   normaliseSpatialBounds,
   normaliseSpatialPoint,
@@ -325,15 +327,21 @@ export function cloneFrozenSpatialValue(value) {
 }
 
 function normaliseIdentifierSet(value) {
-  const values = Array.isArray(value)
-    ? value
-    : value === null || value === undefined || value === ""
-      ? []
-      : [value];
+  const identifiers = new Set();
+  if (value === null || value === undefined || value === "") return identifiers;
 
-  return new Set(values
-    .map((entry) => String(entry).trim())
-    .filter(Boolean));
+  if (!Array.isArray(value)) {
+    const identifier = String(value).trim();
+    if (identifier) identifiers.add(identifier);
+    return identifiers;
+  }
+
+  // forEach preserves the previous map() handling of sparse arrays.
+  value.forEach((entry) => {
+    const identifier = String(entry).trim();
+    if (identifier) identifiers.add(identifier);
+  });
+  return identifiers;
 }
 
 function normaliseLimit(value) {

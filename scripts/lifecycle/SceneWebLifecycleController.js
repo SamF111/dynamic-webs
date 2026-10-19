@@ -255,6 +255,21 @@ export class SceneWebLifecycleController {
     );
 
     this.#register(
+      "preMoveToken",
+      (
+        tokenDocument,
+        movement,
+        operation
+      ) => {
+        this.tokenSpanWebInteractionController.handleTokenPreMoved(
+          tokenDocument,
+          movement,
+          operation
+        );
+      }
+    );
+
+    this.#register(
       "preUpdateToken",
       (
         tokenDocument,

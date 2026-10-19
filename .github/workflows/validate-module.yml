@@ -106,16 +106,16 @@ jobs:
 
           if (
             moduleManifest.manifest !==
-            `${expectedRepository}/releases/latest/download/module.json`
+            `${expectedRepository}/releases/download/v${moduleManifest.version}/module.json`
           ) {
-            errors.push("module.json manifest must point to the latest release asset.");
+            errors.push("module.json manifest must point to its versioned release asset.");
           }
 
           if (
             moduleManifest.download !==
-            `${expectedRepository}/releases/latest/download/module.zip`
+            `${expectedRepository}/releases/download/v${moduleManifest.version}/module.zip`
           ) {
-            errors.push("module.json download must point to the latest release asset.");
+            errors.push("module.json download must point to its versioned release asset.");
           }
 
           for (const entry of moduleManifest.esmodules ?? []) {

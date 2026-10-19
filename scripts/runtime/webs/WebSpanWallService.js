@@ -108,7 +108,9 @@ export class WebSpanWallService {
       this.pendingJobs.filter(
         pending =>
           pending.sceneId !==
-            sceneId
+            sceneId ||
+          pending.type ===
+            "open"
       );
 
     return this.#queueJob(
@@ -117,13 +119,17 @@ export class WebSpanWallService {
   }
 
   /**
-   * Delete only the generated walls belonging to the supplied destroyed spans.
+   * Deactivate generated walls belonging to supplied destroyed spans.
+   *
+   * Token-crossing destruction may open a blocking secret door and defer its
+   * WallDocument deletion so the hot movement path avoids a delete/rebuild.
    */
   requestWebRemoval({
     scene,
     webIds,
     generationId = null,
-    reason = "destroy-span-wall"
+    reason = "destroy-span-wall",
+    openSecretDoorsBeforeRemoval = false
   }) {
     const sceneId =
       resolveSceneId(
@@ -157,6 +163,9 @@ export class WebSpanWallService {
           normaliseGenerationId(
             generationId
           ),
+        openSecretDoorsBeforeRemoval:
+          openSecretDoorsBeforeRemoval ===
+            true,
         reason:
           String(
             reason ??
@@ -172,6 +181,102 @@ export class WebSpanWallService {
     if (
       last?.type ===
         "remove" &&
+      last.sceneId ===
+        sceneId &&
+      last.openSecretDoorsBeforeRemoval ===
+        job.openSecretDoorsBeforeRemoval
+    ) {
+      this.pendingJobs[
+        this.pendingJobs.length -
+        1
+      ] =
+        Object.freeze({
+          ...last,
+          webIds:
+            Object.freeze(
+              normaliseIdentifierList([
+                ...last.webIds,
+                ...identifiers
+              ])
+            ),
+          generationId:
+            job.generationId,
+          openSecretDoorsBeforeRemoval:
+            job.openSecretDoorsBeforeRemoval,
+          reason:
+            job.reason
+        });
+
+      this.#markRequested(
+        job
+      );
+
+      this.#ensureDrain();
+
+      return true;
+    }
+
+    return this.#queueJob(
+      job
+    );
+  }
+
+  /**
+   * Open only the generated secret-door walls belonging to supplied intact spans.
+   */
+  requestSecretDoorOpening({
+    scene,
+    webIds,
+    generationId = null,
+    reason = "open-span-secret-door"
+  }) {
+    const sceneId =
+      resolveSceneId(
+        scene
+      );
+
+    const identifiers =
+      normaliseIdentifierList(
+        webIds
+      );
+
+    if (
+      !sceneId ||
+      identifiers.length ===
+        0
+    ) {
+      return false;
+    }
+
+    const job =
+      Object.freeze({
+        type:
+          "open",
+        scene,
+        sceneId,
+        webIds:
+          Object.freeze(
+            identifiers
+          ),
+        generationId:
+          normaliseGenerationId(
+            generationId
+          ),
+        reason:
+          String(
+            reason ??
+            "open-span-secret-door"
+          )
+      });
+
+    const last =
+      this.pendingJobs.at(
+        -1
+      );
+
+    if (
+      last?.type ===
+        "open" &&
       last.sceneId ===
         sceneId
     ) {
@@ -352,7 +457,9 @@ export class WebSpanWallService {
       targetWebIds:
         Object.freeze(
           job.type ===
-            "remove"
+              "remove" ||
+          job.type ===
+              "open"
             ? [
                 ...job.webIds
               ]
@@ -421,6 +528,14 @@ export class WebSpanWallService {
             );
         } else if (
           job.type ===
+            "open"
+        ) {
+          result =
+            await this.#openWebWalls(
+              job
+            );
+        } else if (
+          job.type ===
             "restore"
         ) {
           result =
@@ -451,6 +566,8 @@ export class WebSpanWallService {
             Date.now(),
           lastError:
             null,
+          openedCount:
+            0,
           deferredCount:
             0,
           deferredWallIds:
@@ -716,13 +833,9 @@ export class WebSpanWallService {
         });
 
       const data =
-        {
-          ...desired,
-          flags:
-            mergeGeneratedSpanWallFlags(
-              desired
-            )
-        };
+        createWritableSpanWallPayload(
+          desired
+        );
 
       if (
         !existing
@@ -843,6 +956,12 @@ export class WebSpanWallService {
       };
     }
 
+    const mayOpenSecretDoors =
+      job.openSecretDoorsBeforeRemoval ===
+        true &&
+      typeof scene.updateEmbeddedDocuments ===
+        "function";
+
     const targets =
       new Set(
         job.webIds
@@ -924,8 +1043,14 @@ export class WebSpanWallService {
     const deleteIds =
       [];
 
+    const updateData =
+      [];
+
     const deferredWallIds =
       [];
+
+    const constants =
+      resolveDoorConstants();
 
     for (
       const [
@@ -941,19 +1066,57 @@ export class WebSpanWallService {
         deferredWallIds.push(
           wallId
         );
-      } else {
-        deleteIds.push(
+
+        continue;
+      }
+
+      const door =
+        Number(
+          wall?.door ??
+          wall?._source?.door ??
+          constants.doorNone
+        );
+
+      if (
+        mayOpenSecretDoors &&
+        door ===
+          constants.doorSecret
+      ) {
+        updateData.push({
+          _id:
+            wallId,
+          ds:
+            constants.doorOpen
+        });
+
+        deferredWallIds.push(
           wallId
         );
+
+        continue;
       }
+
+      deleteIds.push(
+        wallId
+      );
     }
 
     /**
-     * An already-open secret door no longer blocks movement or sight. Leaving
-     * that harmless WallDocument in place avoids Foundry's expensive deferred
-     * perception rebuild during token movement. Full reconciliation and the
-     * explicit maintenance actions remove it later.
+     * Crossing destruction opens a blocking generated secret door instead of
+     * deleting it. The web asset/state is already destroyed by the runtime;
+     * this leaves a harmless open WallDocument for later reconciliation or
+     * maintenance cleanup. Non-secret vision walls still have to be deleted.
      */
+    if (
+      updateData.length >
+        0
+    ) {
+      await scene.updateEmbeddedDocuments(
+        "Wall",
+        updateData
+      );
+    }
+
     if (
       deleteIds.length >
         0
@@ -983,7 +1146,9 @@ export class WebSpanWallService {
       createdCount:
         0,
       updatedCount:
-        0,
+        updateData.length,
+      openedCount:
+        updateData.length,
       deletedCount:
         deleteIds.length,
       deferredCount:
@@ -992,6 +1157,184 @@ export class WebSpanWallService {
         Object.freeze(
           deferredWallIds.sort()
         )
+    };
+  }
+
+  async #openWebWalls(
+    job
+  ) {
+    const scene =
+      job.scene;
+
+    if (
+      globalThis.game?.user?.isGM !==
+        true
+    ) {
+      return createNonAuthoritativeResult(
+        scene
+      );
+    }
+
+    if (
+      typeof scene.updateEmbeddedDocuments !==
+        "function"
+    ) {
+      return {
+        ...createNonAuthoritativeResult(
+          scene
+        ),
+        skippedReason:
+          "scene-not-writable"
+      };
+    }
+
+    const targets =
+      new Set(
+        job.webIds
+      );
+
+    const targetWallsById =
+      new Map();
+
+    const indexed =
+      this.wallIdsBySceneId.get(
+        job.sceneId
+      ) ??
+      this.#rebuildSceneWallIndex(
+        scene
+      );
+
+    for (
+      const webId of
+      targets
+    ) {
+      const wallId =
+        indexed.get(
+          webId
+        );
+
+      const wall =
+        wallId
+          ? resolveSceneWallById(
+              scene,
+              wallId
+            )
+          : null;
+
+      if (wall) {
+        targetWallsById.set(
+          wallId,
+          wall
+        );
+      }
+    }
+
+    for (
+      const wall of
+      collectGeneratedWalls(
+        scene
+      )
+    ) {
+      const webId =
+        getGeneratedSpanWallWebId(
+          wall
+        );
+
+      if (
+        !webId ||
+        !targets.has(
+          webId
+        )
+      ) {
+        continue;
+      }
+
+      const wallId =
+        getDocumentId(
+          wall
+        );
+
+      if (wallId) {
+        targetWallsById.set(
+          wallId,
+          wall
+        );
+      }
+    }
+
+    const constants =
+      resolveDoorConstants();
+
+    const updateData =
+      [];
+
+    for (
+      const [
+        wallId,
+        wall
+      ] of targetWallsById
+    ) {
+      const door =
+        Number(
+          wall?.door ??
+          wall?._source?.door ??
+          constants.doorNone
+        );
+
+      const state =
+        Number(
+          wall?.ds ??
+          wall?._source?.ds ??
+          constants.doorClosed
+        );
+
+      if (
+        door !==
+          constants.doorSecret ||
+        state ===
+          constants.doorOpen
+      ) {
+        continue;
+      }
+
+      updateData.push({
+        _id:
+          wallId,
+        ds:
+          constants.doorOpen
+      });
+    }
+
+    if (
+      updateData.length >
+        0
+    ) {
+      await scene.updateEmbeddedDocuments(
+        "Wall",
+        updateData
+      );
+    }
+
+    const nextIndex =
+      this.#rebuildSceneWallIndex(
+        scene
+      );
+
+    return {
+      authoritative:
+        true,
+      desiredWallCount:
+        nextIndex.size,
+      activeWallCount:
+        nextIndex.size,
+      createdCount:
+        0,
+      updatedCount:
+        updateData.length,
+      openedCount:
+        updateData.length,
+      deletedCount:
+        0
     };
   }
 
@@ -1126,13 +1469,9 @@ export class WebSpanWallService {
         });
 
       const data =
-        {
-          ...desired,
-          flags:
-            mergeGeneratedSpanWallFlags(
-              desired
-            )
-        };
+        createWritableSpanWallPayload(
+          desired
+        );
 
       if (!existing) {
         createData.push(
@@ -1287,9 +1626,9 @@ function normaliseBehaviour(
     secretDoor:
       behaviour?.secretDoor ===
         true,
-    destructible:
-      behaviour?.destructible ===
-        true
+    crossingAction:
+      behaviour?.crossingAction ??
+      "none"
   });
 }
 
@@ -1352,6 +1691,27 @@ function createNonAuthoritativeResult(
     deletedCount:
       0
   };
+}
+
+function resolveDoorConstants() {
+  const constants =
+    globalThis.CONST ??
+    {};
+
+  return Object.freeze({
+    doorNone:
+      constants.WALL_DOOR_TYPES?.NONE ??
+      0,
+    doorSecret:
+      constants.WALL_DOOR_TYPES?.SECRET ??
+      2,
+    doorClosed:
+      constants.WALL_DOOR_STATES?.CLOSED ??
+      0,
+    doorOpen:
+      constants.WALL_DOOR_STATES?.OPEN ??
+      1
+  });
 }
 
 function collectGeneratedWalls(
@@ -1456,6 +1816,8 @@ function createEmptyDiagnostics() {
       0,
     updatedCount:
       0,
+    openedCount:
+      0,
     deletedCount:
       0,
     deferredCount:
@@ -1518,4 +1880,17 @@ function deepFreezeClone(
       )
     )
   );
+}
+
+
+/**
+ * Foundry cleans document inputs in place, including every coordinate array
+ * entry. Keep immutable generated data inside the module and detach all nested
+ * fields before handing a payload to the document API.
+ */
+function createWritableSpanWallPayload(desired) {
+  return structuredClone({
+    ...desired,
+    flags: mergeGeneratedSpanWallFlags(desired)
+  });
 }

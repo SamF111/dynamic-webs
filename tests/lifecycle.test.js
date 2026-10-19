@@ -135,7 +135,13 @@ test("lifecycle registration installs level-aware hooks and dispose removes them
     const controller = new SceneWebLifecycleController({ runtime: environment.runtime, debounceMs: 200 });
     assert.equal(controller.registerHooks(), true);
     assert.equal(controller.registerHooks(), false);
-    assert.equal(environment.callbacks.size, 21);
+    assert.equal(environment.callbacks.size, 22);
+    assert.equal(
+      Array.from(environment.callbacks.values()).some(
+        registration => registration.event === "preMoveToken"
+      ),
+      true
+    );
     assert.equal(
       Array.from(environment.callbacks.values()).some(
         registration => registration.event === "preUpdateToken"
@@ -283,9 +289,10 @@ test("Scene span-behaviour updates regenerate the active Scene immediately", () 
       flags: {
         "dynamic-webs": {
           spanWebBehaviour: {
+            schemaVersion: 2,
             visionMode: "blocked",
             secretDoor: true,
-            destructible: false
+            crossingAction: "open-secret-door"
           }
         }
       }

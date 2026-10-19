@@ -41,8 +41,7 @@ export class WebMutableStateService {
     sceneId,
     generationId,
     webs,
-    persistedState = null,
-    destroyable = true
+    persistedState = null
   }) {
     const nextSceneId =
       normaliseIdentifier(
@@ -55,27 +54,24 @@ export class WebMutableStateService {
 
     const validDestroyableIds =
       new Set(
-        destroyable ===
-          true
-          ? (
-              Array.isArray(
-                webs
+        (
+          Array.isArray(
+            webs
+          )
+            ? webs
+            : []
+        )
+          .filter(
+            web =>
+              web?.kind ===
+                "wall-span"
+          )
+          .map(
+            web =>
+              String(
+                web.id
               )
-                ? webs
-                : []
-            )
-              .filter(
-                web =>
-                  web?.kind ===
-                    "wall-span"
-              )
-              .map(
-                web =>
-                  String(
-                    web.id
-                  )
-              )
-          : []
+          )
       );
 
     if (
@@ -101,9 +97,13 @@ export class WebMutableStateService {
         null;
     }
 
+    /**
+     * Whole-span destruction remains an explicit runtime/public capability.
+     * Token crossing policy is resolved elsewhere and must never invalidate
+     * persisted destroyed-span state.
+     */
     this.destroyable =
-      destroyable ===
-        true;
+      true;
 
     this.eligibleWebIds =
       validDestroyableIds;
@@ -181,8 +181,7 @@ export class WebMutableStateService {
               ).revision
             : null,
         destroyable:
-          destroyable ===
-            true,
+          true,
         eligibleWebCount:
           validDestroyableIds.size,
         prunedWebIds:
@@ -217,8 +216,6 @@ export class WebMutableStateService {
       );
 
     if (
-      this.destroyable !==
-        true ||
       !this.eligibleWebIds.has(
         id
       ) ||
@@ -267,8 +264,6 @@ export class WebMutableStateService {
       ids
     ) {
       if (
-        this.destroyable ===
-          true &&
         this.eligibleWebIds.has(
           id
         ) &&
@@ -507,14 +502,10 @@ export class WebMutableStateService {
         snapshot.destroyedWebIds
       ).filter(
         webId =>
-          this.destroyable ===
-            true &&
-          (
-            eligibility.size ===
-              0 ||
-            eligibility.has(
-              webId
-            )
+          eligibility.size ===
+            0 ||
+          eligibility.has(
+            webId
           )
       );
 
@@ -614,8 +605,7 @@ export class WebMutableStateService {
       eligibleWebCount:
         this.eligibleWebIds.size,
       destroyable:
-        this.destroyable ===
-          true,
+        true,
       lastMutation:
         this.lastMutation,
       lastReconciliation:

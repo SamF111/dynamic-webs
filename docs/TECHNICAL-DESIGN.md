@@ -182,11 +182,21 @@ Queries return deeply frozen plain snapshots in stable distance-and-identifier o
 
 Presentation-only colour or thickness changes refresh indexed snapshots without rebuilding cells. Visibility-only changes leave geometry and the index unchanged. A geometry rebuild atomically replaces the index.
 
-## Whole-span destruction and generated walls
+## Span crossing, whole-span destruction and generated walls
 
-Only wall-span webs are destructible through token movement or the public mutation API. Corner, ground and carpet webs remain immutable.
+Only wall-span webs support whole-span mutable destruction. Corner, ground and carpet webs remain immutable.
 
-A committed token movement uses its swept centre path and collision radius. Dynamic Webs queries intact wall-span strands, performs precise capsule-to-polyline checks and destroys each intersected whole span. Drag previews do not mutate state.
+Scene span behaviour stores a separate token-crossing policy:
+
+```text
+none
+destroy-web
+open-secret-door
+```
+
+The final constrained movement path exposed by Foundry's `preMoveToken` hook is evaluated on the initiating client before the update workflow concludes. `preUpdateToken` remains a compatibility fallback for update flows which do not provide pre-movement path data. This allows a closed generated secret door to react to an attempted crossing even when committed movement would otherwise stop at the barrier. The rendered movement tracker remains as a compatibility supplement for unusual visual paths.
+
+`destroy-web` uses the existing swept centre path and collision radius to query intact wall-span strands, perform precise capsule-to-polyline checks and destroy each intersected whole span. For token-crossing destruction, a blocking generated secret door is changed to `ds = OPEN` and retained as deferred clean-up instead of deleting its WallDocument in the movement hot path. `open-secret-door` leaves immutable geometry and mutable destroyed-span state unchanged and requests the same targeted door-state update while keeping the web intact. `none` skips automatic span interaction.
 
 Destroyed IDs are stored separately from immutable geometry:
 
@@ -198,11 +208,11 @@ flags["dynamic-webs"].mutableState = {
 };
 ```
 
-Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration.
+Compatible IDs survive deterministic regeneration, canvas teardown, Scene reopening and server restart. Missing IDs are pruned after regeneration. Crossing-policy changes do not prune or restore otherwise valid destroyed IDs.
 
-Generated span walls carry explicit Dynamic Webs ownership flags. Reconciliation creates, updates or removes one wall per intact span and preserves a GM-opened secret door's open state.
+Generated span walls carry explicit Dynamic Webs ownership flags. Reconciliation creates, updates or removes one wall per intact span and preserves an opened secret door's open state. Targeted opening updates only the requested generated secret doors and does not mutate web state.
 
-Vision-only walls and closed generated secret doors are removed immediately when their span is destroyed. An already-open generated secret door may remain as a harmless deferred-cleanup WallDocument to avoid an expensive perception rebuild during token movement; later reconciliation or maintenance removes it.
+Explicit destruction outside token crossing retains the existing wall-removal behaviour. During token-crossing destruction, a closed generated secret door is opened first and then deliberately retained as a harmless deferred-cleanup WallDocument; later reconciliation or maintenance removes it. A vision-only wall has no equivalent open state and is therefore removed when its span is destroyed.
 
 The GM is authoritative for mutations. Compact Scene state is serialised, broadcast over `module.dynamic-webs`, and also converges through normal `updateScene` propagation.
 

@@ -30,7 +30,7 @@ Dynamic Webs can:
 - Place natural-looking webs in wall corners, across passages, on open ground and throughout tagged areas.
 - Keep the same web layout when a Scene is reopened or regenerated with unchanged settings.
 - Support multi-floor Scenes in Foundry v14 and v13 with the Levels module.
-- Let wall-spanning webs limit vision, block movement through secret doors, or break when tokens push through them.
+- Let wall-spanning webs limit vision, block movement through secret doors, open on attempted crossing, or break when tokens push through them.
 - Expose a public API for other modules without coupling Dynamic Webs to a particular creature or game system.
 
 ## Web types
@@ -41,7 +41,7 @@ Webs form around suitable wall corners and junctions. They work well for old roo
 
 ### Passage webs
 
-Wall-spanning webs stretch across suitable narrow gaps. They can remain purely decorative, interfere with vision, act as closed secret doors, or be made destructible.
+Wall-spanning webs stretch across suitable narrow gaps. They can remain purely decorative, interfere with vision, block movement through closed secret doors, open those doors on attempted crossing, or tear away when crossed.
 
 ### Ground webs
 
@@ -81,10 +81,10 @@ World settings provide defaults for new or previously unconfigured Scene populat
 Wall-spanning webs have optional Scene-wide behaviour:
 
 - Vision can be unaffected, limited or blocked.
-- Movement blocking can be represented by a closed Foundry secret door.
-- Span webs can be destructible or indestructible.
+- Movement blocking is represented by a closed Foundry secret door.
+- Attempted crossing can open the secret door, destroy the web, or take no action.
 
-When destructible span webs are crossed by a token, the whole span can tear away and remain destroyed after the Scene is reopened. Corner, ground and carpet webs remain environmental scenery.
+Opening a generated secret door leaves the web intact. Destroy Web tears the span away and persists it as destroyed; when the span also blocks movement, its generated secret door is opened and deliberately left behind for later reconciliation or maintenance rather than being deleted during the crossing. Vision-only generated walls still need removal when their web is destroyed. Corner, ground and carpet webs remain environmental scenery.
 
 ## Regions and floors
 

@@ -591,7 +591,7 @@ test("the initiating player submits the first pass-through movement to the GM", 
 });
 
 
-test("indestructible Scene span policy skips token movement queries and destruction", () => {
+test("No Action span policy skips token movement queries and mutations", () => {
   const previousGame = globalThis.game;
   const previousCanvas = globalThis.canvas;
 
@@ -613,7 +613,10 @@ test("indestructible Scene span policy skips token movement queries and destruct
       return {
         active: true,
         sceneId: "scene-a",
-        spanWebBehaviour: { destructible: false },
+        spanWebBehaviour: {
+          crossingAction: "none",
+          secretDoor: false
+        },
         levels: [{ id: "base", elevationBand: { bottom: -Infinity, top: Infinity } }]
       };
     },
@@ -649,6 +652,214 @@ test("indestructible Scene span policy skips token movement queries and destruct
     assert.equal(controller.handleTokenUpdated(token, { x: 100 }, {}, "gm"), null);
     assert.equal(queryCount, 0);
     assert.equal(destroyCount, 0);
+  } finally {
+    globalThis.game = previousGame;
+    globalThis.canvas = previousCanvas;
+  }
+});
+
+
+test("attempted crossing opens a generated secret door during preUpdate without destroying the web", () => {
+  const previousGame = globalThis.game;
+  const previousCanvas = globalThis.canvas;
+
+  const tokenDocument = {
+    id: "token-open-door",
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    elevation: 0,
+    parent: { id: "scene-a" }
+  };
+
+  const movementQueries = [];
+  const opened = [];
+  let destroyCount = 0;
+
+  const service = {
+    getState() {
+      return {
+        active: true,
+        sceneId: "scene-a",
+        spanWebBehaviour: {
+          crossingAction: "open-secret-door",
+          secretDoor: true
+        },
+        levels: [
+          {
+            id: "level-0",
+            elevationBand: { bottom: 0, top: 9 }
+          }
+        ]
+      };
+    },
+    queryMovementIntersections(request) {
+      movementQueries.push(request);
+
+      return Object.freeze([
+        Object.freeze({
+          webId: "span-door"
+        })
+      ]);
+    },
+    openSpanSecretDoors(webIds, metadata) {
+      opened.push({
+        webIds,
+        metadata
+      });
+
+      return Object.freeze({
+        changed: true,
+        requestedWebIds: Object.freeze([
+          ...webIds
+        ])
+      });
+    },
+    destroyWebs() {
+      destroyCount += 1;
+      throw new Error("Open Secret Door must not destroy mutable web state.");
+    }
+  };
+
+  globalThis.game = {
+    user: {
+      id: "gm",
+      isGM: true
+    }
+  };
+
+  globalThis.canvas = {
+    dimensions: { size: 100 },
+    scene: {
+      id: "scene-a",
+      grid: { size: 100 },
+      tokens: [tokenDocument]
+    },
+    tokens: {
+      placeables: [tokenDocument]
+    }
+  };
+
+  try {
+    const controller =
+      new TokenSpanWebInteractionController({
+        runtime: {
+          getWebRuntimeService: () => service
+        }
+      });
+
+    controller.prime(
+      globalThis.canvas.scene
+    );
+
+    const outcome =
+      controller.handleTokenPreMoved(
+        tokenDocument,
+        {
+          id:
+            "movement-open-door",
+          origin: {
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1,
+            elevation: 0,
+            level: "level-0"
+          },
+          destination: {
+            x: 200,
+            y: 0,
+            width: 1,
+            height: 1,
+            elevation: 0,
+            level: "level-0"
+          },
+          pending: {
+            waypoints: [
+              {
+                x: 200,
+                y: 0,
+                width: 1,
+                height: 1,
+                elevation: 0,
+                level: "level-0"
+              }
+            ]
+          }
+        },
+        { animate: true }
+      );
+
+    assert.deepEqual(
+      outcome.from,
+      { x: 50, y: 50 }
+    );
+
+    assert.deepEqual(
+      outcome.to,
+      { x: 250, y: 50 }
+    );
+
+    assert.equal(
+      movementQueries.length,
+      1
+    );
+
+    assert.equal(
+      opened.length,
+      1
+    );
+
+    controller.handleTokenPreUpdated(
+      tokenDocument,
+      { x: 200 },
+      { animate: true },
+      "gm"
+    );
+
+    assert.equal(
+      movementQueries.length,
+      1
+    );
+
+    assert.equal(
+      opened.length,
+      1
+    );
+
+    assert.deepEqual(
+      opened[0].webIds,
+      ["span-door"]
+    );
+
+    assert.equal(
+      opened[0].metadata.entityId,
+      tokenDocument.id
+    );
+
+    assert.equal(
+      destroyCount,
+      0
+    );
+
+    const diagnostics =
+      controller.createDiagnosticSnapshot();
+
+    assert.equal(
+      diagnostics.openedDoorRequestCount,
+      1
+    );
+
+    assert.equal(
+      diagnostics.destroyedWebCount,
+      0
+    );
+
+    assert.deepEqual(
+      diagnostics.lastOutcome.openedWebIds,
+      ["span-door"]
+    );
   } finally {
     globalThis.game = previousGame;
     globalThis.canvas = previousCanvas;

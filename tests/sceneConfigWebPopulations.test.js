@@ -60,7 +60,11 @@ test("Scene Configuration context exposes collapsed modular population cards", a
     assert.equal(context.spanWebBehaviour.useWorldMaximumSpanWidth, true);
     assert.equal(context.spanWebBehaviour.visionOptions.find((option) => option.selected)?.value, "limited");
     assert.equal(context.spanWebBehaviour.secretDoor, false);
-    assert.equal(context.spanWebBehaviour.destructible, true);
+    assert.equal(context.spanWebBehaviour.crossingAction, "destroy-web");
+    assert.equal(
+      context.spanWebBehaviour.crossingActionOptions.find((option) => option.selected)?.value,
+      "destroy-web"
+    );
   } finally { restore(); }
 });
 
@@ -110,8 +114,12 @@ test("Scene Configuration templates contain population operations and no auto-op
   assert.match(template, /data-dynamic-webs-use-world-span-width/u);
   assert.match(template, /data-dynamic-webs-span-vision-mode/u);
   assert.match(template, /data-dynamic-webs-span-secret-door/u);
-  assert.match(template, /closed secret doors/u);
-  assert.match(template, /data-dynamic-webs-span-destructible/u);
+  assert.match(template, /Block movement/u);
+  assert.match(template, /data-dynamic-webs-span-crossing-action/u);
+  assert.match(template, /Open Secret Door/u);
+  assert.match(template, /Destroy Web/u);
+  assert.match(template, /No Action/u);
+  assert.doesNotMatch(template, /data-dynamic-webs-span-destructible/u);
   assert.match(template, /data-dynamic-webs-restore-destroyed-spans/u);
   assert.match(template, /Restore Destroyed Span Webs/u);
   assert.match(template, /data-dynamic-webs-update-span-walls/u);
