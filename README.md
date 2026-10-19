@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/f60c0b25-cd5a-46a0-81de-a3e9aa05067c
 
 I built Dynamic Webs for my own game because I wanted scenes to feel more lived-in. I had a large spider battle in the works as GM, and drawing or placing every web by hand was not how I wanted to spend my preparation time.
 
-The web system originally lived inside another module I am working on. As it gained its own generation, Scene controls, Regions, floors, interactions and destructible passage webs, it became clear that it had grown into a module of its own. I split it out, kept it independent, and decided to share it for other GMs who want the same sort of environmental detail.
+The web system originally lived inside [Ambient Critters](https://github.com/SamF111/ambient-critters), another Foundry VTT module I am working on. As it gained its own generation, Scene controls, Regions, floors, interactions and destructible passage webs, it became clear that it had grown into a module of its own. I split it out, kept it independent, and decided to share it for other GMs who want the same sort of environmental detail.
 
 ## What it adds
 
