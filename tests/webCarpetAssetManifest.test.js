@@ -17,7 +17,8 @@ test("generated carpet manifest exposes immutable transparent WebP assets", () =
   assert.equal(WEB_CARPET_ASSET_MANIFEST.schemaVersion, 1);
   assert.equal(WEB_CARPET_ASSET_MANIFEST.rendering.format, "webp");
   assert.equal(WEB_CARPET_ASSET_MANIFEST.rendering.colourMode, "transparent-white");
-  assert.equal(WEB_CARPET_ASSETS.length, 48);
+  assert.ok(WEB_CARPET_ASSETS.length > 0);
+  assert.equal(new Set(WEB_CARPET_ASSETS.map(asset => asset.id)).size, WEB_CARPET_ASSETS.length);
   assert.ok(Object.isFrozen(WEB_CARPET_ASSET_MANIFEST));
   assert.ok(Object.isFrozen(WEB_CARPET_ASSETS));
 

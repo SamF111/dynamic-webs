@@ -7,19 +7,17 @@ import {
   createWebCornerAssetPresentation,
   selectWebCornerAsset
 } from "../scripts/data/webCornerAssetCatalog.js";
+import manifest from "../assets/web-corner/generated/manifest.json" with {type: "json"};
 
 test(
-  "corner asset catalog exposes six deterministic variants for twelve angle families",
+  "corner asset catalog matches the generated manifest and covers every angle family",
   () => {
-    assert.equal(
-      WEB_CORNER_ASSET_ANGLE_FAMILIES.length,
-      12
-    );
-
-    assert.equal(
-      WEB_CORNER_ASSETS.length,
-      72
-    );
+    assert.ok(WEB_CORNER_ASSET_ANGLE_FAMILIES.length > 0);
+    assert.ok(WEB_CORNER_ASSETS.length > 0);
+    assert.deepEqual(WEB_CORNER_ASSETS.map(({id, modulePath}) => ({id, modulePath})),
+      manifest.assets.map(({id, modulePath}) => ({id, modulePath})));
+    assert.ok(WEB_CORNER_ASSET_ANGLE_FAMILIES.every(family =>
+      WEB_CORNER_ASSETS.some(asset => asset.canonicalAngleDeg === family.canonicalAngleDeg)));
 
     assert.equal(
       new Set(
@@ -28,7 +26,7 @@ test(
             asset.id
         )
       ).size,
-      72
+      WEB_CORNER_ASSETS.length
     );
 
     assert.ok(

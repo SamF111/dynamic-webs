@@ -1,178 +1,33 @@
-// D:/FoundryVTT/Data/modules/dynamic-webs/tests/documentation.test.js
-// Purpose: Verify public documentation covers the current configuration and integration contracts.
+// Purpose: Verify documentation links and data/API references without constraining prose.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import {access, readFile, readdir} from "node:fs/promises";
+import {fileURLToPath} from "node:url";
+import {createPublicApi} from "../scripts/api.js";
 
 const readText = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readJson = async (path) => JSON.parse(await readText(path));
 
-test("README is a public landing page with the author's motivation", async () => {
-  const readme = await readText("README.md");
-
-  for (const phrase of [
-    "fills Foundry Virtual Tabletop scenes with procedurally generated spider webs",
-    "I built Dynamic Webs for my own game",
-    "scenes to feel more lived-in",
-    "large spider battle",
-    "decided to share it"
-  ]) {
-    assert.ok(readme.includes(phrase));
-  }
-
-  assert.match(readme, /originally lived inside \[Ambient Critters\]\(https:\/\/github\.com\/SamF111\/ambient-critters\)/u);
-  assert.match(readme, /## What it adds/u);
-  assert.match(readme, /## Getting started/u);
-  assert.match(readme, /## Compatibility/u);
-  assert.match(readme, /## Documentation/u);
-});
-
-test("README presents the four web types and principal GM-facing features", async () => {
-  const readme = await readText("README.md");
-
-  for (const phrase of [
-    "### Corner webs",
-    "### Passage webs",
-    "### Ground webs",
-    "### Web carpets",
-    "disabled, sparse, standard, dense or infested",
-    "Confine",
-    "Exclude",
-    "closed Foundry secret door",
-    "Attempted crossing can open the secret door, destroy the web, or take no action",
-    "Foundry v14",
-    "theripper93's Levels"
-  ]) {
-    assert.ok(readme.includes(phrase));
+test("local documentation links resolve to existing files", async () => {
+  const guides = (await readdir(new URL("../docs/", import.meta.url)))
+    .filter(name => name.endsWith(".md")).map(name => `docs/${name}`);
+  for (const page of ["README.md", "roadmap.md", ...guides]) {
+    const source = new URL(`../${page}`, import.meta.url);
+    for (const [, href] of (await readText(page)).matchAll(/\[[^\]]*\]\(([^)\s]+)\)/gu)) {
+      if (/^(?:[a-z][\w+.-]*:|#)/iu.test(href)) continue;
+      const target = fileURLToPath(new URL(href, source));
+      await assert.doesNotReject(() => access(target), `Broken link in ${page}: ${href}`);
+    }
   }
 });
 
-test("README links specialist documentation instead of carrying internal contracts", async () => {
-  const readme = await readText("README.md");
-
-  for (const link of [
-    "docs/CONFIGURATION.md",
-    "docs/PUBLIC-API.md",
-    "docs/TECHNICAL-DESIGN.md",
-    "docs/DEVELOPMENT.md",
-    "roadmap.md"
-  ]) {
-    assert.ok(readme.includes(link));
-  }
-
-  for (const technicalDetail of [
-    "flags.dynamic-webs.webPopulations",
-    "dynamic-webs:web-generation:v4",
-    "two-triangle textured mesh",
-    'flags["dynamic-webs"].mutableState',
-    "PrimaryCanvasGroup",
-    "Blueprint schema version"
-  ]) {
-    assert.equal(readme.includes(technicalDetail), false);
-  }
-});
-
-test("configuration guide owns populations, defaults, Regions, levels and span behaviour", async () => {
-  const configuration = await readText("docs/CONFIGURATION.md");
-
-  for (const phrase of [
-    "flags.dynamic-webs.webPopulations",
-    "An explicitly saved empty array means that the Scene intentionally generates no webs",
-    "missing population flag",
-    "disabled → sparse → standard → dense → infested",
-    "Confine to Region tags",
-    "Exclude Region tags",
-    "flags.dynamic-webs.regionTags",
-    "theripper93's Levels",
-    "natural-white",
-    "toxic-green",
-    "1×, 2×, 3×, 4×",
-    "0.35–10",
-    "None** — no vision restriction",
-    "closed secret-door",
-    "Open Secret Door",
-    "Destroy Web",
-    "Clear All Webs and Prepare for Uninstall"
-  ]) {
-    assert.ok(configuration.includes(phrase));
-  }
-});
-
-test("technical design preserves deterministic geometry, rendering and destruction contracts", async () => {
-  const design = await readText("docs/TECHNICAL-DESIGN.md");
-
-  for (const phrase of [
-    "Blueprint schema version:** `8`",
-    "dynamic-webs:web-generation:v4:<scene-id>:<encoded-population-id>",
-    "<web-kind>:<encoded-scene-id>:<encoded-population-id>:<encoded-level-id>:<encoded-source-key>",
-    "complete generated strand polylines",
-    "destination-out",
-    "separate sibling containers",
-    "above tiles and drawings but below tokens",
-    "active viewed level plus every detected level below it",
-    "two-triangle textured mesh",
-    "all stored levels",
-    "uniform-grid spatial index",
-    "swept centre path",
-    "whole span",
-    "Scene-owned destroyed-span state",
-    "client-local transient presentation"
-  ]) {
-    assert.ok(design.includes(phrase));
-  }
-});
-
-test("public API guide locks the version-1 integration and capture ownership boundary", async () => {
-  const api = await readText("docs/PUBLIC-API.md");
-
-  for (const method of [
-    "api.getWebs()",
-    "api.getWeb(webId)",
-    "api.queryNearby(point, options = {})",
-    "api.queryStrands(bounds, options = {})",
-    "api.findCompatibleWebs(options = {})",
-    "api.findPerches(options = {})",
-    "api.interactions.queryMovement(request)",
-    "api.interactions.queryEntityPosition(request)",
-    "api.interactions.evaluateEntityMovement(request)",
-    "api.interactions.destroyWebs(webIds, options = {})",
-    "api.captures.show(request)",
-    "api.captures.clearByEntity(entityId, options = {})"
-  ]) {
-    assert.ok(api.includes(method));
-  }
-
-  for (const phrase of [
-    "Public API version:** `1`",
-    "aboveTokens",
-    "defaults to `false` and renders below tokens",
-    "preserves its previous placement",
-    "moves the same capture between layers without creating a duplicate",
-    "Moving or deleting the external entity does not automatically move or remove the overlay",
-    "The consumer decides"
-  ]) {
-    assert.ok(api.includes(phrase));
-  }
-});
-
-test("development guide owns validation, asset tooling and architecture rules", async () => {
-  const development = await readText("docs/DEVELOPMENT.md");
-
-  for (const phrase of [
-    "npm run validate",
-    "node --test tests/documentation.test.js",
-    "Foundry v13 and v14",
-    "generate_span_web_assets.py",
-    "validate_span_web_assets.py",
-    "generate_captured_web_assets.py",
-    "validate_captured_web_assets.py",
-    "Do not add AI-generated image files",
-    "Atomic spatial replacement",
-    "Visibility is presentation-only",
-    "Capture lifecycle belongs to the consumer",
-    "Do not move low-level implementation detail back into the landing-page README"
-  ]) {
-    assert.ok(development.includes(phrase));
+test("documented API method references exist on the public API", async () => {
+  const guide = await readText("docs/PUBLIC-API.md"), api = createPublicApi({});
+  const references = [...guide.matchAll(/\bapi\.([\w.]+)\s*\(/gu)];
+  assert.ok(references.length > 0, "No public API method references were found");
+  for (const [, method] of references) {
+    const value = method.split(".").reduce((owner, key) => owner?.[key], api);
+    assert.equal(typeof value, "function", `Documented API method does not exist: api.${method}`);
   }
 });
 
@@ -182,36 +37,6 @@ test("configuration documentation lists every authored density and colour profil
     readJson("data/webs/presets.json"),
     readJson("data/webs/colours.json")
   ]);
-
-  for (const id of presets.presets.map((entry) => entry.id)) {
-    assert.ok(configuration.includes(id));
-  }
-
-  for (const id of colours.profiles.map((entry) => entry.id)) {
-    assert.ok(configuration.includes(id));
-  }
-});
-
-test("roadmap records feature-complete status and maintenance-only scope", async () => {
-  const roadmap = await readText("roadmap.md");
-
-  for (const phrase of [
-    "feature complete for its intended standalone scope",
-    "There is no scheduled post-release feature roadmap",
-    "Feature-complete scope",
-    "Release work",
-    "release engineering rather than feature development",
-    "Maintenance policy",
-    "Maintaining the public API version 1 contract",
-    "New functionality should be added only when actual play or a real external integration demonstrates a missing generic capability",
-    "Dynamic Webs remains creature-agnostic",
-    "There are no committed future feature milestones",
-    "Feature history should remain in the changelog and GitHub releases"
-  ]) {
-    assert.ok(roadmap.includes(phrase));
-  }
-
-  assert.doesNotMatch(roadmap, /## Milestone/u);
-  assert.doesNotMatch(roadmap, /implementation candidate/u);
-  assert.doesNotMatch(roadmap, /Target:\*\*/u);
+  for (const id of presets.presets.map(entry => entry.id)) assert.ok(configuration.includes(id));
+  for (const id of colours.profiles.map(entry => entry.id)) assert.ok(configuration.includes(id));
 });

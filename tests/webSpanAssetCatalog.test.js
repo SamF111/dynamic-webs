@@ -6,6 +6,7 @@ import {
   createWebSpanAssetPresentation,
   selectWebSpanAsset
 } from "../scripts/data/webSpanAssetCatalog.js";
+import manifest from "../assets/web-span/generated/manifest.json" with {type: "json"};
 
 function createPresentation() {
   return createWebSpanAssetPresentation({
@@ -19,9 +20,11 @@ function createPresentation() {
   });
 }
 
-test("span asset catalogue exposes eight deterministic WebP variants", () => {
-  assert.equal(WEB_SPAN_ASSETS.length, 8);
-  assert.equal(new Set(WEB_SPAN_ASSETS.map((asset) => asset.id)).size, 8);
+test("span asset catalogue matches the generated manifest with unique WebP variants", () => {
+  assert.ok(WEB_SPAN_ASSETS.length > 0);
+  assert.equal(new Set(WEB_SPAN_ASSETS.map(asset => asset.id)).size, WEB_SPAN_ASSETS.length);
+  assert.deepEqual(WEB_SPAN_ASSETS.map(({id, modulePath}) => ({id, modulePath})),
+    manifest.assets.map(({id, modulePath}) => ({id, modulePath})));
   assert.ok(WEB_SPAN_ASSETS.every((asset) => asset.modulePath.endsWith(".webp")));
   assert.ok(WEB_SPAN_ASSETS.every((asset) =>
     asset.recommendedAlpha[0] === 1 &&

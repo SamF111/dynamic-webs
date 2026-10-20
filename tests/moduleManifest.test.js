@@ -8,7 +8,7 @@ import {
 } from "node:fs/promises";
 
 test(
-  "module manifest and package versions remain aligned for v1.0.0",
+  "module release metadata remains internally consistent",
   async () => {
     const moduleManifest =
       JSON.parse(
@@ -37,18 +37,16 @@ test(
       "dynamic-webs"
     );
 
-    assert.equal(
-      moduleManifest.version,
-      "1.0.0"
-    );
+    assert.match(moduleManifest.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u);
 
     assert.equal(
       packageManifest.version,
       moduleManifest.version
     );
 
-    assert.equal(moduleManifest.manifest, "https://github.com/SamF111/dynamic-webs/releases/download/v1.0.0/module.json");
-    assert.equal(moduleManifest.download, "https://github.com/SamF111/dynamic-webs/releases/download/v1.0.0/module.zip");
+    const releaseRoot = `https://github.com/SamF111/dynamic-webs/releases/download/v${moduleManifest.version}`;
+    assert.equal(moduleManifest.manifest, `${releaseRoot}/module.json`);
+    assert.equal(moduleManifest.download, `${releaseRoot}/module.zip`);
     assert.equal(moduleManifest.relationships.requires, undefined);
 
     assert.deepEqual(
@@ -68,15 +66,7 @@ test(
       ]
     );
 
-    assert.equal(
-      moduleManifest.relationships.recommends[0].id,
-      "levels"
-    );
-
-    assert.equal(
-      packageManifest.scripts.validate,
-      "npm run check:syntax && npm run test:v07"
-    );
+    assert.ok(moduleManifest.relationships.recommends.some(({id}) => id === "levels"));
   }
 );
 

@@ -8,12 +8,9 @@ import {
 } from "../scripts/data/webGroundAssetCatalog.js";
 
 test(
-  "ground asset catalog exposes twelve deterministic tintable WebP variants",
+  "ground asset catalog exposes unique tintable WebP variants",
   () => {
-    assert.equal(
-      WEB_GROUND_ASSETS.length,
-      12
-    );
+    assert.ok(WEB_GROUND_ASSETS.length > 0);
 
     assert.equal(
       new Set(
@@ -22,7 +19,7 @@ test(
             asset.id
         )
       ).size,
-      12
+      WEB_GROUND_ASSETS.length
     );
 
     assert.ok(

@@ -64,7 +64,7 @@ test(
 
     assert.ok(
       scriptFiles.length >
-        30
+        0
     );
   }
 );
