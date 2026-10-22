@@ -32,6 +32,18 @@ test("Dynamic Webs recognises its own and Ambient Critters Region tags", () => {
   assert.deepEqual(getRegionTags(region), ["crypt", "shared", "water-dock"]);
 });
 
+test("Region tags survive Foundry rejecting an inactive Ambient Critters flag scope", () => {
+  const region = {
+    flags: { "ambient-critters": { regionTags: ["Area 2"] } },
+    getFlag(namespace) {
+      if (namespace === "dynamic-webs") return ["Crypt"];
+      throw new Error(`Flag scope "${namespace}" is not valid or not currently active`);
+    }
+  };
+
+  assert.deepEqual(getRegionTags(region), ["crypt", "area-2"]);
+});
+
 test("Confine and Exclude reject exact role reuse", () => {
   assert.throws(() => validateRegionTagListsAreUnique({
     confine: ["Crypt"],

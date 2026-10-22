@@ -147,8 +147,12 @@ export function doesRegionUpdateAffectWebs(changed) {
 
 function readRegionTagFlag(document, namespace) {
   if (typeof document?.getFlag === "function") {
-    const value = document.getFlag(namespace, REGION_TAG_FLAG_KEYS.TAGS);
-    if (value !== undefined) return value;
+    try {
+      const value = document.getFlag(namespace, REGION_TAG_FLAG_KEYS.TAGS);
+      if (value !== undefined) return value;
+    } catch (_error) {
+      // Foundry rejects scopes of inactive or missing packages; read raw flags below.
+    }
   }
 
   return (
