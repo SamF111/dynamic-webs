@@ -80,19 +80,21 @@ export function createSceneConfigHookRegistration({
    * an ordinary SceneConfig tab and includes its fields in the normal top-level
    * Scene Configuration form.
    *
+   * Scene sheet subclasses registered in CONFIG.Scene.sheetClasses that define
+   * their own static PARTS or TABS (for example PF2e's SceneConfigPF2e) do not
+   * inherit the base extension, so each call also extends those subclasses.
+   * Call again after systems have registered their sheets (at "ready").
+   *
    * Registration is idempotent.
    *
    * @returns {boolean} True when registration was performed by this call.
    */
   function registerSceneConfigHooks() {
-    if (sceneConfigHooksRegistered) {
-      return false;
-    }
-
     const sceneConfigClass =
       resolveSceneConfigClass();
 
     if (
+      sceneConfigHooksRegistered ||
       sceneConfigClass[
         SCENE_CONFIG_REGISTRATION_MARKER
       ] === true
@@ -100,7 +102,9 @@ export function createSceneConfigHookRegistration({
       sceneConfigHooksRegistered =
         true;
 
-      return false;
+      return extendSceneConfigSubclasses(
+        sceneConfigClass
+      );
     }
 
     validateSceneConfigClass(
@@ -173,6 +177,10 @@ export function createSceneConfigHookRegistration({
       `${MODULE_ID} | Native Scene Configuration tab registered.`
     );
 
+    extendSceneConfigSubclasses(
+      sceneConfigClass
+    );
+
     return true;
   }
 
@@ -200,6 +208,78 @@ export function createSceneConfigHookRegistration({
   }
 
   return registerSceneConfigHooks;
+}
+
+/**
+ * Add the Dynamic Webs part and tab to registered Scene sheet subclasses that
+ * own static PARTS or TABS and therefore shadow the base SceneConfig extension.
+ *
+ * @param {Function} sceneConfigClass - Foundry SceneConfig base class.
+ * @returns {boolean} True when any subclass was extended by this call.
+ */
+function extendSceneConfigSubclasses(
+  sceneConfigClass
+) {
+  let extended =
+    false;
+
+  for (const sheetClass of collectSceneSheetClasses()) {
+    if (!(sheetClass?.prototype instanceof sceneConfigClass)) {
+      continue;
+    }
+
+    if (
+      Object.hasOwn(sheetClass, "PARTS") &&
+      !(SCENE_CONFIG_PART_ID in sheetClass.PARTS)
+    ) {
+      registerSceneConfigPart(
+        sheetClass
+      );
+
+      extended =
+        true;
+    }
+
+    if (
+      Object.hasOwn(sheetClass, "TABS") &&
+      !sheetClass.TABS?.sheet?.tabs?.some(
+        (tab) =>
+          tab?.id ===
+          SCENE_CONFIG_PART_ID
+      )
+    ) {
+      registerSceneConfigTab(
+        sheetClass
+      );
+
+      extended =
+        true;
+    }
+  }
+
+  return extended;
+}
+
+/**
+ * Collect every Scene sheet class registered with Foundry's sheet config.
+ *
+ * CONFIG.Scene.sheetClasses has the shape { [subtype]: { [sheetId]: { cls } } }.
+ *
+ * @returns {Set<Function>} Registered Scene sheet classes.
+ */
+function collectSceneSheetClasses() {
+  const sheetClasses =
+    new Set();
+
+  for (const sheetsById of Object.values(globalThis.CONFIG?.Scene?.sheetClasses ?? {})) {
+    for (const entry of Object.values(sheetsById ?? {})) {
+      if (typeof entry?.cls === "function") {
+        sheetClasses.add(entry.cls);
+      }
+    }
+  }
+
+  return sheetClasses;
 }
 
 /**
